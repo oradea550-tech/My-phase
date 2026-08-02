@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyPhase</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --accent-primary: #6366f1;
+            --accent-glow: #818cf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --shadow-soft: 0 6px 18px rgba(2,6,23,0.6);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding-bottom: 40px; }
+
+        header { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+        .logo { font-weight: 700; font-size: 1.25rem; color: var(--accent-glow); display: flex; align-items: center; gap: 8px; }
+
+        main { padding: 20px; max-width: 760px; margin: 20px auto; }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; margin-bottom: 18px; box-shadow: 0 4px 14px rgba(2,6,23,0.45); }
+
+        .form-control { width: 100%; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--text-main); margin-bottom: 10px; }
+        textarea.form-control { min-height: 88px; resize: vertical; }
+
+        .btn { display: inline-block; padding: 12px 16px; border-radius: 999px; background: linear-gradient(90deg, var(--accent-primary), var(--accent-glow)); color: white; font-weight: 700; border: none; cursor: pointer; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(2,6,23,0.85); z-index: 2000; display: flex; align-items: flex-start; justify-content: center; padding: 24px 12px; overflow-y: auto; }
+        .modal-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; width: 100%; max-width: 520px; box-shadow: var(--shadow-soft); }
+
+        .onboard-title { font-size: 1.35rem; color: var(--accent-glow); font-weight: 800; margin-bottom: 6px; }
+        .onboard-sub { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 18px; }
+
+        .step-indicator { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+        .step-pill { background: rgba(255,255,255,0.04); padding: 6px 12px; border-radius: 999px; font-size: 0.85rem; color: var(--text-muted); }
+        .step-pill.active { background: rgba(99,102,241,0.2); color: var(--accent-glow); font-weight: 700; }
+
+        .small-note { font-size: 0.85rem; color: var(--text-muted); margin-top: 12px; text-align: center; }
+        .link { color: var(--accent-glow); font-weight: 700; cursor: pointer; }
+        .field-row { display: flex; gap: 10px; }
+        .field-row .form-control { flex: 1; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo"><i class="fa-solid fa-compass"></i> MyPhase</div>
+        <button id="btnLogout" onclick="logout()" style="display:none; padding:8px 14px; font-size:0.9rem; background:var(--border); color:white; border:none; border-radius:999px; cursor:pointer;">Sign Out</button>
+    </header>
+
+    <main>
+        <!-- PROFILE SUMMARY -->
+        <div class="card" id="profileCard">
+            <h3 id="displayProfileName">Loading profile...</h3>
+            <p id="displayProfilePhase" style="font-size: 0.95rem; color: var(--accent-glow); margin-top:6px;"></p>
+            <p id="displayProfileLoc" style="font-size: 0.9rem; color: var(--text-muted);"></p>
+        </div>
+
+        <!-- POST DAILY UPDATE -->
+        <div class="card">
+            <h4 style="margin-bottom:12px;">Daily Update</h4>
+            <textarea id="updateInput" class="form-control" placeholder="Share your update for today..." rows="3"></textarea>
+            <div style="display:flex; gap:12px; margin-top:8px;">
+                <button id="btnPostUpdate" class="btn" onclick="postUpdate()">Post Update</button>
+                <button class="btn ghost" onclick="document.getElementById('updateInput').value=''">Clear</button>
+            </div>
+        </div>
+
+        <!-- MATCHED CIRCLE MEMBERS -->
+        <div class="card">
+            <h4 style="margin-bottom: 12px; color: var(--accent-glow);"><i class="fa-solid fa-users"></i> Members in Your Phase</h4>
+            <div id="circleMembersList">Searching for members...</div>
+        </div>
+
+        <!-- FEED -->
+        <div style="font-weight: 700; margin-bottom: 10px;">Phase Feed</div>
+        <div id="feedList"></div>
+    </main>
+
+    <!-- AUTH / ONBOARDING MODAL -->
+    <div id="authModal" class="modal-overlay" style="display:none;">
+        <div class="modal-box">
+            
+            <div class="step-indicator" id="stepIndicator">
+                <div id="step1Pill" class="step-pill active">1 — Welcome</div>
+                <div id="step2Pill" class="step-pill">2 — Your Phase</div>
+            </div>
+
+            <!-- STEP 1: ACCOUNT CREATION -->
+            <div id="step1">
+                <div class="onboard-title">Welcome to MyPhase</div>
+                <div class="onboard-sub">You are not your permanent identity. You are living a phase.</div>
+
+                <form onsubmit="handleStep1(event)">
+                    <input id="firstName" class="form-control" type="text" placeholder="First Name" required>
+                    <input id="signupEmail" class="form-control" type="email" placeholder="Email" required>
+                    <input id="signupPassword" class="form-control" type="password" placeholder="Password (min 6 chars)" minlength="6" required>
+                    <input id="signupConfirm" class="form-control" type="password" placeholder="Confirm Password" minlength="6" required>
+                    
+                    <button type="submit" class="btn" style="width:100%; margin-top:6px;">Continue →</button>
+                </form>
+
+                <p class="small-note">Already have an account? <span class="link" onclick="showSignIn()">Sign In</span></p>
+            </div>
+
+            <!-- STEP 2: PHASE DETAILS -->
+            <div id="step2" style="display:none;">
+                <div class="onboard-title">Tell us about your current phase</div>
+                <div class="onboard-sub">This helps us match you with members in the same phase.</div>
+
+                <form onsubmit="handleStep2(event)">
+                    <div class="field-row">
+                        <input id="country" class="form-control" type="text" placeholder="Country" required>
+                        <input id="city" class="form-control" type="text" placeholder="City" required>
+                    </div>
+
+                    <label style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:4px;">Current Phase</label>
+                    <select id="phaseSelect" class="form-control" required onchange="toggleOtherPhase(this)">
+                        <option value="">Select a phase...</option>
+                        <option>Career Change</option>
+                        <option>Starting a Startup</option>
+                        <option>Learning Programming</option>
+                        <option>Learning English</option>
+                        <option>University / College</option>
+                        <option>Fitness Journey</option>
+                        <option>Moving to a New City</option>
+                        <option>Personal Development</option>
+                        <option>Other...</option>
+                    </select>
+
+                    <input id="otherPhase" class="form-control" type="text" placeholder="Specify your phase" style="display:none;">
+
+                    <label style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:4px;">Goal</label>
+                    <textarea id="goal" class="form-control" placeholder="What do you want to achieve?" required></textarea>
+
+                    <label style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:4px;">Expected Duration</label>
+                    <select id="duration" class="form-control" required>
+                        <option value="">Choose duration...</option>
+                        <option>1 Month</option>
+                        <option>3 Months</option>
+                        <option>6 Months</option>
+                        <option>12 Months</option>
+                        <option>More than 12 Months</option>
+                    </select>
+
+                    <input id="reason" class="form-control" type="text" placeholder="Why did you join? (Optional)">
+
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button type="button" class="btn ghost" onclick="showStep(1)">← Back</button>
+                        <button id="btnSubmitStep2" type="submit" class="btn" style="flex:1">Complete Setup</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- SIGN IN VIEW -->
+            <div id="signInView" style="display:none;">
+                <div class="onboard-title">Sign In</div>
+                <div class="onboard-sub">Welcome back — enter your credentials to continue.</div>
+
+                <form onsubmit="handleSignIn(event)">
+                    <input id="signinEmail" class="form-control" type="email" placeholder="Email" required>
+                    <input id="signinPassword" class="form-control" type="password" placeholder="Password" required>
+                    
+                    <div style="display:flex; gap:10px; margin-top:6px;">
+                        <button type="button" class="btn ghost" onclick="showCreateAccount()">Create Account</button>
+                        <button id="btnSubmitSignIn" type="submit" class="btn" style="flex:1">Sign In</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://liovctvovsyyzcwfjhob.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_SxFzKZuFwq6QZ9ECVk-0Nw_hbITIfWf";
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let myProfile = null;
+        let tempSignupData = {};
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            return new Date(dateString).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function initApp() {
+            const { data: { session } } = await db.auth.getSession();
+            if (session?.user) {
+                currentUser = session.user;
+                await loadUserProfile();
+            } else {
+                showAuthModal();
+            }
+
+            db.auth.onAuthStateChange(async (event, session) => {
+                if (session?.user) {
+                    currentUser = session.user;
+                    await loadUserProfile();
+                } else {
+                    currentUser = null;
+                    myProfile = null;
+                    showAuthModal();
+                }
+            });
+        }
+
+        function showAuthModal() {
+            document.getElementById('authModal').style.display = 'flex';
+            document.getElementById('btnLogout').style.display = 'none';
+            showStep(1);
+        }
+
+        function showStep(n) {
+            document.getElementById('step1').style.display = n === 1 ? 'block' : 'none';
+            document.getElementById('step2').style.display = n === 2 ? 'block' : 'none';
+            document.getElementById('signInView').style.display = 'none';
+            document.getElementById('stepIndicator').style.display = 'flex';
+            document.getElementById('step1Pill').classList.toggle('active', n === 1);
+            document.getElementById('step2Pill').classList.toggle('active', n === 2);
+        }
+
+        function showSignIn() {
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('stepIndicator').style.display = 'none';
+            document.getElementById('signInView').style.display = 'block';
+        }
+
+        function showCreateAccount() {
+            showStep(1);
+        }
+
+        function toggleOtherPhase(select) {
+            document.getElementById('otherPhase').style.display = select.value === 'Other...' ? 'block' : 'none';
+        }
+
+        function handleStep1(e) {
+            e.preventDefault();
+            const password = document.getElementById('signupPassword').value;
+            const confirm = document.getElementById('signupConfirm').value;
+
+            if (password !== confirm) return alert('Passwords do not match.');
+
+            tempSignupData = {
+                first_name: document.getElementById('firstName').value.trim(),
+                email: document.getElementById('signupEmail').value.trim(),
+                password: password
+            };
+
+            showStep(2);
+        }
+
+        async function handleStep2(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitStep2');
+            btn.disabled = true;
+
+            let phase = document.getElementById('phaseSelect').value;
+            if (phase === 'Other...') phase = document.getElementById('otherPhase').value.trim();
+
+            try {
+                const { data: authData, error: authError } = await db.auth.signUp({
+                    email: tempSignupData.email,
+                    password: tempSignupData.password
+                });
+                if (authError) throw authError;
+
+                const userId = authData.user?.id || (await db.auth.getSession()).data.session?.user?.id;
+                if (!userId) throw new Error('Could not retrieve created user ID.');
+
+                const profilePayload = {
+                    user_id: userId,
+                    first_name: tempSignupData.first_name,
+                    email: tempSignupData.email,
+                    country: document.getElementById('country').value.trim(),
+                    city: document.getElementById('city').value.trim(),
+                    current_phase: phase,
+                    goal: document.getElementById('goal').value.trim(),
+                    duration: document.getElementById('duration').value,
+                    reason: document.getElementById('reason').value.trim() || null
+                };
+
+                const { error: profileError } = await db.from('profiles').insert([profilePayload]);
+                if (profileError) throw profileError;
+
+                document.getElementById('authModal').style.display = 'none';
+                
+                await db.auth.signInWithPassword({
+                    email: tempSignupData.email,
+                    password: tempSignupData.password
+                });
+
+            } catch (err) {
+                alert('Registration status: ' + err.message);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function handleSignIn(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitSignIn');
+            btn.disabled = true;
+
+            const { error } = await db.auth.signInWithPassword({
+                email: document.getElementById('signinEmail').value.trim(),
+                password: document.getElementById('signinPassword').value
+            });
+
+            btn.disabled = false;
+            if (error) return alert(error.message);
+            
+            document.getElementById('authModal').style.display = 'none';
+        }
+
+        async function loadUserProfile() {
+            if (!currentUser) return;
+
+            const { data, error } = await db.from('profiles').select('*').eq('user_id', currentUser.id).maybeSingle();
+            if (error) return console.error('Profile fetch error:', error.message);
+
+            if (data) {
+                myProfile = data;
+                document.getElementById('authModal').style.display = 'none';
+                document.getElementById('btnLogout').style.display = 'block';
+
+                document.getElementById('displayProfileName').innerText = `Welcome, ${escapeHTML(data.first_name)} 👋`;
+                document.getElementById('displayProfilePhase').innerText = `Phase: ${escapeHTML(data.current_phase)}`;
+                document.getElementById('displayProfileLoc').innerText = `Location: ${escapeHTML(data.city)}, ${escapeHTML(data.country)}`;
+
+                loadCircleMembers();
+                loadFeeds();
+            }
+        }
+
+        async function loadCircleMembers() {
+            if (!myProfile) return;
+            const { data: members } = await db.from('profiles').select('*').ilike('current_phase', myProfile.current_phase);
+
+            const list = document.getElementById('circleMembersList');
+            if (!members || members.length === 0) {
+                list.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">No other members in this phase yet.</p>`;
+                return;
+            }
+
+            list.innerHTML = members.map(m => {
+                const isMe = m.user_id === currentUser.id ? " (You)" : "";
+                return `<div style="background:var(--bg-main); padding:10px 14px; border-radius:10px; margin-bottom:8px; display:flex; gap:12px; align-items:center;">
+                    <i class="fa-solid fa-user" style="color:var(--accent-glow);"></i>
+                    <div>
+                        <div style="font-weight:700; font-size:0.95rem;">${escapeHTML(m.first_name)}${isMe}</div>
+                        <div style="color:var(--text-muted); font-size:0.85rem;">${escapeHTML(m.city)}, ${escapeHTML(m.country)}</div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function postUpdate() {
+            const text = document.getElementById('updateInput').value.trim();
+            if (!text) return alert('Please write a message.');
+            if (!myProfile) return alert('Please complete your profile first.');
+
+            const btn = document.getElementById('btnPostUpdate');
+            btn.disabled = true;
+
+            const { error } = await db.from('daily_updates').insert([{
+                user_id: currentUser.id,
+                user_name: myProfile.first_name,
+                phase_name: myProfile.current_phase,
+                update_text: text
+            }]);
+
+            btn.disabled = false;
+
+            if (error) {
+                alert('Posting failed: ' + error.message);
+            } else {
+                document.getElementById('updateInput').value = '';
+                loadFeeds();
+            }
+        }
+
+        async function loadFeeds() {
+            if (!myProfile) return;
+            const { data: posts } = await db.from('daily_updates')
+                .select('*')
+                .ilike('phase_name', myProfile.current_phase)
+                .order('created_at', { ascending: false });
+
+            const feed = document.getElementById('feedList');
+            if (!posts || posts.length === 0) {
+                feed.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">No posts in this phase yet.</p>`;
+                return;
+            }
+
+            feed.innerHTML = posts.map(p => `
+                <div class="card" style="padding:14px; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:700; font-size:0.95rem; color:var(--accent-glow);">${escapeHTML(p.user_name)}</span>
+                        <span style="font-size:0.8rem; color:var(--text-muted);">${formatDate(p.created_at)}</span>
+                    </div>
+                    <div style="font-size:0.95rem; margin-top:8px;">${escapeHTML(p.update_text)}</div>
+                </div>
+            `).join('');
+        }
+
+        async function logout() {
+            await db.auth.signOut();
+            location.reload();
+        }
+
+        initApp();
+    </script>
+</body>
+</html>
