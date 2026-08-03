@@ -23,7 +23,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; }
         body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding-bottom: 90px; }
 
-        /* HEADER & AVATAR DROPDOWN */
+        /* HEADER & USER AVATAR */
         header { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.25); position: sticky; top: 0; z-index: 100; }
         .logo { font-weight: 800; font-size: 1.3rem; color: var(--accent-glow); display: flex; align-items: center; gap: 8px; }
 
@@ -54,7 +54,7 @@
         .progress-container { background: rgba(255,255,255,0.05); border-radius: 999px; height: 10px; width: 100%; margin: 12px 0; overflow: hidden; }
         .progress-bar { background: linear-gradient(90deg, var(--accent-primary), var(--accent-glow)); height: 100%; width: 45%; transition: width 0.4s ease; }
 
-        /* TIMER BOX */
+        /* TIMER BADGE */
         .timer-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(99,102,241,0.15); border: 1px solid var(--accent-primary); color: var(--accent-glow); padding: 6px 12px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; }
 
         /* BOTTOM NAV TABS */
@@ -84,8 +84,20 @@
         .field-row .form-control { flex: 1; }
 
         .section-header { font-size: 1.05rem; font-weight: 700; color: var(--accent-glow); margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; }
-        .timeline-item { border-left: 2px solid var(--accent-primary); padding-left: 14px; margin-bottom: 12px; position: relative; }
-        .timeline-item::before { content: ''; width: 8px; height: 8px; background: var(--accent-glow); border-radius: 50%; position: absolute; left: -5px; top: 5px; }
+        
+        /* TIMELINE STYLES FOR JOURNEY */
+        .timeline-item { border-left: 2px solid var(--accent-primary); padding-left: 16px; margin-bottom: 16px; position: relative; }
+        .timeline-item::before { content: ''; width: 10px; height: 10px; background: var(--accent-glow); border-radius: 50%; position: absolute; left: -6px; top: 4px; }
+
+        /* MOOD SELECTOR STYLES */
+        .mood-selector { display: flex; gap: 12px; margin-bottom: 14px; }
+        .mood-btn { flex: 1; padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--text-main); cursor: pointer; font-size: 1.2rem; text-align: center; transition: all 0.2s ease; }
+        .mood-btn.selected { border-color: var(--accent-glow); background: rgba(99,102,241,0.2); }
+
+        /* CATEGORY BADGES FOR DISCUSSIONS */
+        .category-pills { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 14px; }
+        .cat-pill { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--text-muted); font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+        .cat-pill.active { background: var(--accent-primary); color: white; border-color: var(--accent-primary); font-weight: 600; }
     </style>
 </head>
 <body>
@@ -104,62 +116,67 @@
     </header>
 
     <main>
-        <!-- HOME WELCOME CARD (DASHBOARD) -->
-        <div class="card" id="welcomeCard">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                <div>
-                    <h3 id="dashWelcomeName">👋 Welcome back, User</h3>
-                    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">Your current journey dashboard</p>
-                </div>
-                <div class="timer-badge">
-                    <i class="fa-solid fa-clock"></i>
-                    <span id="sessionTimerDisplay">01:58:43 Remaining</span>
-                </div>
-            </div>
-
-            <div style="margin-top: 18px; background: rgba(0,0,0,0.2); padding: 14px; border-radius: var(--radius-md); border:1px solid rgba(255,255,255,0.03);">
-                <div style="font-size: 0.85rem; color: var(--accent-glow); font-weight: 700;">CURRENT PHASE</div>
-                <div id="dashPhaseName" style="font-size: 1.1rem; font-weight: 800; margin-top: 2px;">Loading...</div>
-                
-                <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-top: 10px;">GOAL</div>
-                <div id="dashGoalText" style="font-size: 0.95rem; color: var(--text-main);">...</div>
-
-                <div style="display:flex; justify-content:space-between; margin-top:14px; font-size:0.85rem; color:var(--text-muted);">
-                    <span>Progress</span>
-                    <span id="dashProgressDays" style="font-weight:700; color:var(--text-main);">Day 12 / 90</span>
-                </div>
-                <div class="progress-container">
-                    <div class="progress-bar" id="dashProgressBar" style="width: 15%;"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- TODAY'S FOCUS CARD -->
-        <div class="card">
-            <h4 style="color:var(--accent-glow); font-size:1.05rem; margin-bottom:12px;"><i class="fa-solid fa-bullseye"></i> Today's Focus</h4>
-            <div style="background:var(--bg-main); padding:14px; border-radius:var(--radius-md); margin-bottom:12px;">
-                <div style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">GOAL:</div>
-                <div id="focusGoal" style="font-size:0.95rem; font-weight:700; margin-bottom:8px;">Loading...</div>
-                <div style="font-size:0.8rem; color:var(--accent-glow); font-weight:700;">TODAY'S SMALL STEP:</div>
-                <div id="focusStep" style="font-size:0.95rem;">Finish the business plan and review milestones.</div>
-            </div>
-            <button class="btn small" id="btnMarkCompleted" onclick="markStepCompleted()"><i class="fa-solid fa-check"></i> Mark as Completed</button>
-        </div>
-
-        <!-- TAB 1: FEED -->
+        <!-- ==================================================== -->
+        <!-- TAB 1: HOME (DASHBOARD ONLY) -->
+        <!-- ==================================================== -->
         <div id="panelFeed" class="tab-panel active">
+            <!-- WELCOME CARD & SESSION TIMER -->
+            <div class="card" id="welcomeCard">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <h3 id="dashWelcomeName">👋 Welcome back, User</h3>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">Your daily phase dashboard</p>
+                    </div>
+                    <div class="timer-badge">
+                        <i class="fa-solid fa-clock"></i>
+                        <span id="sessionTimerDisplay">01:58:43 Remaining</span>
+                    </div>
+                </div>
+
+                <!-- CURRENT PHASE CARD (ONLY HERE) -->
+                <div style="margin-top: 18px; background: rgba(0,0,0,0.2); padding: 14px; border-radius: var(--radius-md); border:1px solid rgba(255,255,255,0.03);">
+                    <div style="font-size: 0.85rem; color: var(--accent-glow); font-weight: 700;">CURRENT PHASE</div>
+                    <div id="dashPhaseName" style="font-size: 1.1rem; font-weight: 800; margin-top: 2px;">Loading...</div>
+                    
+                    <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-top: 10px;">GOAL</div>
+                    <div id="dashGoalText" style="font-size: 0.95rem; color: var(--text-main);">...</div>
+
+                    <div style="display:flex; justify-content:space-between; margin-top:14px; font-size:0.85rem; color:var(--text-muted);">
+                        <span>Progress</span>
+                        <span id="dashProgressDays" style="font-weight:700; color:var(--text-main);">Day 12 / 90</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="dashProgressBar" style="width: 15%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TODAY'S FOCUS (ONLY HERE) -->
+            <div class="card">
+                <h4 style="color:var(--accent-glow); font-size:1.05rem; margin-bottom:12px;"><i class="fa-solid fa-bullseye"></i> Today's Focus</h4>
+                <div style="background:var(--bg-main); padding:14px; border-radius:var(--radius-md); margin-bottom:12px;">
+                    <div style="font-size:0.8rem; color:var(--accent-glow); font-weight:700;">TODAY'S SMALL STEP:</div>
+                    <div id="focusStep" style="font-size:0.95rem; margin-top:4px;">Finish the business plan and review milestones.</div>
+                </div>
+                <button class="btn small" id="btnMarkCompleted" onclick="markStepCompleted()"><i class="fa-solid fa-check"></i> Mark as Completed</button>
+            </div>
+
+            <!-- TODAY'S PROGRESS -->
             <div class="section-header"><i class="fa-solid fa-chart-line"></i> Today's Progress</div>
             <div id="feedTodayProgress" class="card" style="padding:14px;"><p style="color:var(--text-muted); font-size:0.9rem;">No progress logs recorded yet for today.</p></div>
 
+            <!-- CIRCLE UPDATES -->
             <div class="section-header"><i class="fa-solid fa-user-group"></i> Circle Updates</div>
             <div id="feedCircleUpdates">Loading circle posts...</div>
 
+            <!-- COMMUNITY HIGHLIGHTS -->
             <div class="section-header"><i class="fa-solid fa-star"></i> Community Highlights</div>
             <div class="card" style="padding:14px;">
                 <div style="font-weight:700; color:var(--accent-glow);">🚀 Milestone Reached!</div>
                 <div style="font-size:0.9rem; margin-top:4px;">Alex completed the 90-day "Starting a Startup" phase!</div>
             </div>
 
+            <!-- SUGGESTED MENTOR -->
             <div class="section-header"><i class="fa-solid fa-user-astronaut"></i> Suggested Mentor</div>
             <div class="card" style="padding:14px; display:flex; justify-content:space-between; align-items:center;">
                 <div>
@@ -169,39 +186,89 @@
                 <button class="btn small ghost" onclick="alert('Connect request sent!')">Connect</button>
             </div>
 
+            <!-- DAILY TIP -->
             <div class="section-header"><i class="fa-solid fa-lightbulb"></i> Daily Tip</div>
             <div class="card" style="padding:14px; background: rgba(99,102,241,0.08); border-color: var(--accent-primary);">
                 <p style="font-size:0.9rem;">"Consistency isn't about grand gestures. It's about small steps taken daily in the same direction."</p>
             </div>
         </div>
 
-        <!-- TAB 2: UPDATE -->
+        <!-- ==================================================== -->
+        <!-- TAB 2: UPDATE (FORM ONLY - NO DASHBOARD CARDS) -->
+        <!-- ==================================================== -->
         <div id="panelUpdate" class="tab-panel">
             <div class="card">
-                <h4 style="margin-bottom:14px;"><i class="fa-solid fa-pen-to-square"></i> Post Daily Update</h4>
-                <textarea id="updateInput" class="form-control" placeholder="Share your update for today..." rows="4"></textarea>
-                <div style="display:flex; gap:12px; margin-top:4px;">
-                    <button id="btnPostUpdate" class="btn" onclick="postUpdate()">Post Update</button>
-                    <button class="btn ghost" onclick="document.getElementById('updateInput').value=''">Clear</button>
+                <h4 style="margin-bottom:16px; color:var(--accent-glow);"><i class="fa-solid fa-pen-to-square"></i> Daily Update Form</h4>
+                
+                <label>What did you do today?</label>
+                <textarea id="updateInput" class="form-control" placeholder="Share your main progress for today..." rows="3"></textarea>
+
+                <label>Mood Selector</label>
+                <div class="mood-selector">
+                    <button type="button" class="mood-btn" onclick="selectMood(this, '🚀')">🚀</button>
+                    <button type="button" class="mood-btn" onclick="selectMood(this, '🔥')">🔥</button>
+                    <button type="button" class="mood-btn" onclick="selectMood(this, '🌱')">🌱</button>
+                    <button type="button" class="mood-btn" onclick="selectMood(this, '😴')">😴</button>
+                    <button type="button" class="mood-btn" onclick="selectMood(this, '💡')">💡</button>
                 </div>
+
+                <label>Today's Small Win</label>
+                <input id="updateWin" class="form-control" type="text" placeholder="E.g., Read 10 pages, solved a bug...">
+
+                <label>Need Help? (Optional)</label>
+                <input id="updateHelp" class="form-control" type="text" placeholder="Describe any challenge you are facing...">
+
+                <label>Reflection</label>
+                <textarea id="updateReflection" class="form-control" placeholder="What did you learn today?" rows="2"></textarea>
+
+                <button id="btnPostUpdate" class="btn" onclick="postUpdate()" style="margin-top:10px;">Submit Daily Update</button>
             </div>
         </div>
 
-        <!-- TAB 3: CIRCLE -->
+        <!-- ==================================================== -->
+        <!-- TAB 3: CIRCLE (SUPPORT CIRCLE MEMBERS ONLY) -->
+        <!-- ==================================================== -->
         <div id="panelCircle" class="tab-panel">
-            <h4 style="color:var(--accent-glow); margin-bottom:14px;"><i class="fa-solid fa-users"></i> Circle Members</h4>
-            <div id="circleMembersList">Loading members...</div>
+            <h4 style="color:var(--accent-glow); margin-bottom:14px;"><i class="fa-solid fa-users"></i> Support Circle Members</h4>
+            <div id="circleMembersList">Loading circle members...</div>
         </div>
 
-        <!-- TAB 4: DISCUSSIONS -->
+        <!-- ==================================================== -->
+        <!-- TAB 4: DISCUSSIONS (COMMUNITY TOPICS & REPLIES) -->
+        <!-- ==================================================== -->
         <div id="panelDiscussions" class="tab-panel">
-            <h4 style="margin-bottom:14px; color:var(--accent-glow);"><i class="fa-solid fa-comments"></i> Phase Discussions</h4>
+            <h4 style="margin-bottom:14px; color:var(--accent-glow);"><i class="fa-solid fa-comments"></i> Community Discussions</h4>
             
+            <!-- CATEGORY FILTERS -->
+            <div class="category-pills">
+                <div class="cat-pill active">All</div>
+                <div class="cat-pill">General</div>
+                <div class="cat-pill">Questions</div>
+                <div class="cat-pill">Need Help</div>
+                <div class="cat-pill">Success Stories</div>
+                <div class="cat-pill">Resources</div>
+                <div class="cat-pill">Ideas</div>
+            </div>
+
             <div id="discussionsList">Loading active discussions...</div>
 
+            <!-- DISCUSSION EDITOR MODAL / CARD -->
             <div id="newDiscussionEditor" class="card" style="display:none; margin-top:16px;">
                 <h5 style="margin-bottom:10px;">Start a New Discussion Topic</h5>
+                
+                <label>Category</label>
+                <select id="discussionCategory" class="form-control">
+                    <option value="General">General</option>
+                    <option value="Questions">Questions</option>
+                    <option value="Need Help">Need Help</option>
+                    <option value="Success Stories">Success Stories</option>
+                    <option value="Resources">Resources</option>
+                    <option value="Ideas">Ideas</option>
+                </select>
+
+                <label>Topic Title or Question</label>
                 <textarea id="discussionInput" class="form-control" placeholder="Ask a question or share a topic..." rows="3"></textarea>
+                
                 <div style="display:flex; gap:10px;">
                     <button class="btn ghost" onclick="toggleDiscussionEditor(false)">Cancel</button>
                     <button class="btn" id="btnPostDiscussion" onclick="postDiscussion()">Publish Topic</button>
@@ -213,28 +280,36 @@
             </button>
         </div>
 
-        <!-- TAB 5: JOURNEY (PROFILE) -->
+        <!-- ==================================================== -->
+        <!-- TAB 5: JOURNEY (PERSONAL TIMELINE & STATS ONLY) -->
+        <!-- ==================================================== -->
         <div id="panelJourney" class="tab-panel">
             <div class="card">
-                <h3 style="color:var(--accent-glow); margin-bottom:12px;"><i class="fa-solid fa-route"></i> My Journey</h3>
+                <h3 style="color:var(--accent-glow); margin-bottom:16px;"><i class="fa-solid fa-route"></i> Personal Journey</h3>
                 
-                <div style="margin-bottom:14px;">
-                    <label>Current Phase</label>
-                    <div id="journeyPhase" style="font-weight:700; font-size:1.05rem;">...</div>
+                <!-- STATISTICS SUMMARY CARD -->
+                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; margin-bottom:20px;">
+                    <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:var(--radius-md); text-align:center;">
+                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statStreak">7 Days</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Current Streak</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:var(--radius-md); text-align:center;">
+                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statLongest">14 Days</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Longest Streak</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:var(--radius-md); text-align:center;">
+                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statUpdates">12</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Total Updates</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:var(--radius-md); text-align:center;">
+                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statDiscussions">4</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Total Discussions</div>
+                    </div>
                 </div>
 
-                <div style="margin-bottom:14px;">
-                    <label>Goal</label>
-                    <div id="journeyGoal" style="font-size:0.95rem;">...</div>
-                </div>
-
-                <div style="margin-bottom:14px;">
-                    <label>Overall Progress</label>
-                    <div class="progress-container"><div class="progress-bar" id="journeyProgressBar" style="width:25%;"></div></div>
-                </div>
-
-                <div style="margin-bottom:14px;">
-                    <label>Achievements</label>
+                <!-- ACHIEVEMENTS -->
+                <div style="margin-bottom:16px;">
+                    <label>Unlocked Achievements</label>
                     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
                         <span class="timer-badge">🔥 7-Day Streak</span>
                         <span class="timer-badge">🎯 Goal Pioneer</span>
@@ -242,14 +317,22 @@
                     </div>
                 </div>
 
-                <div class="section-header"><i class="fa-solid fa-timeline"></i> Timeline Journal</div>
+                <!-- TIMELINE JOURNAL -->
+                <div class="section-header"><i class="fa-solid fa-timeline"></i> Timeline & Journal</div>
                 <div class="timeline-item">
                     <div style="font-size:0.8rem; color:var(--text-muted);">Today</div>
-                    <div style="font-size:0.9rem;">Logged into session and checked today's focus goals.</div>
+                    <div style="font-size:0.9rem; font-weight:600;">Submitted Daily Update</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">Worked on startup roadmap & connected with mentor.</div>
                 </div>
                 <div class="timeline-item">
                     <div style="font-size:0.8rem; color:var(--text-muted);">3 Days ago</div>
-                    <div style="font-size:0.9rem;">Joined the active phase circle and introduced profile.</div>
+                    <div style="font-size:0.9rem; font-weight:600;">Joined Support Circle</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">Connected with 4 peers in the same phase.</div>
+                </div>
+                <div class="timeline-item">
+                    <div style="font-size:0.8rem; color:var(--text-muted);">Day Joined</div>
+                    <div style="font-size:0.9rem; font-weight:600;">Started Phase Journey</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">Established baseline goal and duration.</div>
                 </div>
 
                 <!-- COMPLETION CONGRATS CARD -->
@@ -258,7 +341,7 @@
                     <p style="font-size:0.95rem; margin:8px 0 16px;">You completed your phase. You have evolved through this milestone.</p>
                     <div style="display:flex; gap:10px;">
                         <button class="btn small" onclick="showAuthModal(); showStep(2);">Start New Phase</button>
-                        <button class="btn small ghost" onclick="alert('Congratulations! Mentor application submitted.')">Become a Mentor</button>
+                        <button class="btn small ghost" onclick="alert('Mentor application submitted!')">Become a Mentor</button>
                     </div>
                 </div>
             </div>
@@ -269,7 +352,7 @@
     <nav class="bottom-nav">
         <div class="nav-tab active" onclick="switchTab('Feed')">
             <i class="fa-solid fa-house"></i>
-            <span>Feed</span>
+            <span>Home</span>
         </div>
         <div class="nav-tab" onclick="switchTab('Update')">
             <i class="fa-solid fa-plus-circle"></i>
@@ -284,7 +367,7 @@
             <span>Discussions</span>
         </div>
         <div class="nav-tab" onclick="switchTab('Journey')">
-            <i class="fa-solid fa-user"></i>
+            <i class="fa-solid fa-route"></i>
             <span>Journey</span>
         </div>
     </nav>
@@ -398,9 +481,10 @@
         let currentUser = null;
         let myProfile = null;
         let tempSignupData = {};
-        let sessionSecondsRemaining = 7123; // 1 hour 58 mins 43 seconds baseline
+        let selectedMood = '🚀';
+        let sessionSecondsRemaining = 7123; // 1h 58m 43s baseline
 
-        // SESSION TIMER LOGIC
+        // TIMER LOGIC
         function startSessionTimer() {
             setInterval(() => {
                 if (sessionSecondsRemaining > 0) {
@@ -425,6 +509,12 @@
 
         function toggleDropdown() {
             document.getElementById('dropdownMenu').classList.toggle('show');
+        }
+
+        function selectMood(btn, mood) {
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedMood = mood;
         }
 
         function switchTab(tabName) {
@@ -539,8 +629,6 @@
             const customPhase = document.getElementById('otherPhase').value.trim();
             if (customPhase) phase = customPhase;
 
-            const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-
             try {
                 const { data: authData, error: authError } = await db.auth.signUp({
                     email: tempSignupData.email,
@@ -604,21 +692,15 @@
                 myProfile = data;
                 document.getElementById('authModal').style.display = 'none';
                 
-                // USER MENU & AVATAR
+                // HEADER AVATAR
                 document.getElementById('userMenuContainer').style.display = 'block';
                 const initial = (data.first_name || 'U').charAt(0).toUpperCase();
                 document.getElementById('userAvatarBtn').innerText = initial;
 
-                // DASHBOARD UPDATES
+                // HOME DASHBOARD UPDATES
                 document.getElementById('dashWelcomeName').innerText = `👋 Welcome back, ${escapeHTML(data.first_name)}`;
                 document.getElementById('dashPhaseName').innerText = escapeHTML(data.current_phase);
                 document.getElementById('dashGoalText').innerText = escapeHTML(data.goal);
-
-                document.getElementById('focusGoal').innerText = escapeHTML(data.goal);
-
-                // JOURNEY UPDATES
-                document.getElementById('journeyPhase').innerText = escapeHTML(data.current_phase);
-                document.getElementById('journeyGoal').innerText = escapeHTML(data.goal);
 
                 loadCircleMembers();
                 loadFeeds();
@@ -640,17 +722,38 @@
             list.innerHTML = members.map((m, idx) => {
                 const isMe = m.user_id === currentUser.id ? " (You)" : "";
                 const mood = emojis[idx % emojis.length];
+                const streak = 3 + (idx * 2);
+                const progressPct = 20 + (idx * 15);
+                const needsHelp = idx % 2 === 1;
+
                 return `<div class="card" style="padding:16px; margin-bottom:12px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <span style="font-size:1.3rem;">${mood}</span>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="width:42px; height:42px; border-radius:50%; background:var(--accent-primary); color:white; display:flex; align-items:center; justify-content:center; font-weight:700;">
+                                ${escapeHTML(m.first_name.charAt(0))}
+                            </div>
                             <div>
                                 <div style="font-weight:700;">${escapeHTML(m.first_name)}${isMe}</div>
-                                <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHTML(m.city)}, ${escapeHTML(m.country)} • Day ${10 + idx * 3} in phase</div>
+                                <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHTML(m.city)}, ${escapeHTML(m.country)} • 🔥 ${streak}-Day Streak</div>
                             </div>
                         </div>
+                        <span style="font-size:1.2rem;">${mood}</span>
                     </div>
-                    <div style="font-size:0.85rem; color:var(--text-muted); margin-top:10px;">Last update: Working on daily milestones.</div>
+
+                    <div style="margin-top:12px; font-size:0.85rem; color:var(--text-muted);">
+                        Today's status: <span style="color:var(--text-main);">Working on phase daily step</span>
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+                        <div class="progress-container" style="margin:0; flex:1;"><div class="progress-bar" style="width:${progressPct}%;"></div></div>
+                        <span style="font-size:0.8rem; color:var(--accent-glow); font-weight:700;">${progressPct}%</span>
+                    </div>
+
+                    <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+                        <span class="timer-badge" style="background:rgba(34,197,94,0.15); border-color:#22c55e; color:#4ade80;">✔ Completed Today</span>
+                        ${needsHelp ? '<span class="timer-badge" style="background:rgba(239,68,68,0.15); border-color:#ef4444; color:#f87171;">🆘 Needs Help</span>' : ''}
+                    </div>
+
                     <div style="display:flex; gap:10px; margin-top:12px;">
                         <button class="btn small ghost" onclick="alert('Offer help sent to ${escapeHTML(m.first_name)}!')">Offer Help</button>
                         <button class="btn small ghost" onclick="alert('Help request sent to ${escapeHTML(m.first_name)}!')">Request Help</button>
@@ -660,18 +763,22 @@
         }
 
         async function postUpdate() {
-            if (sessionSecondsRemaining <= 0) return alert('Session time expired. You can only read until tomorrow.');
+            if (sessionSecondsRemaining <= 0) return alert('Session time expired. Read-only mode active.');
+            
             const text = document.getElementById('updateInput').value.trim();
-            if (!text) return alert('Please write a message.');
+            const win = document.getElementById('updateWin').value.trim();
+            if (!text) return alert('Please describe what you did today.');
 
             const btn = document.getElementById('btnPostUpdate');
             btn.disabled = true;
+
+            const fullText = `${selectedMood} ${text} ${win ? '| Small Win: ' + win : ''}`;
 
             const { error } = await db.from('daily_updates').insert([{
                 user_id: currentUser.id,
                 user_name: myProfile.first_name,
                 phase_name: myProfile.current_phase,
-                update_text: text
+                update_text: fullText
             }]);
 
             btn.disabled = false;
@@ -680,6 +787,9 @@
                 alert('Posting failed: ' + error.message);
             } else {
                 document.getElementById('updateInput').value = '';
+                document.getElementById('updateWin').value = '';
+                document.getElementById('updateHelp').value = '';
+                document.getElementById('updateReflection').value = '';
                 switchTab('Feed');
                 loadFeeds();
             }
@@ -716,14 +826,18 @@
 
         async function postDiscussion() {
             if (sessionSecondsRemaining <= 0) return alert('Session time expired. Read-only mode active.');
+            
             const text = document.getElementById('discussionInput').value.trim();
+            const category = document.getElementById('discussionCategory').value;
             if (!text) return alert('Please enter a discussion topic.');
+
+            const formattedText = `[${category}] ${text}`;
 
             const { error } = await db.from('discussions').insert([{
                 user_id: currentUser.id,
                 user_name: myProfile.first_name,
                 phase_name: myProfile.current_phase,
-                topic_text: text
+                topic_text: formattedText
             }]);
 
             if (error) {
@@ -746,12 +860,20 @@
             if (!discussions || discussions.length === 0) {
                 list.innerHTML = `
                 <div class="card" style="padding:16px; margin-bottom:10px;">
-                    <div style="font-weight:700;">How did you find your first apartment?</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">25 Replies • Active 2h ago</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="timer-badge" style="font-size:0.75rem;">General</span>
+                        <span style="font-size:0.8rem; color:var(--text-muted);">2h ago</span>
+                    </div>
+                    <div style="font-weight:700; margin-top:6px;">How did you find your first apartment?</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">25 Replies • Last active by Sarah</div>
                 </div>
                 <div class="card" style="padding:16px; margin-bottom:10px;">
-                    <div style="font-weight:700;">Feeling lonely after moving?</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">14 Replies • Active 5h ago</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="timer-badge" style="font-size:0.75rem; background:rgba(239,68,68,0.15); border-color:#ef4444; color:#f87171;">Need Help</span>
+                        <span style="font-size:0.8rem; color:var(--text-muted);">5h ago</span>
+                    </div>
+                    <div style="font-weight:700; margin-top:6px;">Feeling lonely after moving to a new city?</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">14 Replies • Last active by Omar</div>
                 </div>`;
                 return;
             }
@@ -759,8 +881,8 @@
             list.innerHTML = discussions.map(d => `
                 <div class="card" style="padding:16px; margin-bottom:12px;">
                     <div style="font-weight:700; color:var(--text-main);">${escapeHTML(d.topic_text)}</div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:0.8rem; color:var(--text-muted);">
-                        <span>By ${escapeHTML(d.user_name)}</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-size:0.8rem; color:var(--text-muted);">
+                        <span>Author: ${escapeHTML(d.user_name)}</span>
                         <span>0 Replies • ${formatDate(d.created_at)}</span>
                     </div>
                 </div>
@@ -774,7 +896,7 @@
             
             document.getElementById('feedTodayProgress').innerHTML = `
                 <div style="font-weight:700; color:#4ade80;">✔ Small Step Completed Today</div>
-                <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">You reviewed and completed your daily focus step.</div>
+                <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">You completed your daily focus milestone.</div>
             `;
         }
 
