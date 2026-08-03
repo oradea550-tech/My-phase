@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../../lib/supabaseClient"; // adjust path if needed
+import Button from "../ui/Button";
+import Input from "../ui/Input";
+import Card from "../ui/Card";
+import NavLink from "../ui/NavLink";
 
 export default function Step1({ init = {}, onContinue }) {
   const router = useRouter();
@@ -54,98 +58,54 @@ export default function Step1({ init = {}, onContinue }) {
   };
 
   return (
-    <div style={card}>
-      <h1 style={title}>Welcome to MyPhase</h1>
-      <p style={subtitle}>You are not your permanent identity. You are living a phase.</p>
+    <Card>
+      <h1 style={{ margin: 0, fontSize: 28, color: 'white', letterSpacing: '-0.2px' }}>Welcome to MyPhase</h1>
+      <p style={{ marginTop: 8, color: 'var(--muted, #9aa0b4)' }}>You are not your permanent identity. You are living a phase.</p>
 
       <form onSubmit={handleContinue} style={{ marginTop: 20 }}>
-        <label style={label}>First Name</label>
-        <input
+        <label style={{ display: 'block', marginTop: 18, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>First Name</label>
+        <Input
           aria-label="First name"
-          style={input}
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
           placeholder="First name"
         />
 
-        <label style={label}>Email</label>
-        <input
+        <label style={{ display: 'block', marginTop: 18, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>Email</label>
+        <Input
           aria-label="Email"
-          style={input}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
           type="email"
         />
 
-        <label style={label}>Password</label>
-        <input
+        <label style={{ display: 'block', marginTop: 18, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>Password</label>
+        <Input
           aria-label="Password"
-          style={input}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Create a password"
           type="password"
         />
 
-        <label style={label}>Confirm Password</label>
-        <input
+        <label style={{ display: 'block', marginTop: 18, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>Confirm Password</label>
+        <Input
           aria-label="Confirm password"
-          style={input}
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           placeholder="Confirm your password"
           type="password"
         />
 
-        {error && <div style={errorStyle}>{error}</div>}
+        {error && <div style={{ marginTop: 10, color: '#ff6b6b', fontWeight: 500 }}>{error}</div>}
 
-        <button type="submit" style={{ ...button, opacity: loading ? 0.7 : 1 }} disabled={loading}>
-          {loading ? "Creating..." : "Continue →"}
-        </button>
+        <Button type="submit" loading={loading}>{loading ? 'Creating...' : 'Continue →'}</Button>
       </form>
 
-      <div style={{ marginTop: 16, textAlign: "center", color: "var(--muted, #9aa0b4)" }}>
-        Already have an account?{" "}
-        <a href="/signin" style={{ color: "var(--accent, #9b6cff)", textDecoration: "underline" }}>
-          Sign In
-        </a>
+      <div style={{ marginTop: 16, textAlign: 'center', color: 'var(--muted, #9aa0b4)' }}>
+        Already have an account? <NavLink href="/signin">Sign In</NavLink>
       </div>
-    </div>
+    </Card>
   );
 }
-
-/* Styles (inline for easy integration; replace with your design tokens) */
-const card = {
-  borderRadius: 12,
-  padding: 28,
-  background: "rgba(255,255,255,0.02)",
-  boxShadow: "0 6px 18px rgba(2,8,23,0.5)",
-};
-const title = { margin: 0, fontSize: 28, color: "white", letterSpacing: "-0.2px" };
-const subtitle = { marginTop: 8, color: "var(--muted, #9aa0b4)" };
-const label = { display: "block", marginTop: 18, marginBottom: 8, color: "var(--muted, #9aa0b4)" };
-const input = {
-  width: "100%",
-  padding: "12px 14px",
-  borderRadius: 10,
-  border: "1px solid rgba(255,255,255,0.04)",
-  background: "rgba(255,255,255,0.02)",
-  color: "white",
-  outline: "none",
-  boxSizing: "border-box",
-  boxShadow: "inset 0 -1px 0 rgba(255,255,255,0.01)",
-};
-const button = {
-  marginTop: 20,
-  width: "100%",
-  padding: "12px 16px",
-  borderRadius: 10,
-  border: "none",
-  background: "linear-gradient(90deg, #8A6CFF, #6F42C1)",
-  color: "white",
-  fontWeight: 600,
-  cursor: "pointer",
-  boxShadow: "0 6px 18px rgba(111,66,193,0.18)",
-};
-const errorStyle = { marginTop: 10, color: "#ff6b6b", fontWeight: 500 };

@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../../lib/supabaseClient"; // adjust path if needed
+import Button from "../ui/Button";
+import Input from "../ui/Input";
+import Textarea from "../ui/Textarea";
+import Select from "../ui/Select";
+import Card from "../ui/Card";
 
 const PHASE_OPTIONS = [
   "Career Change",
@@ -82,8 +87,10 @@ export default function Step2({ init = {}, onBack }) {
         return;
       }
 
-      // Success: navigate to Home
-      router.push("/");
+      // Success: navigate to verification page if email confirmation required
+      // We'll redirect to a verify-email page which polls confirmation status
+      const emailParam = encodeURIComponent(init.email || payload.email || "");
+      router.push(`/verify-email?email=${emailParam}`);
     } catch (err) {
       setError(err.message || "Unexpected error.");
     } finally {
@@ -92,91 +99,49 @@ export default function Step2({ init = {}, onBack }) {
   };
 
   return (
-    <div style={card}>
-      <button onClick={onBack} style={backButton}>← Back</button>
+    <Card>
+      <button onClick={onBack} style={{ background: 'transparent', color: 'var(--muted,#9aa0b4)', border: 'none', cursor: 'pointer', marginBottom: 8 }}>← Back</button>
 
-      <h1 style={title}>Tell us about your current phase</h1>
+      <h1 style={{ margin: 0, fontSize: 22, color: 'white' }}>Tell us about your current phase</h1>
 
       <form onSubmit={submit}>
-        <label style={label}>Country</label>
-        <input style={input} value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Country" />
+        <label style={{ display: 'block', marginTop: 14, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>Country</label>
+        <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Country" />
 
-        <label style={label}>City</label>
-        <input style={input} value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" />
+        <label style={{ display: 'block', marginTop: 14, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>City</label>
+        <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" />
 
-        <label style={label}>Current Phase</label>
-        <select style={select} value={phase} onChange={(e) => setPhase(e.target.value)}>
+        <label style={{ display: 'block', marginTop: 14, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>Current Phase</label>
+        <Select value={phase} onChange={(e) => setPhase(e.target.value)}>
           {PHASE_OPTIONS.map((p) => (
             <option key={p} value={p}>{p}</option>
           ))}
-        </select>
+        </Select>
 
         {phase === "Other..." && (
           <>
-            <label style={label}>Enter your phase</label>
-            <input style={input} value={otherPhase} onChange={(e) => setOtherPhase(e.target.value)} placeholder="Enter your phase" />
+            <label style={{ display: 'block', marginTop: 14, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>Enter your phase</label>
+            <Input value={otherPhase} onChange={(e) => setOtherPhase(e.target.value)} placeholder="Enter your phase" />
           </>
         )}
 
-        <label style={label}>My Goal</label>
-        <textarea
-          style={textarea}
-          value={goal}
-          onChange={(e) => setGoal(e.target.value)}
-          placeholder="Describe what you want to achieve during this phase..."
-        />
+        <label style={{ display: 'block', marginTop: 14, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>My Goal</label>
+        <Textarea value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="Describe what you want to achieve during this phase..." />
 
-        <label style={label}>Expected Duration</label>
-        <select style={select} value={duration} onChange={(e) => setDuration(e.target.value)}>
+        <label style={{ display: 'block', marginTop: 14, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>Expected Duration</label>
+        <Select value={duration} onChange={(e) => setDuration(e.target.value)}>
           {DURATION_OPTIONS.map((d) => (
             <option key={d} value={d}>{d}</option>
           ))}
-        </select>
+        </Select>
 
-        <label style={{ ...label, marginTop: 14 }}>Why did you join MyPhase? (optional)</label>
-        <textarea style={textarea} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Write a few words..." />
+        <label style={{ display: 'block', marginTop: 14, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>Why did you join MyPhase? (optional)</label>
+        <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Write a few words..." />
 
-        {error && <div style={errorStyle}>{error}</div>}
+        {error && <div style={{ marginTop: 10, color: '#ff6b6b', fontWeight: 500 }}>{error}</div>}
 
-        <button type="submit" style={{ ...button, opacity: loading ? 0.8 : 1 }} disabled={loading}>
-          {loading ? "Creating account..." : "Create MyPhase Account"}
-        </button>
+        <Button type="submit" loading={loading}>{loading ? 'Creating account...' : 'Create MyPhase Account'}</Button>
       </form>
-    </div>
+    </Card>
   );
 }
-
-/* Styles — keep consistent visual style with Step1 */
-const card = {
-  borderRadius: 12,
-  padding: 28,
-  background: "rgba(255,255,255,0.02)",
-  boxShadow: "0 6px 18px rgba(2,8,23,0.5)",
-};
-const backButton = { background: "transparent", color: "var(--muted,#9aa0b4)", border: "none", cursor: "pointer", marginBottom: 8 };
-const title = { margin: 0, fontSize: 22, color: "white" };
-const label = { display: "block", marginTop: 14, marginBottom: 8, color: "var(--muted, #9aa0b4)" };
-const input = {
-  width: "100%",
-  padding: "12px 14px",
-  borderRadius: 10,
-  border: "1px solid rgba(255,255,255,0.04)",
-  background: "rgba(255,255,255,0.02)",
-  color: "white",
-  outline: "none",
-};
-const textarea = { ...input, minHeight: 100, resize: "vertical" };
-const select = { ...input, appearance: "none" };
-const button = {
-  marginTop: 18,
-  width: "100%",
-  padding: "12px 16px",
-  borderRadius: 10,
-  border: "none",
-  background: "linear-gradient(90deg, #8A6CFF, #6F42C1)",
-  color: "white",
-  fontWeight: 600,
-  cursor: "pointer",
-  boxShadow: "0 6px 18px rgba(111,66,193,0.18)",
-};
-const errorStyle = { marginTop: 10, color: "#ff6b6b", fontWeight: 500 };
