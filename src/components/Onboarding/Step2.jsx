@@ -1,0 +1,145 @@
+import React, { useState } from "react";
+import { useRouter } from "next/router";
+import { supabase } from "../../lib/supabaseClient"; // adjust path if needed
+import Button from "../ui/Button";
+import Input from "../ui/Input";
+import Textarea from "../ui/Textarea";
+import Select from "../ui/Select";
+import Card from "../ui/Card";
+
+const PHASE_OPTIONS = [
+  "Career Change",
+  "Starting a Startup",
+  "Learning Programming",
+  "Learning English",
+  "University / College",
+  "Financial Goal",
+  "Fitness Journey",
+  "Health Recovery",
+  "Mental Health",
+  "Breaking a Habit",
+  "Relationship",
+  "Divorce Recovery",
+  "New Parent",
+  "Moving to a New City",
+  "Immigration",
+  "Grief Recovery",
+  "Creative Project",
+  "Business Growth",
+  "Personal Development",
+  "Travel Preparation",
+  "Other...",
+];
+
+const DURATION_OPTIONS = [
+  "1 Month",
+  "3 Months",
+  "6 Months",
+  "9 Months",
+  "12 Months",
+  "More than 12 Months",
+];
+
+export default function Step2({ init = {}, onBack }) {
+  const router = useRouter();
+  const [country, setCountry] = useState("");
+  const [city, setCity] = useState("");
+  const [phase, setPhase] = useState(PHASE_OPTIONS[0]);
+  const [otherPhase, setOtherPhase] = useState("");
+  const [goal, setGoal] = useState("");
+  const [duration, setDuration] = useState(DURATION_OPTIONS[0]);
+  const [reason, setReason] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!country.trim()) return setError("Please enter your country.");
+    if (!city.trim()) return setError("Please enter your city.");
+    if (!goal.trim()) return setError("Please describe your goal.");
+
+    const finalPhase = phase === "Other..." ? (otherPhase.trim() || "Other") : phase;
+    setLoading(true);
+
+    try {
+      // Gather profile
+      // If init.user_id exists link to user_id, otherwise just store email
+      const payload = {
+        user_id: init.user_id || null,
+        first_name: init.first_name || null,
+        email: init.email || null,
+        country,
+        city,
+        phase: finalPhase,
+        goal,
+        duration,
+        reason: reason || null,
+        created_at: new Date().toISOString(),
+      };
+
+      const { error: insertError } = await supabase.from("profiles").insert([payload]);
+
+      if (insertError) {
+        setError(insertError.message || "Failed to create profile.");
+        setLoading(false);
+        return;
+      }
+
+      // Success: navigate to Home immediately (no email verification gate)
+      router.push("/");
+    } catch (err) {
+      setError(err.message || "Unexpected error.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <button onClick={onBack} style={{ background: 'transparent', color: 'var(--muted,#9aa0b4)', border: 'none', cursor: 'pointer', marginBottom: 8 }}>← Back</button>
+
+      <h1 style={{ margin: 0, fontSize: 22, color: 'white' }}>Tell us about your current phase</h1>
+
+      <form onSubmit={submit}>
+        <label style={{ display: 'block', marginTop: 14, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>Country</label>
+        <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Country" />
+
+        <label style={{ display: 'block', marginTop: 14, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>City</label>
+        <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" />
+
+        <label style={{ display: 'block', marginTop: 14, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>Current Phase</label>
+        <Select value={phase} onChange={(e) => setPhase(e.target.value)}>
+          {PHASE_OPTIONS.map((p) => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+        </Select>
+
+        {phase === "Other..." && (
+          <>
+            <label style={{ display: 'block', marginTop: 14, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>Enter your phase</label>
+            <Input value={otherPhase} onChange={(e) => setOtherPhase(e.target.value)} placeholder="Enter your phase" />
+          </>
+        )}
+
+        <label style={{ display: 'block', marginTop: 14, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>My Goal</label>
+        <Textarea value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="Describe what you want to achieve during this phase..." />
+
+        <label style={{ display: 'block', marginTop: 14, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>Expected Duration</label>
+        <Select value={duration} onChange={(e) => setDuration(e.target.value)}>
+          {DURATION_OPTIONS.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </Select>
+
+        <label style={{ display: 'block', marginTop: 14, marginBottom: 8, color: 'var(--muted, #9aa0b4)' }}>Why did you join MyPhase? (optional)</label>
+        <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Write a few words..." />
+
+        {error && <div style={{ marginTop: 10, color: '#ff6b6b', fontWeight: 500 }}>{error}</div>}
+
+        <Button type="submit" loading={loading}>{loading ? 'Creating account...' : 'Create MyPhase Account'}</Button>
+      </form>
+    </Card>
+  );
+}
