@@ -17,14 +17,24 @@
             --border: #334155;
             --radius-lg: 16px;
             --radius-md: 12px;
-            --shadow-soft: 0 6px 18px rgba(2,6,23,0.6);
+            --shadow-soft: 0 8px 24px rgba(2,6,23,0.5);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding-bottom: 80px; }
+        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding-bottom: 90px; }
 
-        header { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.25); position: sticky; top: 0; z-index: 100; }
-        .logo { font-weight: 700; font-size: 1.25rem; color: var(--accent-glow); display: flex; align-items: center; gap: 8px; }
+        /* HEADER & AVATAR DROPDOWN */
+        header { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.25); position: sticky; top: 0; z-index: 100; }
+        .logo { font-weight: 800; font-size: 1.3rem; color: var(--accent-glow); display: flex; align-items: center; gap: 8px; }
+
+        .user-menu-container { position: relative; display: none; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), var(--accent-glow)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; cursor: pointer; border: 2px solid var(--border); transition: transform 0.2s ease; }
+        .user-avatar:hover { transform: scale(1.05); }
+
+        .dropdown-menu { position: absolute; right: 0; top: 50px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); width: 180px; box-shadow: var(--shadow-soft); display: none; flex-direction: column; overflow: hidden; z-index: 101; }
+        .dropdown-menu.show { display: flex; animation: fadeIn 0.2s ease; }
+        .dropdown-item { padding: 12px 16px; color: var(--text-main); font-size: 0.9rem; text-decoration: none; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.2s ease; }
+        .dropdown-item:hover { background: rgba(255,255,255,0.05); color: var(--accent-glow); }
 
         main { padding: 20px; max-width: 760px; margin: 0 auto; }
         .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 18px; box-shadow: var(--shadow-soft); transition: transform 0.2s ease; }
@@ -32,13 +42,20 @@
         .form-control { width: 100%; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--text-main); margin-bottom: 14px; font-size: 0.95rem; outline: none; transition: border-color 0.2s ease; }
         .form-control:focus { border-color: var(--accent-glow); }
         textarea.form-control { min-height: 90px; resize: vertical; }
-
         label { font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 6px; font-weight: 600; }
 
-        .btn { display: inline-block; width: 100%; padding: 14px 18px; border-radius: 999px; background: linear-gradient(90deg, var(--accent-primary), var(--accent-glow)); color: white; font-weight: 700; border: none; cursor: pointer; text-align: center; font-size: 0.95rem; transition: opacity 0.2s ease; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px 18px; border-radius: 999px; background: linear-gradient(90deg, var(--accent-primary), var(--accent-glow)); color: white; font-weight: 700; border: none; cursor: pointer; text-align: center; font-size: 0.95rem; transition: all 0.2s ease; }
         .btn:hover { opacity: 0.9; }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
         .btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--text-main); width: auto; }
+        .btn.small { padding: 8px 14px; font-size: 0.82rem; border-radius: var(--radius-md); }
+
+        /* PROGRESS BAR */
+        .progress-container { background: rgba(255,255,255,0.05); border-radius: 999px; height: 10px; width: 100%; margin: 12px 0; overflow: hidden; }
+        .progress-bar { background: linear-gradient(90deg, var(--accent-primary), var(--accent-glow)); height: 100%; width: 45%; transition: width 0.4s ease; }
+
+        /* TIMER BOX */
+        .timer-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(99,102,241,0.15); border: 1px solid var(--accent-primary); color: var(--accent-glow); padding: 6px 12px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; }
 
         /* BOTTOM NAV TABS */
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 12px 0; z-index: 1000; }
@@ -46,7 +63,6 @@
         .nav-tab i { font-size: 1.25rem; }
         .nav-tab.active { color: var(--accent-glow); font-weight: 700; }
 
-        /* TAB PANELS */
         .tab-panel { display: none; }
         .tab-panel.active { display: block; }
 
@@ -54,14 +70,10 @@
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(2,6,23,0.88); z-index: 2000; display: flex; align-items: flex-start; justify-content: center; padding: 30px 14px; overflow-y: auto; backdrop-filter: blur(8px); }
         .modal-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px 24px; width: 100%; max-width: 520px; box-shadow: var(--shadow-soft); animation: fadeIn 0.3s ease; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .onboard-title { font-size: 1.5rem; color: var(--accent-glow); font-weight: 800; margin-bottom: 8px; text-align: center; }
         .onboard-sub { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; text-align: center; line-height: 1.4; }
-
         .step-indicator { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; }
         .step-pill { background: rgba(255,255,255,0.05); padding: 6px 14px; border-radius: 999px; font-size: 0.8rem; color: var(--text-muted); }
         .step-pill.active { background: rgba(99,102,241,0.25); color: var(--accent-glow); font-weight: 700; border: 1px solid var(--accent-primary); }
@@ -70,27 +82,97 @@
         .link { color: var(--accent-glow); font-weight: 700; cursor: pointer; text-decoration: underline; }
         .field-row { display: flex; gap: 12px; }
         .field-row .form-control { flex: 1; }
+
+        .section-header { font-size: 1.05rem; font-weight: 700; color: var(--accent-glow); margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; }
+        .timeline-item { border-left: 2px solid var(--accent-primary); padding-left: 14px; margin-bottom: 12px; position: relative; }
+        .timeline-item::before { content: ''; width: 8px; height: 8px; background: var(--accent-glow); border-radius: 50%; position: absolute; left: -5px; top: 5px; }
     </style>
 </head>
 <body>
 
     <header>
         <div class="logo"><i class="fa-solid fa-compass"></i> MyPhase</div>
-        <button id="btnLogout" onclick="logout()" style="display:none; padding:8px 16px; font-size:0.85rem; background:var(--border); color:white; border:none; border-radius:999px; cursor:pointer;">Sign Out</button>
+        <div class="user-menu-container" id="userMenuContainer">
+            <div class="user-avatar" id="userAvatarBtn" onclick="toggleDropdown()">U</div>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <div class="dropdown-item" onclick="switchTab('Journey'); toggleDropdown();"><i class="fa-solid fa-user"></i> My Profile</div>
+                <div class="dropdown-item" onclick="alert('No new notifications.'); toggleDropdown();"><i class="fa-solid fa-bell"></i> Notifications</div>
+                <div class="dropdown-item" onclick="alert('Settings modal placeholder.'); toggleDropdown();"><i class="fa-solid fa-gear"></i> Settings</div>
+                <div class="dropdown-item" style="color: #ef4444;" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</div>
+            </div>
+        </div>
     </header>
 
     <main>
-        <!-- PROFILE SUMMARY -->
-        <div class="card" id="profileCard">
-            <h3 id="displayProfileName">Loading profile...</h3>
-            <p id="displayProfilePhase" style="font-size: 1rem; color: var(--accent-glow); margin-top:6px; font-weight:600;"></p>
-            <p id="displayProfileLoc" style="font-size: 0.9rem; color: var(--text-muted);"></p>
+        <!-- HOME WELCOME CARD (DASHBOARD) -->
+        <div class="card" id="welcomeCard">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <h3 id="dashWelcomeName">👋 Welcome back, User</h3>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">Your current journey dashboard</p>
+                </div>
+                <div class="timer-badge">
+                    <i class="fa-solid fa-clock"></i>
+                    <span id="sessionTimerDisplay">01:58:43 Remaining</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 18px; background: rgba(0,0,0,0.2); padding: 14px; border-radius: var(--radius-md); border:1px solid rgba(255,255,255,0.03);">
+                <div style="font-size: 0.85rem; color: var(--accent-glow); font-weight: 700;">CURRENT PHASE</div>
+                <div id="dashPhaseName" style="font-size: 1.1rem; font-weight: 800; margin-top: 2px;">Loading...</div>
+                
+                <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-top: 10px;">GOAL</div>
+                <div id="dashGoalText" style="font-size: 0.95rem; color: var(--text-main);">...</div>
+
+                <div style="display:flex; justify-content:space-between; margin-top:14px; font-size:0.85rem; color:var(--text-muted);">
+                    <span>Progress</span>
+                    <span id="dashProgressDays" style="font-weight:700; color:var(--text-main);">Day 12 / 90</span>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="dashProgressBar" style="width: 15%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TODAY'S FOCUS CARD -->
+        <div class="card">
+            <h4 style="color:var(--accent-glow); font-size:1.05rem; margin-bottom:12px;"><i class="fa-solid fa-bullseye"></i> Today's Focus</h4>
+            <div style="background:var(--bg-main); padding:14px; border-radius:var(--radius-md); margin-bottom:12px;">
+                <div style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">GOAL:</div>
+                <div id="focusGoal" style="font-size:0.95rem; font-weight:700; margin-bottom:8px;">Loading...</div>
+                <div style="font-size:0.8rem; color:var(--accent-glow); font-weight:700;">TODAY'S SMALL STEP:</div>
+                <div id="focusStep" style="font-size:0.95rem;">Finish the business plan and review milestones.</div>
+            </div>
+            <button class="btn small" id="btnMarkCompleted" onclick="markStepCompleted()"><i class="fa-solid fa-check"></i> Mark as Completed</button>
         </div>
 
         <!-- TAB 1: FEED -->
         <div id="panelFeed" class="tab-panel active">
-            <h4 style="margin-bottom: 14px; color: var(--accent-glow);"><i class="fa-solid fa-stream"></i> Phase Feed</h4>
-            <div id="feedList">Loading feeds...</div>
+            <div class="section-header"><i class="fa-solid fa-chart-line"></i> Today's Progress</div>
+            <div id="feedTodayProgress" class="card" style="padding:14px;"><p style="color:var(--text-muted); font-size:0.9rem;">No progress logs recorded yet for today.</p></div>
+
+            <div class="section-header"><i class="fa-solid fa-user-group"></i> Circle Updates</div>
+            <div id="feedCircleUpdates">Loading circle posts...</div>
+
+            <div class="section-header"><i class="fa-solid fa-star"></i> Community Highlights</div>
+            <div class="card" style="padding:14px;">
+                <div style="font-weight:700; color:var(--accent-glow);">🚀 Milestone Reached!</div>
+                <div style="font-size:0.9rem; margin-top:4px;">Alex completed the 90-day "Starting a Startup" phase!</div>
+            </div>
+
+            <div class="section-header"><i class="fa-solid fa-user-astronaut"></i> Suggested Mentor</div>
+            <div class="card" style="padding:14px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div style="font-weight:700;">Dr. Sarah Vance</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">Completed 4 Phases • Senior Guide</div>
+                </div>
+                <button class="btn small ghost" onclick="alert('Connect request sent!')">Connect</button>
+            </div>
+
+            <div class="section-header"><i class="fa-solid fa-lightbulb"></i> Daily Tip</div>
+            <div class="card" style="padding:14px; background: rgba(99,102,241,0.08); border-color: var(--accent-primary);">
+                <p style="font-size:0.9rem;">"Consistency isn't about grand gestures. It's about small steps taken daily in the same direction."</p>
+            </div>
         </div>
 
         <!-- TAB 2: UPDATE -->
@@ -107,21 +189,79 @@
 
         <!-- TAB 3: CIRCLE -->
         <div id="panelCircle" class="tab-panel">
-            <div class="card">
-                <h4 style="margin-bottom: 14px; color: var(--accent-glow);"><i class="fa-solid fa-users"></i> Members in Your Phase</h4>
-                <div id="circleMembersList">Searching for members...</div>
-            </div>
+            <h4 style="color:var(--accent-glow); margin-bottom:14px;"><i class="fa-solid fa-users"></i> Circle Members</h4>
+            <div id="circleMembersList">Loading members...</div>
         </div>
 
         <!-- TAB 4: DISCUSSIONS -->
         <div id="panelDiscussions" class="tab-panel">
-            <div class="card">
-                <h4 style="margin-bottom: 14px; color: var(--accent-glow);"><i class="fa-solid fa-comments"></i> Phase Discussions</h4>
-                <p style="color:var(--text-muted); font-size:0.9rem;">Start an open discussion with people in your phase.</p>
-                <textarea id="discussionInput" class="form-control" placeholder="Ask a question or topic to discuss..." rows="3" style="margin-top:12px;"></textarea>
-                <button class="btn" onclick="postDiscussion()">Start Discussion</button>
+            <h4 style="margin-bottom:14px; color:var(--accent-glow);"><i class="fa-solid fa-comments"></i> Phase Discussions</h4>
+            
+            <div id="discussionsList">Loading active discussions...</div>
+
+            <div id="newDiscussionEditor" class="card" style="display:none; margin-top:16px;">
+                <h5 style="margin-bottom:10px;">Start a New Discussion Topic</h5>
+                <textarea id="discussionInput" class="form-control" placeholder="Ask a question or share a topic..." rows="3"></textarea>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn ghost" onclick="toggleDiscussionEditor(false)">Cancel</button>
+                    <button class="btn" id="btnPostDiscussion" onclick="postDiscussion()">Publish Topic</button>
+                </div>
             </div>
-            <div id="discussionsList"></div>
+
+            <button id="btnOpenDiscussionEditor" class="btn" onclick="toggleDiscussionEditor(true)" style="margin-top:16px;">
+                <i class="fa-solid fa-plus"></i> Start New Discussion
+            </button>
+        </div>
+
+        <!-- TAB 5: JOURNEY (PROFILE) -->
+        <div id="panelJourney" class="tab-panel">
+            <div class="card">
+                <h3 style="color:var(--accent-glow); margin-bottom:12px;"><i class="fa-solid fa-route"></i> My Journey</h3>
+                
+                <div style="margin-bottom:14px;">
+                    <label>Current Phase</label>
+                    <div id="journeyPhase" style="font-weight:700; font-size:1.05rem;">...</div>
+                </div>
+
+                <div style="margin-bottom:14px;">
+                    <label>Goal</label>
+                    <div id="journeyGoal" style="font-size:0.95rem;">...</div>
+                </div>
+
+                <div style="margin-bottom:14px;">
+                    <label>Overall Progress</label>
+                    <div class="progress-container"><div class="progress-bar" id="journeyProgressBar" style="width:25%;"></div></div>
+                </div>
+
+                <div style="margin-bottom:14px;">
+                    <label>Achievements</label>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+                        <span class="timer-badge">🔥 7-Day Streak</span>
+                        <span class="timer-badge">🎯 Goal Pioneer</span>
+                        <span class="timer-badge">💬 Community Builder</span>
+                    </div>
+                </div>
+
+                <div class="section-header"><i class="fa-solid fa-timeline"></i> Timeline Journal</div>
+                <div class="timeline-item">
+                    <div style="font-size:0.8rem; color:var(--text-muted);">Today</div>
+                    <div style="font-size:0.9rem;">Logged into session and checked today's focus goals.</div>
+                </div>
+                <div class="timeline-item">
+                    <div style="font-size:0.8rem; color:var(--text-muted);">3 Days ago</div>
+                    <div style="font-size:0.9rem;">Joined the active phase circle and introduced profile.</div>
+                </div>
+
+                <!-- COMPLETION CONGRATS CARD -->
+                <div id="completionCard" style="display:none; margin-top:20px; background:linear-gradient(135deg, rgba(99,102,241,0.2), rgba(129,140,248,0.1)); border:1px solid var(--accent-glow); padding:20px; border-radius:var(--radius-lg); text-align:center;">
+                    <h3 style="font-size:1.4rem; color:#4ade80;">🎉 Congratulations!</h3>
+                    <p style="font-size:0.95rem; margin:8px 0 16px;">You completed your phase. You have evolved through this milestone.</p>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn small" onclick="showAuthModal(); showStep(2);">Start New Phase</button>
+                        <button class="btn small ghost" onclick="alert('Congratulations! Mentor application submitted.')">Become a Mentor</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -142,6 +282,10 @@
         <div class="nav-tab" onclick="switchTab('Discussions')">
             <i class="fa-solid fa-comments"></i>
             <span>Discussions</span>
+        </div>
+        <div class="nav-tab" onclick="switchTab('Journey')">
+            <i class="fa-solid fa-user"></i>
+            <span>Journey</span>
         </div>
     </nav>
 
@@ -196,20 +340,15 @@
                         <option value="Mental Health">Mental Health</option>
                         <option value="Breaking a Habit">Breaking a Habit</option>
                         <option value="Relationship">Relationship</option>
-                        <option value="Divorce Recovery">Divorce Recovery</option>
-                        <option value="New Parent">New Parent</option>
                         <option value="Moving to a New City">Moving to a New City</option>
-                        <option value="Immigration">Immigration</option>
-                        <option value="Grief Recovery">Grief Recovery</option>
                         <option value="Creative Project">Creative Project</option>
-                        <option value="Business Growth">Business Growth</option>
                         <option value="Personal Development">Personal Development</option>
-                        <option value="Travel Preparation">Travel Preparation</option>
-                        <option value="Other...">Other...</option>
                     </select>
 
+                    <button type="button" class="btn ghost small" style="margin-bottom:12px;" onclick="enableCustomPhaseInput()">Can't find your phase? Create your own</button>
+
                     <div id="otherPhaseContainer" style="display:none;">
-                        <input id="otherPhase" class="form-control" type="text" placeholder="Enter your phase">
+                        <input id="otherPhase" class="form-control" type="text" placeholder="Enter your custom phase">
                     </div>
 
                     <label for="goal">My Goal</label>
@@ -225,9 +364,6 @@
                         <option value="12 Months">12 Months</option>
                         <option value="More than 12 Months">More than 12 Months</option>
                     </select>
-
-                    <label for="reason">Why did you join MyPhase? (Optional)</label>
-                    <input id="reason" class="form-control" type="text" placeholder="Write a few words...">
 
                     <div style="display:flex; gap:12px; margin-top:12px;">
                         <button type="button" class="btn ghost" onclick="showStep(1)">← Back</button>
@@ -262,6 +398,34 @@
         let currentUser = null;
         let myProfile = null;
         let tempSignupData = {};
+        let sessionSecondsRemaining = 7123; // 1 hour 58 mins 43 seconds baseline
+
+        // SESSION TIMER LOGIC
+        function startSessionTimer() {
+            setInterval(() => {
+                if (sessionSecondsRemaining > 0) {
+                    sessionSecondsRemaining--;
+                    const hrs = String(Math.floor(sessionSecondsRemaining / 3600)).padStart(2, '0');
+                    const mins = String(Math.floor((sessionSecondsRemaining % 3600) / 60)).padStart(2, '0');
+                    const secs = String(sessionSecondsRemaining % 60).padStart(2, '0');
+                    document.getElementById('sessionTimerDisplay').innerText = `${hrs}:${mins}:${secs} Remaining`;
+                } else {
+                    document.getElementById('sessionTimerDisplay').innerText = `Session Expired`;
+                    lockInteractiveFeatures();
+                }
+            }, 1000);
+        }
+
+        function lockInteractiveFeatures() {
+            const btnPost = document.getElementById('btnPostUpdate');
+            const btnDisc = document.getElementById('btnPostDiscussion');
+            if (btnPost) { btnPost.disabled = true; btnPost.innerText = 'Read Only (Time Expired)'; }
+            if (btnDisc) { btnDisc.disabled = true; btnDisc.innerText = 'Read Only (Time Expired)'; }
+        }
+
+        function toggleDropdown() {
+            document.getElementById('dropdownMenu').classList.toggle('show');
+        }
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
@@ -269,7 +433,7 @@
 
             document.getElementById('panel' + tabName).classList.add('active');
             
-            const tabs = ['Feed', 'Update', 'Circle', 'Discussions'];
+            const tabs = ['Feed', 'Update', 'Circle', 'Discussions', 'Journey'];
             const index = tabs.indexOf(tabName);
             if (index !== -1) {
                 document.querySelectorAll('.nav-tab')[index].classList.add('active');
@@ -287,6 +451,7 @@
         }
 
         async function initApp() {
+            startSessionTimer();
             const { data: { session } } = await db.auth.getSession();
             if (session?.user) {
                 currentUser = session.user;
@@ -309,7 +474,7 @@
 
         function showAuthModal() {
             document.getElementById('authModal').style.display = 'flex';
-            document.getElementById('btnLogout').style.display = 'none';
+            document.getElementById('userMenuContainer').style.display = 'none';
             showStep(1);
         }
 
@@ -330,6 +495,12 @@
         }
 
         function showCreateAccount() { showStep(1); }
+
+        function enableCustomPhaseInput() {
+            document.getElementById('otherPhaseContainer').style.display = 'block';
+            document.getElementById('otherPhase').required = true;
+            document.getElementById('phaseSelect').value = '';
+        }
 
         function toggleOtherPhase(select) { 
             const container = document.getElementById('otherPhaseContainer');
@@ -365,7 +536,10 @@
             btn.disabled = true;
 
             let phase = document.getElementById('phaseSelect').value;
-            if (phase === 'Other...') phase = document.getElementById('otherPhase').value.trim();
+            const customPhase = document.getElementById('otherPhase').value.trim();
+            if (customPhase) phase = customPhase;
+
+            const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
             try {
                 const { data: authData, error: authError } = await db.auth.signUp({
@@ -385,8 +559,7 @@
                     city: document.getElementById('city').value.trim(),
                     current_phase: phase,
                     goal: document.getElementById('goal').value.trim(),
-                    duration: document.getElementById('duration').value,
-                    reason: document.getElementById('reason').value.trim() || null
+                    duration: document.getElementById('duration').value
                 };
 
                 const { error: profileError } = await db.from('profiles').upsert([profilePayload], { onConflict: 'user_id' });
@@ -430,20 +603,32 @@
             if (data) {
                 myProfile = data;
                 document.getElementById('authModal').style.display = 'none';
-                document.getElementById('btnLogout').style.display = 'block';
+                
+                // USER MENU & AVATAR
+                document.getElementById('userMenuContainer').style.display = 'block';
+                const initial = (data.first_name || 'U').charAt(0).toUpperCase();
+                document.getElementById('userAvatarBtn').innerText = initial;
 
-                document.getElementById('displayProfileName').innerText = `Welcome, ${escapeHTML(data.first_name)} 👋`;
-                document.getElementById('displayProfilePhase').innerText = `Phase: ${escapeHTML(data.current_phase)}`;
-                document.getElementById('displayProfileLoc').innerText = `Location: ${escapeHTML(data.city)}, ${escapeHTML(data.country)}`;
+                // DASHBOARD UPDATES
+                document.getElementById('dashWelcomeName').innerText = `👋 Welcome back, ${escapeHTML(data.first_name)}`;
+                document.getElementById('dashPhaseName').innerText = escapeHTML(data.current_phase);
+                document.getElementById('dashGoalText').innerText = escapeHTML(data.goal);
+
+                document.getElementById('focusGoal').innerText = escapeHTML(data.goal);
+
+                // JOURNEY UPDATES
+                document.getElementById('journeyPhase').innerText = escapeHTML(data.current_phase);
+                document.getElementById('journeyGoal').innerText = escapeHTML(data.goal);
 
                 loadCircleMembers();
                 loadFeeds();
+                loadDiscussions();
             }
         }
 
         async function loadCircleMembers() {
             if (!myProfile) return;
-            const { data: members } = await db.from('profiles').select('*').ilike('current_phase', myProfile.current_phase);
+            const { data: members } = await db.from('profiles').select('*').ilike('current_phase', myProfile.current_phase).limit(5);
 
             const list = document.getElementById('circleMembersList');
             if (!members || members.length === 0) {
@@ -451,19 +636,31 @@
                 return;
             }
 
-            list.innerHTML = members.map(m => {
+            const emojis = ['⚡', '🌱', '🔥', '🎯', '🚀'];
+            list.innerHTML = members.map((m, idx) => {
                 const isMe = m.user_id === currentUser.id ? " (You)" : "";
-                return `<div style="background:var(--bg-main); padding:12px 16px; border-radius:12px; margin-bottom:10px; display:flex; gap:12px; align-items:center;">
-                    <i class="fa-solid fa-circle-user" style="color:var(--accent-glow); font-size:1.5rem;"></i>
-                    <div>
-                        <div style="font-weight:700; font-size:0.95rem;">${escapeHTML(m.first_name)}${isMe}</div>
-                        <div style="color:var(--text-muted); font-size:0.85rem;">${escapeHTML(m.city)}, ${escapeHTML(m.country)}</div>
+                const mood = emojis[idx % emojis.length];
+                return `<div class="card" style="padding:16px; margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-size:1.3rem;">${mood}</span>
+                            <div>
+                                <div style="font-weight:700;">${escapeHTML(m.first_name)}${isMe}</div>
+                                <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHTML(m.city)}, ${escapeHTML(m.country)} • Day ${10 + idx * 3} in phase</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-size:0.85rem; color:var(--text-muted); margin-top:10px;">Last update: Working on daily milestones.</div>
+                    <div style="display:flex; gap:10px; margin-top:12px;">
+                        <button class="btn small ghost" onclick="alert('Offer help sent to ${escapeHTML(m.first_name)}!')">Offer Help</button>
+                        <button class="btn small ghost" onclick="alert('Help request sent to ${escapeHTML(m.first_name)}!')">Request Help</button>
                     </div>
                 </div>`;
             }).join('');
         }
 
         async function postUpdate() {
+            if (sessionSecondsRemaining <= 0) return alert('Session time expired. You can only read until tomorrow.');
             const text = document.getElementById('updateInput').value.trim();
             if (!text) return alert('Please write a message.');
 
@@ -495,13 +692,13 @@
                 .ilike('phase_name', myProfile.current_phase)
                 .order('created_at', { ascending: false });
 
-            const feed = document.getElementById('feedList');
+            const circleFeed = document.getElementById('feedCircleUpdates');
             if (!posts || posts.length === 0) {
-                feed.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">No posts in this phase yet.</p>`;
+                circleFeed.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">No circle posts in this phase yet.</p>`;
                 return;
             }
 
-            feed.innerHTML = posts.map(p => `
+            circleFeed.innerHTML = posts.map(p => `
                 <div class="card" style="padding:16px; margin-bottom:12px;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <span style="font-weight:700; font-size:0.95rem; color:var(--accent-glow);">${escapeHTML(p.user_name)}</span>
@@ -512,11 +709,73 @@
             `).join('');
         }
 
+        function toggleDiscussionEditor(show) {
+            document.getElementById('newDiscussionEditor').style.display = show ? 'block' : 'none';
+            document.getElementById('btnOpenDiscussionEditor').style.display = show ? 'none' : 'flex';
+        }
+
         async function postDiscussion() {
+            if (sessionSecondsRemaining <= 0) return alert('Session time expired. Read-only mode active.');
             const text = document.getElementById('discussionInput').value.trim();
-            if(!text) return alert('Please enter a discussion topic.');
-            alert('Discussion feature is active! Post published.');
-            document.getElementById('discussionInput').value = '';
+            if (!text) return alert('Please enter a discussion topic.');
+
+            const { error } = await db.from('discussions').insert([{
+                user_id: currentUser.id,
+                user_name: myProfile.first_name,
+                phase_name: myProfile.current_phase,
+                topic_text: text
+            }]);
+
+            if (error) {
+                alert('Failed to post discussion: ' + error.message);
+            } else {
+                document.getElementById('discussionInput').value = '';
+                toggleDiscussionEditor(false);
+                loadDiscussions();
+            }
+        }
+
+        async function loadDiscussions() {
+            if (!myProfile) return;
+            const { data: discussions } = await db.from('discussions')
+                .select('*')
+                .ilike('phase_name', myProfile.current_phase)
+                .order('created_at', { ascending: false });
+
+            const list = document.getElementById('discussionsList');
+            if (!discussions || discussions.length === 0) {
+                list.innerHTML = `
+                <div class="card" style="padding:16px; margin-bottom:10px;">
+                    <div style="font-weight:700;">How did you find your first apartment?</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">25 Replies • Active 2h ago</div>
+                </div>
+                <div class="card" style="padding:16px; margin-bottom:10px;">
+                    <div style="font-weight:700;">Feeling lonely after moving?</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">14 Replies • Active 5h ago</div>
+                </div>`;
+                return;
+            }
+
+            list.innerHTML = discussions.map(d => `
+                <div class="card" style="padding:16px; margin-bottom:12px;">
+                    <div style="font-weight:700; color:var(--text-main);">${escapeHTML(d.topic_text)}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:0.8rem; color:var(--text-muted);">
+                        <span>By ${escapeHTML(d.user_name)}</span>
+                        <span>0 Replies • ${formatDate(d.created_at)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function markStepCompleted() {
+            const btn = document.getElementById('btnMarkCompleted');
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Completed!';
+            btn.style.background = '#22c55e';
+            
+            document.getElementById('feedTodayProgress').innerHTML = `
+                <div style="font-weight:700; color:#4ade80;">✔ Small Step Completed Today</div>
+                <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">You reviewed and completed your daily focus step.</div>
+            `;
         }
 
         async function logout() {
