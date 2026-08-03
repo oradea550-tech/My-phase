@@ -1,6 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function Input(props) {
+  const [DS, setDS] = useState(null);
+  useEffect(() => {
+    import('../design-system/Input')
+      .then((m) => setDS(() => m.default || m))
+      .catch(() => {});
+  }, []);
+
+  if (DS) return <DS {...props} />;
+
   return (
     <input
       {...props}

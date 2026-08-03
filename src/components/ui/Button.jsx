@@ -1,6 +1,17 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function Button({ children, onClick, type = 'button', className = '', loading = false, ...props }) {
+  const [DS, setDS] = useState(null);
+
+  useEffect(() => {
+    // Try to dynamically load a design-system replacement at runtime if present
+    import('../design-system/Button')
+      .then((m) => setDS(() => m.default || m))
+      .catch(() => {});
+  }, []);
+
+  if (DS) return <DS {...{ children, onClick, type, className, loading, ...props }} />;
+
   return (
     <button
       type={type}

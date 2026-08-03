@@ -1,6 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function Card({ children, style = {}, ...props }) {
+  const [DS, setDS] = useState(null);
+  useEffect(() => {
+    import('../design-system/Card')
+      .then((m) => setDS(() => m.default || m))
+      .catch(() => {});
+  }, []);
+
+  if (DS) return <DS {...props} style={style}>{children}</DS>;
+
   return (
     <div
       {...props}

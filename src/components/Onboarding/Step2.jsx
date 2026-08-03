@@ -87,8 +87,9 @@ export default function Step2({ init = {}, onBack }) {
         return;
       }
 
-      // Success: navigate to Home immediately (no email verification gate)
-      router.push("/");
+      // Success: navigate to verification page which will poll confirmation status
+      const emailParam = encodeURIComponent(init.email || payload.email || "");
+      router.push(`/verify-email?email=${emailParam}`);
     } catch (err) {
       setError(err.message || "Unexpected error.");
     } finally {

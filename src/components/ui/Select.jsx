@@ -1,6 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function Select(props) {
+  const [DS, setDS] = useState(null);
+  useEffect(() => {
+    import('../design-system/Select')
+      .then((m) => setDS(() => m.default || m))
+      .catch(() => {});
+  }, []);
+
+  if (DS) return <DS {...props} />;
+
   return (
     <select
       {...props}
