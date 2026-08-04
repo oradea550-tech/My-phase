@@ -327,7 +327,7 @@
                 <div class="timeline-item">
                     <div style="font-size:0.8rem; color:var(--text-muted);">3 Days ago</div>
                     <div style="font-size:0.9rem; font-weight:600;">Joined Support Circle</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);">Connected with 4 peers in the same phase.</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">Connected with peers in the same phase.</div>
                 </div>
                 <div class="timeline-item">
                     <div style="font-size:0.8rem; color:var(--text-muted);">Day Joined</div>
@@ -482,9 +482,8 @@
         let myProfile = null;
         let tempSignupData = {};
         let selectedMood = '🚀';
-        let sessionSecondsRemaining = 7123; // 1h 58m 43s baseline
+        let sessionSecondsRemaining = 7123;
 
-        // TIMER LOGIC
         function startSessionTimer() {
             setInterval(() => {
                 if (sessionSecondsRemaining > 0) {
@@ -620,6 +619,9 @@
             showStep(2);
         }
 
+        // ==========================================
+        // 🔥 دالة handleStep2 المحدثة (Smart Circle Matching)
+        // ==========================================
         async function handleStep2(e) {
             e.preventDefault();
             const btn = document.getElementById('btnSubmitStep2');
@@ -628,6 +630,11 @@
             let phase = document.getElementById('phaseSelect').value;
             const customPhase = document.getElementById('otherPhase').value.trim();
             if (customPhase) phase = customPhase;
+
+            const countryVal = document.getElementById('country').value.trim();
+            const cityVal = document.getElementById('city').value.trim();
+            const goalVal = document.getElementById('goal').value.trim();
+            const durationVal = document.getElementById('duration').value;
 
             try {
                 const { data: authData, error: authError } = await db.auth.signUp({
@@ -643,15 +650,27 @@
                     user_id: userId,
                     first_name: tempSignupData.first_name,
                     email: tempSignupData.email,
-                    country: document.getElementById('country').value.trim(),
-                    city: document.getElementById('city').value.trim(),
+                    country: countryVal,
+                    city: cityVal,
                     current_phase: phase,
-                    goal: document.getElementById('goal').value.trim(),
-                    duration: document.getElementById('duration').value
+                    goal: goalVal,
+                    duration: durationVal
                 };
 
                 const { error: profileError } = await db.from('profiles').upsert([profilePayload], { onConflict: 'user_id' });
                 if (profileError) throw profileError;
+
+                // استدعاء الملاءمة الذكية للدوائر عبر Supabase
+                const { data: circleId, error: matchError } = await db.rpc('match_user_to_circle', {
+                    p_user_id: userId,
+                    p_phase: phase,
+                    p_country: countryVal,
+                    p_city: cityVal,
+                    p_language: 'Arabic',
+                    p_duration: durationVal
+                });
+
+                if (matchError) console.error('Matching Error:', matchError.message);
 
                 document.getElementById('authModal').style.display = 'none';
                 
@@ -692,12 +711,10 @@
                 myProfile = data;
                 document.getElementById('authModal').style.display = 'none';
                 
-                // HEADER AVATAR
                 document.getElementById('userMenuContainer').style.display = 'block';
                 const initial = (data.first_name || 'U').charAt(0).toUpperCase();
                 document.getElementById('userAvatarBtn').innerText = initial;
 
-                // HOME DASHBOARD UPDATES
                 document.getElementById('dashWelcomeName').innerText = `👋 Welcome back, ${escapeHTML(data.first_name)}`;
                 document.getElementById('dashPhaseName').innerText = escapeHTML(data.current_phase);
                 document.getElementById('dashGoalText').innerText = escapeHTML(data.goal);
@@ -708,58 +725,80 @@
             }
         }
 
+        // ==========================================
+        // 🔥 دالة loadCircleMembers المحدثة (جلب الأعضاء الحقيقيين من الدائرة)
+        // ==========================================
         async function loadCircleMembers() {
-            if (!myProfile) return;
-            const { data: members } = await db.from('profiles').select('*').ilike('current_phase', myProfile.current_phase).limit(5);
+            if (!myProfile || !currentUser) return;
 
             const list = document.getElementById('circleMembersList');
-            if (!members || members.length === 0) {
-                list.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">No other members in this phase yet.</p>`;
-                return;
-            }
 
-            const emojis = ['⚡', '🌱', '🔥', '🎯', '🚀'];
-            list.innerHTML = members.map((m, idx) => {
-                const isMe = m.user_id === currentUser.id ? " (You)" : "";
-                const mood = emojis[idx % emojis.length];
-                const streak = 3 + (idx * 2);
-                const progressPct = 20 + (idx * 15);
-                const needsHelp = idx % 2 === 1;
+            try {
+                const { data: myCircleMember, error: circleErr } = await db
+                    .from('circle_members')
+                    .select('circle_id')
+                    .eq('user_id', currentUser.id)
+                    .maybeSingle();
 
-                return `<div class="card" style="padding:16px; margin-bottom:12px;">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <div style="display:flex; align-items:center; gap:12px;">
-                            <div style="width:42px; height:42px; border-radius:50%; background:var(--accent-primary); color:white; display:flex; align-items:center; justify-content:center; font-weight:700;">
-                                ${escapeHTML(m.first_name.charAt(0))}
+                if (circleErr) throw circleErr;
+
+                if (!myCircleMember) {
+                    list.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">No active circle assigned yet.</p>`;
+                    return;
+                }
+
+                const { data: membersInCircle, error: membersErr } = await db
+                    .from('circle_members')
+                    .select('user_id, joined_at')
+                    .eq('circle_id', myCircleMember.circle_id);
+
+                if (membersErr) throw membersErr;
+
+                const memberIds = membersInCircle.map(m => m.user_id);
+
+                const { data: profiles, error: profilesErr } = await db
+                    .from('profiles')
+                    .select('*')
+                    .in('user_id', memberIds);
+
+                if (profilesErr) throw profilesErr;
+
+                if (!profiles || profiles.length === 0) {
+                    list.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">No other members in this support circle yet.</p>`;
+                    return;
+                }
+
+                list.innerHTML = profiles.map(m => {
+                    const isMe = m.user_id === currentUser.id ? " (You)" : "";
+                    
+                    return `<div class="card" style="padding:16px; margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <div style="width:42px; height:42px; border-radius:50%; background:var(--accent-primary); color:white; display:flex; align-items:center; justify-content:center; font-weight:700;">
+                                    ${escapeHTML((m.first_name || 'U').charAt(0))}
+                                </div>
+                                <div>
+                                    <div style="font-weight:700;">${escapeHTML(m.first_name || 'Member')}${isMe}</div>
+                                    <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHTML(m.city || '')}, ${escapeHTML(m.country || '')}</div>
+                                </div>
                             </div>
-                            <div>
-                                <div style="font-weight:700;">${escapeHTML(m.first_name)}${isMe}</div>
-                                <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHTML(m.city)}, ${escapeHTML(m.country)} • 🔥 ${streak}-Day Streak</div>
-                            </div>
+                            <span class="timer-badge" style="font-size:0.75rem;">Phase Peer</span>
                         </div>
-                        <span style="font-size:1.2rem;">${mood}</span>
-                    </div>
 
-                    <div style="margin-top:12px; font-size:0.85rem; color:var(--text-muted);">
-                        Today's status: <span style="color:var(--text-main);">Working on phase daily step</span>
-                    </div>
+                        <div style="margin-top:12px; font-size:0.85rem; color:var(--text-muted);">
+                            Goal: <span style="color:var(--text-main);">${escapeHTML(m.goal || 'Active Phase')}</span>
+                        </div>
 
-                    <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
-                        <div class="progress-container" style="margin:0; flex:1;"><div class="progress-bar" style="width:${progressPct}%;"></div></div>
-                        <span style="font-size:0.8rem; color:var(--accent-glow); font-weight:700;">${progressPct}%</span>
-                    </div>
+                        <div style="display:flex; gap:10px; margin-top:12px;">
+                            <button class="btn small ghost" onclick="alert('Support sent to ${escapeHTML(m.first_name)}!')">Offer Support</button>
+                        </div>
+                    </div>`;
+                }).join('');
 
-                    <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
-                        <span class="timer-badge" style="background:rgba(34,197,94,0.15); border-color:#22c55e; color:#4ade80;">✔ Completed Today</span>
-                        ${needsHelp ? '<span class="timer-badge" style="background:rgba(239,68,68,0.15); border-color:#ef4444; color:#f87171;">🆘 Needs Help</span>' : ''}
-                    </div>
-
-                    <div style="display:flex; gap:10px; margin-top:12px;">
-                        <button class="btn small ghost" onclick="alert('Offer help sent to ${escapeHTML(m.first_name)}!')">Offer Help</button>
-                        <button class="btn small ghost" onclick="alert('Help request sent to ${escapeHTML(m.first_name)}!')">Request Help</button>
-                    </div>
-                </div>`;
-            }).join('');
+            } catch (err) {
+                console.error('Error loading circle members:', err.message);
+                list.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">Error loading circle members.</p>`;
+            }
         }
 
         async function postUpdate() {
