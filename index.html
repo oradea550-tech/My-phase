@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPhase</title>
+    <title>MyPhase — Structured Life Support</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -18,28 +18,28 @@
             --radius-lg: 16px;
             --radius-md: 12px;
             --shadow-soft: 0 8px 24px rgba(2,6,23,0.5);
+            --success: #22c55e;
+            --warning: #f59e0b;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; }
         body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding-bottom: 90px; }
 
-        /* HEADER & USER AVATAR */
+        /* HEADER */
         header { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.25); position: sticky; top: 0; z-index: 100; }
         .logo { font-weight: 800; font-size: 1.3rem; color: var(--accent-glow); display: flex; align-items: center; gap: 8px; }
 
         .user-menu-container { position: relative; display: none; }
-        .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), var(--accent-glow)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; cursor: pointer; border: 2px solid var(--border); transition: transform 0.2s ease; }
-        .user-avatar:hover { transform: scale(1.05); }
-
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), var(--accent-glow)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; cursor: pointer; border: 2px solid var(--border); }
         .dropdown-menu { position: absolute; right: 0; top: 50px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); width: 180px; box-shadow: var(--shadow-soft); display: none; flex-direction: column; overflow: hidden; z-index: 101; }
-        .dropdown-menu.show { display: flex; animation: fadeIn 0.2s ease; }
-        .dropdown-item { padding: 12px 16px; color: var(--text-main); font-size: 0.9rem; text-decoration: none; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.2s ease; }
+        .dropdown-menu.show { display: flex; }
+        .dropdown-item { padding: 12px 16px; color: var(--text-main); font-size: 0.9rem; text-decoration: none; display: flex; align-items: center; gap: 10px; cursor: pointer; }
         .dropdown-item:hover { background: rgba(255,255,255,0.05); color: var(--accent-glow); }
 
         main { padding: 20px; max-width: 760px; margin: 0 auto; }
-        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 18px; box-shadow: var(--shadow-soft); transition: transform 0.2s ease; }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 18px; box-shadow: var(--shadow-soft); }
 
-        .form-control { width: 100%; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--text-main); margin-bottom: 14px; font-size: 0.95rem; outline: none; transition: border-color 0.2s ease; }
+        .form-control { width: 100%; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--text-main); margin-bottom: 14px; font-size: 0.95rem; outline: none; }
         .form-control:focus { border-color: var(--accent-glow); }
         textarea.form-control { min-height: 90px; resize: vertical; }
         label { font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 6px; font-weight: 600; }
@@ -50,14 +50,16 @@
         .btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--text-main); width: auto; }
         .btn.small { padding: 8px 14px; font-size: 0.82rem; border-radius: var(--radius-md); }
 
-        /* PROGRESS BAR */
+        /* BADGES & CHIPS */
+        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+        .badge-location { background: rgba(99,102,241,0.15); border: 1px solid var(--accent-primary); color: var(--accent-glow); }
+        .badge-active { background: rgba(34,197,94,0.15); border: 1px solid var(--success); color: #4ade80; }
+        .badge-mentor { background: rgba(245,158,11,0.15); border: 1px solid var(--warning); color: #fbbf24; }
+
         .progress-container { background: rgba(255,255,255,0.05); border-radius: 999px; height: 10px; width: 100%; margin: 12px 0; overflow: hidden; }
-        .progress-bar { background: linear-gradient(90deg, var(--accent-primary), var(--accent-glow)); height: 100%; width: 45%; transition: width 0.4s ease; }
+        .progress-bar { background: linear-gradient(90deg, var(--accent-primary), var(--accent-glow)); height: 100%; transition: width 0.4s ease; }
 
-        /* TIMER BADGE */
-        .timer-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(99,102,241,0.15); border: 1px solid var(--accent-primary); color: var(--accent-glow); padding: 6px 12px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; }
-
-        /* BOTTOM NAV TABS */
+        /* NAVIGATION TABS */
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 12px 0; z-index: 1000; }
         .nav-tab { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-muted); font-size: 0.75rem; text-decoration: none; cursor: pointer; flex: 1; }
         .nav-tab i { font-size: 1.25rem; }
@@ -66,38 +68,35 @@
         .tab-panel { display: none; }
         .tab-panel.active { display: block; }
 
-        /* MODAL & ONBOARDING */
+        /* MODAL */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(2,6,23,0.88); z-index: 2000; display: flex; align-items: flex-start; justify-content: center; padding: 30px 14px; overflow-y: auto; backdrop-filter: blur(8px); }
-        .modal-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px 24px; width: 100%; max-width: 520px; box-shadow: var(--shadow-soft); animation: fadeIn 0.3s ease; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px 24px; width: 100%; max-width: 520px; box-shadow: var(--shadow-soft); }
 
         .onboard-title { font-size: 1.5rem; color: var(--accent-glow); font-weight: 800; margin-bottom: 8px; text-align: center; }
-        .onboard-sub { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; text-align: center; line-height: 1.4; }
+        .onboard-sub { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; text-align: center; }
         .step-indicator { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; }
         .step-pill { background: rgba(255,255,255,0.05); padding: 6px 14px; border-radius: 999px; font-size: 0.8rem; color: var(--text-muted); }
         .step-pill.active { background: rgba(99,102,241,0.25); color: var(--accent-glow); font-weight: 700; border: 1px solid var(--accent-primary); }
 
-        .small-note { font-size: 0.9rem; color: var(--text-muted); margin-top: 16px; text-align: center; }
-        .link { color: var(--accent-glow); font-weight: 700; cursor: pointer; text-decoration: underline; }
-        .field-row { display: flex; gap: 12px; }
-        .field-row .form-control { flex: 1; }
+        .mood-selector { display: flex; gap: 12px; margin-bottom: 14px; }
+        .mood-btn { flex: 1; padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--text-main); cursor: pointer; font-size: 1.2rem; text-align: center; }
+        .mood-btn.selected { border-color: var(--accent-glow); background: rgba(99,102,241,0.2); }
 
-        .section-header { font-size: 1.05rem; font-weight: 700; color: var(--accent-glow); margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; }
-        
+        /* EMPTY STATE */
+        .empty-state { text-align: center; padding: 30px 16px; background: rgba(255,255,255,0.02); border: 1px dashed var(--border); border-radius: var(--radius-lg); margin-top: 10px; }
+        .empty-state i { font-size: 2.2rem; color: var(--accent-glow); margin-bottom: 10px; opacity: 0.8; }
+        .empty-state p { color: var(--text-muted); font-size: 0.9rem; }
+
+        /* REDDIT DISCUSSION CARDS */
+        .reddit-post { display: flex; gap: 14px; border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 14px; }
+        .upvote-box { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 6px 10px; height: fit-content; }
+        .upvote-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; }
+        .upvote-btn:hover { color: var(--accent-glow); }
+        .upvote-count { font-weight: 700; font-size: 0.85rem; }
+
         /* TIMELINE STYLES FOR JOURNEY */
         .timeline-item { border-left: 2px solid var(--accent-primary); padding-left: 16px; margin-bottom: 16px; position: relative; }
         .timeline-item::before { content: ''; width: 10px; height: 10px; background: var(--accent-glow); border-radius: 50%; position: absolute; left: -6px; top: 4px; }
-
-        /* MOOD SELECTOR STYLES */
-        .mood-selector { display: flex; gap: 12px; margin-bottom: 14px; }
-        .mood-btn { flex: 1; padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--text-main); cursor: pointer; font-size: 1.2rem; text-align: center; transition: all 0.2s ease; }
-        .mood-btn.selected { border-color: var(--accent-glow); background: rgba(99,102,241,0.2); }
-
-        /* CATEGORY BADGES FOR DISCUSSIONS */
-        .category-pills { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 14px; }
-        .cat-pill { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--text-muted); font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
-        .cat-pill.active { background: var(--accent-primary); color: white; border-color: var(--accent-primary); font-weight: 600; }
     </style>
 </head>
 <body>
@@ -107,9 +106,7 @@
         <div class="user-menu-container" id="userMenuContainer">
             <div class="user-avatar" id="userAvatarBtn" onclick="toggleDropdown()">U</div>
             <div class="dropdown-menu" id="dropdownMenu">
-                <div class="dropdown-item" onclick="switchTab('Journey'); toggleDropdown();"><i class="fa-solid fa-user"></i> My Profile</div>
-                <div class="dropdown-item" onclick="alert('No new notifications.'); toggleDropdown();"><i class="fa-solid fa-bell"></i> Notifications</div>
-                <div class="dropdown-item" onclick="alert('Settings modal placeholder.'); toggleDropdown();"><i class="fa-solid fa-gear"></i> Settings</div>
+                <div class="dropdown-item" onclick="switchTab('Journey'); toggleDropdown();"><i class="fa-solid fa-user"></i> Profile & Journey</div>
                 <div class="dropdown-item" style="color: #ef4444;" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</div>
             </div>
         </div>
@@ -117,116 +114,116 @@
 
     <main>
         <!-- ==================================================== -->
-        <!-- TAB 1: HOME (DASHBOARD ONLY) -->
+        <!-- 1. HOME PAGE (DAILY DASHBOARD ONLY) -->
         <!-- ==================================================== -->
         <div id="panelFeed" class="tab-panel active">
-            <!-- WELCOME CARD & SESSION TIMER -->
+            <!-- DAILY REMINDER / COMPLETED BANNER -->
+            <div id="reminderBanner" class="card" style="background: rgba(99,102,241,0.1); border-color: var(--accent-primary); display:none; padding:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size:0.9rem; font-weight:600;" id="reminderText">⏰ Reminder: You haven't submitted today's update yet.</div>
+                    <button class="btn small" style="width:auto;" onclick="switchTab('Update')">Action</button>
+                </div>
+            </div>
+
+            <!-- WELCOME CARD -->
             <div class="card" id="welcomeCard">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                     <div>
-                        <h3 id="dashWelcomeName">👋 Welcome back, User</h3>
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">Your daily phase dashboard</p>
-                    </div>
-                    <div class="timer-badge">
-                        <i class="fa-solid fa-clock"></i>
-                        <span id="sessionTimerDisplay">01:58:43 Remaining</span>
+                        <h3 id="dashWelcomeName">👋 Welcome back</h3>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;" id="dashPhaseSub">Phase Tracker</p>
                     </div>
                 </div>
 
-                <!-- CURRENT PHASE CARD (ONLY HERE) -->
-                <div style="margin-top: 18px; background: rgba(0,0,0,0.2); padding: 14px; border-radius: var(--radius-md); border:1px solid rgba(255,255,255,0.03);">
-                    <div style="font-size: 0.85rem; color: var(--accent-glow); font-weight: 700;">CURRENT PHASE</div>
+                <!-- CURRENT PHASE & METRICS (ALGORITHM COMPUTE) -->
+                <div style="margin-top: 16px; background: rgba(0,0,0,0.2); padding: 14px; border-radius: var(--radius-md); border:1px solid rgba(255,255,255,0.03);">
+                    <div style="font-size: 0.8rem; color: var(--accent-glow); font-weight: 700; text-transform:uppercase;">CURRENT PHASE</div>
                     <div id="dashPhaseName" style="font-size: 1.1rem; font-weight: 800; margin-top: 2px;">Loading...</div>
-                    
-                    <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-top: 10px;">GOAL</div>
-                    <div id="dashGoalText" style="font-size: 0.95rem; color: var(--text-main);">...</div>
 
                     <div style="display:flex; justify-content:space-between; margin-top:14px; font-size:0.85rem; color:var(--text-muted);">
-                        <span>Progress</span>
-                        <span id="dashProgressDays" style="font-weight:700; color:var(--text-main);">Day 12 / 90</span>
+                        <span>Effective Completion Progress</span>
+                        <span id="dashProgressPct" style="font-weight:700; color:var(--text-main);">0%</span>
                     </div>
                     <div class="progress-container">
-                        <div class="progress-bar" id="dashProgressBar" style="width: 15%;"></div>
+                        <div class="progress-bar" id="dashProgressBar" style="width: 0%;"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- TODAY'S FOCUS (ONLY HERE) -->
+            <!-- DAILY FOCUS TASK (ANSWERING: WHAT SHOULD I DO TODAY?) -->
             <div class="card">
-                <h4 style="color:var(--accent-glow); font-size:1.05rem; margin-bottom:12px;"><i class="fa-solid fa-bullseye"></i> Today's Focus</h4>
+                <h4 style="color:var(--accent-glow); font-size:1.05rem; margin-bottom:12px;"><i class="fa-solid fa-bullseye"></i> Daily Focus Task</h4>
                 <div style="background:var(--bg-main); padding:14px; border-radius:var(--radius-md); margin-bottom:12px;">
-                    <div style="font-size:0.8rem; color:var(--accent-glow); font-weight:700;">TODAY'S SMALL STEP:</div>
-                    <div id="focusStep" style="font-size:0.95rem; margin-top:4px;">Finish the business plan and review milestones.</div>
+                    <div style="font-size:0.8rem; color:var(--accent-glow); font-weight:700;">TODAY'S MISSION:</div>
+                    <div id="focusStep" style="font-size:0.95rem; margin-top:4px;">Execute your primary small action towards phase goals.</div>
                 </div>
-                <button class="btn small" id="btnMarkCompleted" onclick="markStepCompleted()"><i class="fa-solid fa-check"></i> Mark as Completed</button>
+                <button class="btn small" id="btnMarkCompleted" onclick="markStepCompleted()"><i class="fa-solid fa-check"></i> Mark Today's Task Complete</button>
             </div>
 
             <!-- TODAY'S PROGRESS -->
-            <div class="section-header"><i class="fa-solid fa-chart-line"></i> Today's Progress</div>
-            <div id="feedTodayProgress" class="card" style="padding:14px;"><p style="color:var(--text-muted); font-size:0.9rem;">No progress logs recorded yet for today.</p></div>
-
-            <!-- CIRCLE UPDATES -->
-            <div class="section-header"><i class="fa-solid fa-user-group"></i> Circle Updates</div>
-            <div id="feedCircleUpdates">Loading circle posts...</div>
-
-            <!-- COMMUNITY HIGHLIGHTS -->
-            <div class="section-header"><i class="fa-solid fa-star"></i> Community Highlights</div>
-            <div class="card" style="padding:14px;">
-                <div style="font-weight:700; color:var(--accent-glow);">🚀 Milestone Reached!</div>
-                <div style="font-size:0.9rem; margin-top:4px;">Alex completed the 90-day "Starting a Startup" phase!</div>
+            <div style="font-weight:700; color:var(--accent-glow); margin: 18px 0 10px;"><i class="fa-solid fa-chart-line"></i> Today's Progress</div>
+            <div id="feedTodayProgress" class="card" style="padding:14px;">
+                <p style="color:var(--text-muted); font-size:0.9rem;">No action logged yet for today.</p>
             </div>
 
-            <!-- SUGGESTED MENTOR -->
-            <div class="section-header"><i class="fa-solid fa-user-astronaut"></i> Suggested Mentor</div>
-            <div class="card" style="padding:14px; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <div style="font-weight:700;">Dr. Sarah Vance</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);">Completed 4 Phases • Senior Guide</div>
-                </div>
-                <button class="btn small ghost" onclick="alert('Connect request sent!')">Connect</button>
-            </div>
-
-            <!-- DAILY TIP -->
-            <div class="section-header"><i class="fa-solid fa-lightbulb"></i> Daily Tip</div>
-            <div class="card" style="padding:14px; background: rgba(99,102,241,0.08); border-color: var(--accent-primary);">
-                <p style="font-size:0.9rem;">"Consistency isn't about grand gestures. It's about small steps taken daily in the same direction."</p>
-            </div>
+            <!-- LATEST 3 CIRCLE UPDATES ONLY -->
+            <div style="font-weight:700; color:var(--accent-glow); margin: 18px 0 10px;"><i class="fa-solid fa-user-group"></i> Latest 3 Circle Updates</div>
+            <div id="feedCircleUpdates">Loading circle updates...</div>
         </div>
 
         <!-- ==================================================== -->
-        <!-- TAB 2: UPDATE (FORM ONLY - NO DASHBOARD CARDS) -->
+        <!-- 2. UPDATE PAGE (DAILY JOURNAL - LOCK AFTER SUBMIT) -->
         <!-- ==================================================== -->
         <div id="panelUpdate" class="tab-panel">
-            <div class="card">
-                <h4 style="margin-bottom:16px; color:var(--accent-glow);"><i class="fa-solid fa-pen-to-square"></i> Daily Update Form</h4>
+            <div class="card" id="updateFormContainer">
+                <h4 style="margin-bottom:16px; color:var(--accent-glow);"><i class="fa-solid fa-book-open"></i> Private Daily Journal</h4>
                 
-                <label>What did you do today?</label>
-                <textarea id="updateInput" class="form-control" placeholder="Share your main progress for today..." rows="3"></textarea>
+                <form id="dailyJournalForm" onsubmit="handleJournalSubmit(event)">
+                    <label>How are you feeling today?</label>
+                    <div class="mood-selector">
+                        <button type="button" class="mood-btn selected" onclick="selectMood(this, '🚀')">🚀</button>
+                        <button type="button" class="mood-btn" onclick="selectMood(this, '🔥')">🔥</button>
+                        <button type="button" class="mood-btn" onclick="selectMood(this, '🌱')">🌱</button>
+                        <button type="button" class="mood-btn" onclick="selectMood(this, '😴')">😴</button>
+                        <button type="button" class="mood-btn" onclick="selectMood(this, '💡')">💡</button>
+                    </div>
 
-                <label>Mood Selector</label>
-                <div class="mood-selector">
-                    <button type="button" class="mood-btn" onclick="selectMood(this, '🚀')">🚀</button>
-                    <button type="button" class="mood-btn" onclick="selectMood(this, '🔥')">🔥</button>
-                    <button type="button" class="mood-btn" onclick="selectMood(this, '🌱')">🌱</button>
-                    <button type="button" class="mood-btn" onclick="selectMood(this, '😴')">😴</button>
-                    <button type="button" class="mood-btn" onclick="selectMood(this, '💡')">💡</button>
+                    <label>Small Win</label>
+                    <input id="updateWin" class="form-control" type="text" placeholder="What was your small victory today?" required>
+
+                    <label>Reflection</label>
+                    <textarea id="updateReflection" class="form-control" placeholder="What did you learn or observe today?" rows="3" required></textarea>
+
+                    <label>Help Request (Optional)</label>
+                    <input id="updateHelp" class="form-control" type="text" placeholder="Do you need guidance from your circle or mentor?">
+
+                    <button id="btnPostUpdate" type="submit" class="btn" style="margin-top:10px;">Submit Journal & Share Update</button>
+                </form>
+            </div>
+
+            <!-- SUBMISSION SUMMARY CARD (SHOWS WHEN LOCKED) -->
+            <div class="card" id="submittedSummaryCard" style="display:none; border-color: var(--success);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                    <h4 style="color:var(--success);"><i class="fa-solid fa-circle-check"></i> Today's Entry Submitted</h4>
+                    <span id="journalSubmitTime" style="font-size:0.75rem; color:var(--text-muted);">Timestamp</span>
                 </div>
-
-                <label>Today's Small Win</label>
-                <input id="updateWin" class="form-control" type="text" placeholder="E.g., Read 10 pages, solved a bug...">
-
-                <label>Need Help? (Optional)</label>
-                <input id="updateHelp" class="form-control" type="text" placeholder="Describe any challenge you are facing...">
-
-                <label>Reflection</label>
-                <textarea id="updateReflection" class="form-control" placeholder="What did you learn today?" rows="2"></textarea>
-
-                <button id="btnPostUpdate" class="btn" onclick="postUpdate()" style="margin-top:10px;">Submit Daily Update</button>
+                <div style="background:rgba(0,0,0,0.2); padding:14px; border-radius:var(--radius-md); margin-bottom:10px;">
+                    <div style="font-size:0.8rem; color:var(--text-muted);">MOOD & WIN</div>
+                    <div id="summaryMoodWin" style="font-size:0.95rem; font-weight:700; margin-top:2px;">-</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.2); padding:14px; border-radius:var(--radius-md); margin-bottom:10px;">
+                    <div style="font-size:0.8rem; color:var(--text-muted);">REFLECTION</div>
+                    <div id="summaryReflection" style="font-size:0.9rem; margin-top:2px;">-</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.2); padding:14px; border-radius:var(--radius-md);">
+                    <div style="font-size:0.8rem; color:var(--text-muted);">HELP REQUESTED</div>
+                    <div id="summaryHelp" style="font-size:0.9rem; margin-top:2px;">None</div>
+                </div>
+                <p style="text-align:center; color:var(--text-muted); font-size:0.85rem; margin-top:16px;">Journal locked until tomorrow. See you then!</p>
             </div>
         </div>
 
         <!-- ==================================================== -->
-        <!-- TAB 3: CIRCLE (SUPPORT CIRCLE MEMBERS ONLY) -->
+        <!-- 3. CIRCLE PAGE (PEOPLE FOCUSED & DYNAMIC MATCHING) -->
         <!-- ==================================================== -->
         <div id="panelCircle" class="tab-panel">
             <h4 style="color:var(--accent-glow); margin-bottom:14px;"><i class="fa-solid fa-users"></i> Support Circle Members</h4>
@@ -234,128 +231,78 @@
         </div>
 
         <!-- ==================================================== -->
-        <!-- TAB 4: DISCUSSIONS (COMMUNITY TOPICS & REPLIES) -->
+        <!-- 4. DISCUSSIONS PAGE (REDDIT STYLE WITH UPVOTES) -->
         <!-- ==================================================== -->
         <div id="panelDiscussions" class="tab-panel">
-            <h4 style="margin-bottom:14px; color:var(--accent-glow);"><i class="fa-solid fa-comments"></i> Community Discussions</h4>
-            
-            <!-- CATEGORY FILTERS -->
-            <div class="category-pills">
-                <div class="cat-pill active">All</div>
-                <div class="cat-pill">General</div>
-                <div class="cat-pill">Questions</div>
-                <div class="cat-pill">Need Help</div>
-                <div class="cat-pill">Success Stories</div>
-                <div class="cat-pill">Resources</div>
-                <div class="cat-pill">Ideas</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                <h4 style="color:var(--accent-glow);"><i class="fa-solid fa-comments"></i> Community Discussions</h4>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn small ghost" onclick="sortDiscussions('new')">New</button>
+                    <button class="btn small ghost" onclick="sortDiscussions('trending')">Trending</button>
+                </div>
             </div>
 
             <div id="discussionsList">Loading active discussions...</div>
 
-            <!-- DISCUSSION EDITOR MODAL / CARD -->
             <div id="newDiscussionEditor" class="card" style="display:none; margin-top:16px;">
-                <h5 style="margin-bottom:10px;">Start a New Discussion Topic</h5>
-                
-                <label>Category</label>
-                <select id="discussionCategory" class="form-control">
-                    <option value="General">General</option>
-                    <option value="Questions">Questions</option>
-                    <option value="Need Help">Need Help</option>
-                    <option value="Success Stories">Success Stories</option>
-                    <option value="Resources">Resources</option>
-                    <option value="Ideas">Ideas</option>
-                </select>
-
-                <label>Topic Title or Question</label>
-                <textarea id="discussionInput" class="form-control" placeholder="Ask a question or share a topic..." rows="3"></textarea>
-                
+                <h5 style="margin-bottom:10px;">Start Discussion Topic</h5>
+                <textarea id="discussionInput" class="form-control" placeholder="Ask a question or request advice..." rows="3"></textarea>
                 <div style="display:flex; gap:10px;">
                     <button class="btn ghost" onclick="toggleDiscussionEditor(false)">Cancel</button>
-                    <button class="btn" id="btnPostDiscussion" onclick="postDiscussion()">Publish Topic</button>
+                    <button class="btn" onclick="postDiscussion()">Post Topic</button>
                 </div>
             </div>
 
             <button id="btnOpenDiscussionEditor" class="btn" onclick="toggleDiscussionEditor(true)" style="margin-top:16px;">
-                <i class="fa-solid fa-plus"></i> Start New Discussion
+                <i class="fa-solid fa-plus"></i> Ask or Share Something
             </button>
         </div>
 
         <!-- ==================================================== -->
-        <!-- TAB 5: JOURNEY (PERSONAL TIMELINE & STATS ONLY) -->
+        <!-- 5. JOURNEY PAGE (PERSONAL TIMELINE & ACHIEVEMENTS) -->
         <!-- ==================================================== -->
         <div id="panelJourney" class="tab-panel">
             <div class="card">
-                <h3 style="color:var(--accent-glow); margin-bottom:16px;"><i class="fa-solid fa-route"></i> Personal Journey</h3>
+                <h3 style="color:var(--accent-glow); margin-bottom:16px;"><i class="fa-solid fa-route"></i> Personal Journey Timeline</h3>
                 
-                <!-- STATISTICS SUMMARY CARD -->
                 <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; margin-bottom:20px;">
                     <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:var(--radius-md); text-align:center;">
-                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statStreak">7 Days</div>
+                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statStreak">0 Days</div>
                         <div style="font-size:0.75rem; color:var(--text-muted);">Current Streak</div>
                     </div>
                     <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:var(--radius-md); text-align:center;">
-                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statLongest">14 Days</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Longest Streak</div>
+                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statTotalDays">0 Days</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Total Active Days</div>
                     </div>
                     <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:var(--radius-md); text-align:center;">
-                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statUpdates">12</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Total Updates</div>
+                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statCompletionRate">0%</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Completion Rate</div>
                     </div>
                     <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:var(--radius-md); text-align:center;">
-                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statDiscussions">4</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Total Discussions</div>
+                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statActions">0</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Actions Logged</div>
                     </div>
                 </div>
 
-                <!-- ACHIEVEMENTS -->
-                <div style="margin-bottom:16px;">
-                    <label>Unlocked Achievements</label>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
-                        <span class="timer-badge">🔥 7-Day Streak</span>
-                        <span class="timer-badge">🎯 Goal Pioneer</span>
-                        <span class="timer-badge">💬 Community Builder</span>
-                    </div>
+                <div style="margin-bottom:20px;">
+                    <label>Unlocked Badges & Achievements</label>
+                    <div id="badgesContainer" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;"></div>
                 </div>
 
-                <!-- TIMELINE JOURNAL -->
-                <div class="section-header"><i class="fa-solid fa-timeline"></i> Timeline & Journal</div>
-                <div class="timeline-item">
-                    <div style="font-size:0.8rem; color:var(--text-muted);">Today</div>
-                    <div style="font-size:0.9rem; font-weight:600;">Submitted Daily Update</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);">Worked on startup roadmap & connected with mentor.</div>
-                </div>
-                <div class="timeline-item">
-                    <div style="font-size:0.8rem; color:var(--text-muted);">3 Days ago</div>
-                    <div style="font-size:0.9rem; font-weight:600;">Joined Support Circle</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);">Connected with peers in the same phase.</div>
-                </div>
-                <div class="timeline-item">
-                    <div style="font-size:0.8rem; color:var(--text-muted);">Day Joined</div>
-                    <div style="font-size:0.9rem; font-weight:600;">Started Phase Journey</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);">Established baseline goal and duration.</div>
-                </div>
-
-                <!-- COMPLETION CONGRATS CARD -->
-                <div id="completionCard" style="display:none; margin-top:20px; background:linear-gradient(135deg, rgba(99,102,241,0.2), rgba(129,140,248,0.1)); border:1px solid var(--accent-glow); padding:20px; border-radius:var(--radius-lg); text-align:center;">
-                    <h3 style="font-size:1.4rem; color:#4ade80;">🎉 Congratulations!</h3>
-                    <p style="font-size:0.95rem; margin:8px 0 16px;">You completed your phase. You have evolved through this milestone.</p>
-                    <div style="display:flex; gap:10px;">
-                        <button class="btn small" onclick="showAuthModal(); showStep(2);">Start New Phase</button>
-                        <button class="btn small ghost" onclick="alert('Mentor application submitted!')">Become a Mentor</button>
-                    </div>
-                </div>
+                <div style="font-weight:700; color:var(--accent-glow); margin-bottom:12px;"><i class="fa-solid fa-timeline"></i> Activity Timeline</div>
+                <div id="journeyTimeline">Loading timeline...</div>
             </div>
         </div>
     </main>
 
-    <!-- BOTTOM NAVIGATION -->
+    <!-- NAVIGATION TABS -->
     <nav class="bottom-nav">
         <div class="nav-tab active" onclick="switchTab('Feed')">
             <i class="fa-solid fa-house"></i>
             <span>Home</span>
         </div>
         <div class="nav-tab" onclick="switchTab('Update')">
-            <i class="fa-solid fa-plus-circle"></i>
+            <i class="fa-solid fa-pen-to-square"></i>
             <span>Update</span>
         </div>
         <div class="nav-tab" onclick="switchTab('Circle')">
@@ -372,104 +319,71 @@
         </div>
     </nav>
 
-    <!-- AUTH / ONBOARDING MODAL -->
+    <!-- AUTH & ONBOARDING MODAL -->
     <div id="authModal" class="modal-overlay" style="display:none;">
         <div class="modal-box">
-            
             <div class="step-indicator" id="stepIndicator">
                 <div id="step1Pill" class="step-pill active">1 — Account</div>
-                <div id="step2Pill" class="step-pill">2 — Phase Details</div>
+                <div id="step2Pill" class="step-pill">2 — Phase Setup</div>
             </div>
 
-            <!-- STEP 1 -->
             <div id="step1">
                 <div class="onboard-title">Welcome to MyPhase</div>
-                <div class="onboard-sub">You are not your permanent identity.<br>You are living a phase.</div>
+                <div class="onboard-sub">Step through life phases with trusted circles.</div>
 
                 <form onsubmit="handleStep1(event)">
                     <input id="firstName" class="form-control" type="text" placeholder="First Name" required>
                     <input id="signupEmail" class="form-control" type="email" placeholder="Email" required>
                     <input id="signupPassword" class="form-control" type="password" placeholder="Password (min 6 chars)" minlength="6" required>
-                    <input id="signupConfirm" class="form-control" type="password" placeholder="Confirm Password" minlength="6" required>
-                    
                     <button type="submit" class="btn" style="margin-top:8px;">Continue →</button>
                 </form>
-
-                <p class="small-note">Already have an account? <span class="link" onclick="showSignIn()">Sign In</span></p>
+                <p style="font-size:0.85rem; text-align:center; margin-top:14px; color:var(--text-muted);">Already registered? <span style="color:var(--accent-glow); font-weight:700; cursor:pointer;" onclick="showSignIn()">Sign In</span></p>
             </div>
 
-            <!-- STEP 2 -->
             <div id="step2" style="display:none;">
-                <div class="onboard-title">Tell us about your current phase</div>
-                <div class="onboard-sub">Connect with members sharing the exact same journey.</div>
+                <div class="onboard-title">Setup Phase Profile</div>
+                <div class="onboard-sub">Smart matching places you in small, local, active support circles.</div>
 
                 <form onsubmit="handleStep2(event)">
-                    <div class="field-row">
+                    <div style="display:flex; gap:10px;">
                         <input id="country" class="form-control" type="text" placeholder="Country" required>
                         <input id="city" class="form-control" type="text" placeholder="City" required>
                     </div>
 
                     <label for="phaseSelect">Current Phase</label>
-                    <select id="phaseSelect" class="form-control" required onchange="toggleOtherPhase(this)">
-                        <option value="">Select your phase...</option>
-                        <option value="Career Change">Career Change</option>
+                    <select id="phaseSelect" class="form-control" required>
+                        <option value="">Select phase...</option>
                         <option value="Starting a Startup">Starting a Startup</option>
+                        <option value="Career Change">Career Change</option>
                         <option value="Learning Programming">Learning Programming</option>
-                        <option value="Learning English">Learning English</option>
-                        <option value="University / College">University / College</option>
-                        <option value="Financial Goal">Financial Goal</option>
-                        <option value="Fitness Journey">Fitness Journey</option>
+                        <option value="Personal Goal">Personal Goal</option>
                         <option value="Health Recovery">Health Recovery</option>
-                        <option value="Mental Health">Mental Health</option>
-                        <option value="Breaking a Habit">Breaking a Habit</option>
-                        <option value="Relationship">Relationship</option>
-                        <option value="Moving to a New City">Moving to a New City</option>
-                        <option value="Creative Project">Creative Project</option>
-                        <option value="Personal Development">Personal Development</option>
                     </select>
 
-                    <button type="button" class="btn ghost small" style="margin-bottom:12px;" onclick="enableCustomPhaseInput()">Can't find your phase? Create your own</button>
+                    <label for="goal">Your Main Objective</label>
+                    <textarea id="goal" class="form-control" placeholder="What is your focus for this phase?" required></textarea>
 
-                    <div id="otherPhaseContainer" style="display:none;">
-                        <input id="otherPhase" class="form-control" type="text" placeholder="Enter your custom phase">
-                    </div>
-
-                    <label for="goal">My Goal</label>
-                    <textarea id="goal" class="form-control" placeholder="Describe what you want to achieve during this phase..." required></textarea>
-
-                    <label for="duration">Expected Duration</label>
+                    <label for="duration">Target Duration</label>
                     <select id="duration" class="form-control" required>
-                        <option value="">Choose duration...</option>
-                        <option value="1 Month">1 Month</option>
-                        <option value="3 Months">3 Months</option>
-                        <option value="6 Months">6 Months</option>
-                        <option value="9 Months">9 Months</option>
-                        <option value="12 Months">12 Months</option>
-                        <option value="More than 12 Months">More than 12 Months</option>
+                        <option value="30">30 Days</option>
+                        <option value="60">60 Days</option>
+                        <option value="90">90 Days</option>
+                        <option value="180">180 Days</option>
                     </select>
 
-                    <div style="display:flex; gap:12px; margin-top:12px;">
-                        <button type="button" class="btn ghost" onclick="showStep(1)">← Back</button>
-                        <button id="btnSubmitStep2" type="submit" class="btn" style="flex:1">Create MyPhase Account</button>
-                    </div>
+                    <button id="btnSubmitStep2" type="submit" class="btn" style="margin-top:10px;">Complete Registration</button>
                 </form>
             </div>
 
-            <!-- SIGN IN VIEW -->
             <div id="signInView" style="display:none;">
                 <div class="onboard-title">Sign In</div>
-                <div class="onboard-sub">Welcome back — enter your credentials to continue.</div>
-
                 <form onsubmit="handleSignIn(event)">
                     <input id="signinEmail" class="form-control" type="email" placeholder="Email" required>
                     <input id="signinPassword" class="form-control" type="password" placeholder="Password" required>
-                    
                     <button id="btnSubmitSignIn" type="submit" class="btn" style="margin-top:8px;">Sign In</button>
                 </form>
-
-                <p class="small-note">Don't have an account? <span class="link" onclick="showCreateAccount()">Create Account</span></p>
+                <p style="font-size:0.85rem; text-align:center; margin-top:14px; color:var(--text-muted);"><span style="color:var(--accent-glow); font-weight:700; cursor:pointer;" onclick="showStep(1)">Create an account</span></p>
             </div>
-
         </div>
     </div>
 
@@ -480,35 +394,17 @@
 
         let currentUser = null;
         let myProfile = null;
-        let tempSignupData = {};
         let selectedMood = '🚀';
-        let sessionSecondsRemaining = 7123;
+        let tempSignupData = {};
+        let todaySubmitted = false;
+        let currentDiscussions = [];
 
-        function startSessionTimer() {
-            setInterval(() => {
-                if (sessionSecondsRemaining > 0) {
-                    sessionSecondsRemaining--;
-                    const hrs = String(Math.floor(sessionSecondsRemaining / 3600)).padStart(2, '0');
-                    const mins = String(Math.floor((sessionSecondsRemaining % 3600) / 60)).padStart(2, '0');
-                    const secs = String(sessionSecondsRemaining % 60).padStart(2, '0');
-                    document.getElementById('sessionTimerDisplay').innerText = `${hrs}:${mins}:${secs} Remaining`;
-                } else {
-                    document.getElementById('sessionTimerDisplay').innerText = `Session Expired`;
-                    lockInteractiveFeatures();
-                }
-            }, 1000);
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
         }
 
-        function lockInteractiveFeatures() {
-            const btnPost = document.getElementById('btnPostUpdate');
-            const btnDisc = document.getElementById('btnPostDiscussion');
-            if (btnPost) { btnPost.disabled = true; btnPost.innerText = 'Read Only (Time Expired)'; }
-            if (btnDisc) { btnDisc.disabled = true; btnDisc.innerText = 'Read Only (Time Expired)'; }
-        }
-
-        function toggleDropdown() {
-            document.getElementById('dropdownMenu').classList.toggle('show');
-        }
+        function toggleDropdown() { document.getElementById('dropdownMenu').classList.toggle('show'); }
 
         function selectMood(btn, mood) {
             document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
@@ -519,43 +415,29 @@
         function switchTab(tabName) {
             document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
             document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-
             document.getElementById('panel' + tabName).classList.add('active');
             
             const tabs = ['Feed', 'Update', 'Circle', 'Discussions', 'Journey'];
-            const index = tabs.indexOf(tabName);
-            if (index !== -1) {
-                document.querySelectorAll('.nav-tab')[index].classList.add('active');
-            }
-        }
-
-        function escapeHTML(str) {
-            if (!str) return '';
-            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
-        }
-
-        function formatDate(dateString) {
-            if (!dateString) return '';
-            return new Date(dateString).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const idx = tabs.indexOf(tabName);
+            if (idx !== -1) document.querySelectorAll('.nav-tab')[idx].classList.add('active');
         }
 
         async function initApp() {
-            startSessionTimer();
             const { data: { session } } = await db.auth.getSession();
             if (session?.user) {
                 currentUser = session.user;
                 await loadUserProfile();
+                setupRealtime();
             } else {
                 showAuthModal();
             }
 
-            db.auth.onAuthStateChange(async (event, session) => {
+            db.auth.onAuthStateChange(async (evt, session) => {
                 if (session?.user) {
                     currentUser = session.user;
                     await loadUserProfile();
                 } else {
                     currentUser = null;
-                    myProfile = null;
                     showAuthModal();
                 }
             });
@@ -583,104 +465,55 @@
             document.getElementById('signInView').style.display = 'block';
         }
 
-        function showCreateAccount() { showStep(1); }
-
-        function enableCustomPhaseInput() {
-            document.getElementById('otherPhaseContainer').style.display = 'block';
-            document.getElementById('otherPhase').required = true;
-            document.getElementById('phaseSelect').value = '';
-        }
-
-        function toggleOtherPhase(select) { 
-            const container = document.getElementById('otherPhaseContainer');
-            const otherInput = document.getElementById('otherPhase');
-            if (select.value === 'Other...') {
-                container.style.display = 'block';
-                otherInput.required = true;
-            } else {
-                container.style.display = 'none';
-                otherInput.required = false;
-            }
-        }
-
         function handleStep1(e) {
             e.preventDefault();
-            const password = document.getElementById('signupPassword').value;
-            const confirm = document.getElementById('signupConfirm').value;
-
-            if (password !== confirm) return alert('Passwords do not match.');
-
             tempSignupData = {
                 first_name: document.getElementById('firstName').value.trim(),
                 email: document.getElementById('signupEmail').value.trim(),
-                password: password
+                password: document.getElementById('signupPassword').value
             };
-
             showStep(2);
         }
 
-        // ==========================================
-        // 🔥 دالة handleStep2 المحدثة (Smart Circle Matching)
-        // ==========================================
         async function handleStep2(e) {
             e.preventDefault();
             const btn = document.getElementById('btnSubmitStep2');
             btn.disabled = true;
 
-            let phase = document.getElementById('phaseSelect').value;
-            const customPhase = document.getElementById('otherPhase').value.trim();
-            if (customPhase) phase = customPhase;
-
-            const countryVal = document.getElementById('country').value.trim();
-            const cityVal = document.getElementById('city').value.trim();
-            const goalVal = document.getElementById('goal').value.trim();
-            const durationVal = document.getElementById('duration').value;
-
             try {
-                const { data: authData, error: authError } = await db.auth.signUp({
+                const { data: authData, error: authErr } = await db.auth.signUp({
                     email: tempSignupData.email,
                     password: tempSignupData.password
                 });
-                if (authError) throw authError;
+                if (authErr) throw authErr;
 
                 const userId = authData.user?.id || (await db.auth.getSession()).data.session?.user?.id;
-                if (!userId) throw new Error('Could not retrieve created user ID.');
-
+                
                 const profilePayload = {
                     user_id: userId,
                     first_name: tempSignupData.first_name,
                     email: tempSignupData.email,
-                    country: countryVal,
-                    city: cityVal,
-                    current_phase: phase,
-                    goal: goalVal,
-                    duration: durationVal
+                    country: document.getElementById('country').value.trim(),
+                    city: document.getElementById('city').value.trim(),
+                    current_phase: document.getElementById('phaseSelect').value,
+                    goal: document.getElementById('goal').value.trim(),
+                    duration: document.getElementById('duration').value
                 };
 
-                const { error: profileError } = await db.from('profiles').upsert([profilePayload], { onConflict: 'user_id' });
-                if (profileError) throw profileError;
+                await db.from('profiles').upsert([profilePayload], { onConflict: 'user_id' });
 
-                // استدعاء الملاءمة الذكية للدوائر عبر Supabase
-                const { data: circleId, error: matchError } = await db.rpc('match_user_to_circle', {
+                await db.rpc('match_user_to_circle', {
                     p_user_id: userId,
-                    p_phase: phase,
-                    p_country: countryVal,
-                    p_city: cityVal,
-                    p_language: 'Arabic',
-                    p_duration: durationVal
+                    p_phase: profilePayload.current_phase,
+                    p_country: profilePayload.country,
+                    p_city: profilePayload.city,
+                    p_language: 'Arabic'
                 });
-
-                if (matchError) console.error('Matching Error:', matchError.message);
 
                 document.getElementById('authModal').style.display = 'none';
-                
-                await db.auth.signInWithPassword({
-                    email: tempSignupData.email,
-                    password: tempSignupData.password
-                });
-
+                await db.auth.signInWithPassword({ email: tempSignupData.email, password: tempSignupData.password });
             } catch (err) {
-                alert('Registration status: ' + err.message);
+                alert(err.message);
             } finally {
                 btn.disabled = false;
             }
@@ -690,172 +523,260 @@
             e.preventDefault();
             const btn = document.getElementById('btnSubmitSignIn');
             btn.disabled = true;
-
             const { error } = await db.auth.signInWithPassword({
                 email: document.getElementById('signinEmail').value.trim(),
                 password: document.getElementById('signinPassword').value
             });
-
             btn.disabled = false;
-            if (error) return alert(error.message);
-            document.getElementById('authModal').style.display = 'none';
+            if (error) alert(error.message);
+            else document.getElementById('authModal').style.display = 'none';
         }
 
         async function loadUserProfile() {
             if (!currentUser) return;
 
-            const { data, error } = await db.from('profiles').select('*').eq('user_id', currentUser.id).maybeSingle();
-            if (error) return console.error('Profile fetch error:', error.message);
+            // CACHE LOAD FIRST FOR PERFORMANCE
+            const cached = localStorage.getItem('myphase_profile_' + currentUser.id);
+            if (cached) {
+                myProfile = JSON.parse(cached);
+                renderDashboardHeader();
+            }
 
+            const { data } = await db.from('profiles').select('*').eq('user_id', currentUser.id).maybeSingle();
             if (data) {
                 myProfile = data;
-                document.getElementById('authModal').style.display = 'none';
+                localStorage.setItem('myphase_profile_' + currentUser.id, JSON.stringify(data));
+                renderDashboardHeader();
                 
-                document.getElementById('userMenuContainer').style.display = 'block';
-                const initial = (data.first_name || 'U').charAt(0).toUpperCase();
-                document.getElementById('userAvatarBtn').innerText = initial;
-
-                document.getElementById('dashWelcomeName').innerText = `👋 Welcome back, ${escapeHTML(data.first_name)}`;
-                document.getElementById('dashPhaseName').innerText = escapeHTML(data.current_phase);
-                document.getElementById('dashGoalText').innerText = escapeHTML(data.goal);
-
-                loadCircleMembers();
-                loadFeeds();
-                loadDiscussions();
+                await Promise.all([
+                    checkTodayJournal(),
+                    loadCircleMembers(),
+                    loadHomeFeed(),
+                    loadDiscussions(),
+                    loadJourneyTimeline()
+                ]);
             }
         }
 
-        // ==========================================
-        // 🔥 دالة loadCircleMembers المحدثة (جلب الأعضاء الحقيقيين من الدائرة)
-        // ==========================================
-        async function loadCircleMembers() {
-            if (!myProfile || !currentUser) return;
+        function renderDashboardHeader() {
+            document.getElementById('userMenuContainer').style.display = 'block';
+            document.getElementById('userAvatarBtn').innerText = (myProfile.first_name || 'U').charAt(0).toUpperCase();
+            document.getElementById('dashWelcomeName').innerText = `👋 Welcome back, ${escapeHTML(myProfile.first_name)}`;
+            document.getElementById('dashPhaseSub').innerText = `${escapeHTML(myProfile.city || '')}, ${escapeHTML(myProfile.country || '')}`;
+            document.getElementById('dashPhaseName').innerText = escapeHTML(myProfile.current_phase);
+        }
 
-            const list = document.getElementById('circleMembersList');
+        async function checkTodayJournal() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const { data } = await db.from('daily_updates')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .gte('created_at', todayStr + 'T00:00:00.000Z')
+                .maybeSingle();
 
-            try {
-                const { data: myCircleMember, error: circleErr } = await db
-                    .from('circle_members')
-                    .select('circle_id')
-                    .eq('user_id', currentUser.id)
-                    .maybeSingle();
+            const banner = document.getElementById('reminderBanner');
+            const reminderText = document.getElementById('reminderText');
 
-                if (circleErr) throw circleErr;
+            if (data) {
+                todaySubmitted = true;
+                banner.style.display = 'block';
+                banner.style.borderColor = 'var(--success)';
+                banner.style.background = 'rgba(34,197,94,0.1)';
+                reminderText.innerHTML = '🎉 Great job. See you tomorrow.';
+                banner.querySelector('button').style.display = 'none';
 
-                if (!myCircleMember) {
-                    list.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">No active circle assigned yet.</p>`;
-                    return;
-                }
+                // LOCK UPDATE PAGE
+                document.getElementById('updateFormContainer').style.display = 'none';
+                document.getElementById('submittedSummaryCard').style.display = 'block';
+                document.getElementById('journalSubmitTime').innerText = new Date(data.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                document.getElementById('summaryMoodWin').innerText = `${data.update_text.split('|')[0] || ''}`;
+                document.getElementById('summaryReflection').innerText = data.reflection || data.update_text;
+                document.getElementById('summaryHelp').innerText = data.help_request || 'None';
 
-                const { data: membersInCircle, error: membersErr } = await db
-                    .from('circle_members')
-                    .select('user_id, joined_at')
-                    .eq('circle_id', myCircleMember.circle_id);
-
-                if (membersErr) throw membersErr;
-
-                const memberIds = membersInCircle.map(m => m.user_id);
-
-                const { data: profiles, error: profilesErr } = await db
-                    .from('profiles')
-                    .select('*')
-                    .in('user_id', memberIds);
-
-                if (profilesErr) throw profilesErr;
-
-                if (!profiles || profiles.length === 0) {
-                    list.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">No other members in this support circle yet.</p>`;
-                    return;
-                }
-
-                list.innerHTML = profiles.map(m => {
-                    const isMe = m.user_id === currentUser.id ? " (You)" : "";
-                    
-                    return `<div class="card" style="padding:16px; margin-bottom:12px;">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                            <div style="display:flex; align-items:center; gap:12px;">
-                                <div style="width:42px; height:42px; border-radius:50%; background:var(--accent-primary); color:white; display:flex; align-items:center; justify-content:center; font-weight:700;">
-                                    ${escapeHTML((m.first_name || 'U').charAt(0))}
-                                </div>
-                                <div>
-                                    <div style="font-weight:700;">${escapeHTML(m.first_name || 'Member')}${isMe}</div>
-                                    <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHTML(m.city || '')}, ${escapeHTML(m.country || '')}</div>
-                                </div>
-                            </div>
-                            <span class="timer-badge" style="font-size:0.75rem;">Phase Peer</span>
-                        </div>
-
-                        <div style="margin-top:12px; font-size:0.85rem; color:var(--text-muted);">
-                            Goal: <span style="color:var(--text-main);">${escapeHTML(m.goal || 'Active Phase')}</span>
-                        </div>
-
-                        <div style="display:flex; gap:10px; margin-top:12px;">
-                            <button class="btn small ghost" onclick="alert('Support sent to ${escapeHTML(m.first_name)}!')">Offer Support</button>
-                        </div>
-                    </div>`;
-                }).join('');
-
-            } catch (err) {
-                console.error('Error loading circle members:', err.message);
-                list.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">Error loading circle members.</p>`;
+                document.getElementById('feedTodayProgress').innerHTML = `
+                    <div style="font-weight:700; color:var(--success);">✔ Journal & Progress Logged Today</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">"${escapeHTML(data.update_text)}"</div>
+                `;
+            } else {
+                banner.style.display = 'block';
             }
         }
 
-        async function postUpdate() {
-            if (sessionSecondsRemaining <= 0) return alert('Session time expired. Read-only mode active.');
-            
-            const text = document.getElementById('updateInput').value.trim();
+        async function handleJournalSubmit(e) {
+            e.preventDefault();
+            if (todaySubmitted) return;
+
             const win = document.getElementById('updateWin').value.trim();
-            if (!text) return alert('Please describe what you did today.');
+            const reflection = document.getElementById('updateReflection').value.trim();
+            const help = document.getElementById('updateHelp').value.trim();
 
+            const fullText = `${selectedMood} ${win}`;
             const btn = document.getElementById('btnPostUpdate');
             btn.disabled = true;
-
-            const fullText = `${selectedMood} ${text} ${win ? '| Small Win: ' + win : ''}`;
 
             const { error } = await db.from('daily_updates').insert([{
                 user_id: currentUser.id,
                 user_name: myProfile.first_name,
                 phase_name: myProfile.current_phase,
-                update_text: fullText
+                update_text: fullText,
+                reflection: reflection,
+                help_request: help
             }]);
 
             btn.disabled = false;
-
-            if (error) {
-                alert('Posting failed: ' + error.message);
-            } else {
-                document.getElementById('updateInput').value = '';
-                document.getElementById('updateWin').value = '';
-                document.getElementById('updateHelp').value = '';
-                document.getElementById('updateReflection').value = '';
+            if (error) alert(error.message);
+            else {
+                await checkTodayJournal();
                 switchTab('Feed');
-                loadFeeds();
+                loadHomeFeed();
             }
         }
 
-        async function loadFeeds() {
-            if (!myProfile) return;
+        async function loadCircleMembers() {
+            const list = document.getElementById('circleMembersList');
+
+            const { data: circleRel } = await db.from('circle_members')
+                .select('circle_id')
+                .eq('user_id', currentUser.id)
+                .maybeSingle();
+
+            if (!circleRel) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-compass-drafting"></i>
+                        <h4 style="color:var(--text-main); margin-bottom:4px;">Finding people in your phase</h4>
+                        <p>We are searching for active members matching your city, country, and duration.</p>
+                    </div>`;
+                return;
+            }
+
+            const { data: members } = await db.from('circle_members').select('user_id').eq('circle_id', circleRel.circle_id);
+            const userIds = members.map(m => m.user_id);
+            const { data: profiles } = await db.from('profiles').select('*').in('user_id', userIds);
+
+            if (!profiles || profiles.length === 0) {
+                list.innerHTML = `<div class="empty-state"><p>We're finding people in your phase.</p></div>`;
+                return;
+            }
+
+            list.innerHTML = profiles.map(m => {
+                const isMe = m.user_id === currentUser.id ? " (You)" : "";
+                const sameCity = (m.city || '').toLowerCase() === (myProfile.city || '').toLowerCase();
+                const sameCountry = (m.country || '').toLowerCase() === (myProfile.country || '').toLowerCase();
+                
+                let locationBadge = sameCity ? '<span class="badge badge-location">Same City</span>' : (sameCountry ? '<span class="badge badge-location">Same Country</span>' : '');
+                let mentorBadge = m.is_mentor ? '<span class="badge badge-mentor">Mentor</span>' : '';
+
+                return `
+                <div class="card" style="padding:16px; margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div class="user-avatar">${escapeHTML((m.first_name || 'U').charAt(0))}</div>
+                            <div>
+                                <div style="font-weight:700;">${escapeHTML(m.first_name)}${isMe}</div>
+                                <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHTML(m.city || '')}, ${escapeHTML(m.country || '')}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end;">
+                            ${locationBadge}
+                            ${mentorBadge}
+                            <span class="badge badge-active">Active</span>
+                        </div>
+                    </div>
+                    <div style="margin-top:12px; font-size:0.85rem; color:var(--text-muted);">
+                        Goal: <span style="color:var(--text-main);">${escapeHTML(m.goal || 'Phase Focus')}</span>
+                    </div>
+                    <div style="display:flex; gap:8px; margin-top:14px;">
+                        <button class="btn small ghost" onclick="alert('Profile view for ${escapeHTML(m.first_name)}')">View Profile</button>
+                        <button class="btn small ghost" onclick="alert('Encouragement sent!')">Send Support</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function loadHomeFeed() {
+            // LIMITED TO LATEST 3 CIRCLE UPDATES ONLY
             const { data: posts } = await db.from('daily_updates')
                 .select('*')
                 .ilike('phase_name', myProfile.current_phase)
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(3);
 
             const circleFeed = document.getElementById('feedCircleUpdates');
             if (!posts || posts.length === 0) {
-                circleFeed.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">No circle posts in this phase yet.</p>`;
+                circleFeed.innerHTML = `<div class="empty-state" style="padding:16px;"><p>No circle activity logged today.</p></div>`;
                 return;
             }
 
             circleFeed.innerHTML = posts.map(p => `
-                <div class="card" style="padding:16px; margin-bottom:12px;">
+                <div class="card" style="padding:14px; margin-bottom:10px;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-weight:700; font-size:0.95rem; color:var(--accent-glow);">${escapeHTML(p.user_name)}</span>
-                        <span style="font-size:0.8rem; color:var(--text-muted);">${formatDate(p.created_at)}</span>
+                        <span style="font-weight:700; font-size:0.9rem; color:var(--accent-glow);">${escapeHTML(p.user_name)}</span>
+                        <span style="font-size:0.75rem; color:var(--text-muted);">${new Date(p.created_at).toLocaleTimeString([],{hour:'2-digit', minute:'2-digit'})}</span>
                     </div>
-                    <div style="font-size:0.95rem; margin-top:8px;">${escapeHTML(p.update_text)}</div>
+                    <div style="font-size:0.9rem; margin-top:6px;">${escapeHTML(p.update_text)}</div>
                 </div>
             `).join('');
+        }
+
+        async function loadDiscussions() {
+            const { data } = await db.from('discussions')
+                .select('*')
+                .ilike('phase_name', myProfile.current_phase)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            currentDiscussions = data || [];
+            renderDiscussions(currentDiscussions);
+        }
+
+        function renderDiscussions(items) {
+            const list = document.getElementById('discussionsList');
+            if (!items || items.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-comments"></i>
+                        <h4 style="color:var(--text-main); margin-bottom:4px;">No discussions yet</h4>
+                        <p>Be the first to help someone in your phase.</p>
+                    </div>`;
+                return;
+            }
+
+            list.innerHTML = items.map(d => `
+                <div class="card" style="padding:16px; margin-bottom:12px;">
+                    <div class="reddit-post">
+                        <div class="upvote-box">
+                            <button class="upvote-btn" onclick="upvoteDiscussion('${d.id}', this)"><i class="fa-solid fa-caret-up"></i></button>
+                            <span class="upvote-count">${d.upvotes || 0}</span>
+                        </div>
+                        <div style="flex:1;">
+                            <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                                <span style="font-weight:700; font-size:0.9rem;">${escapeHTML(d.user_name)}</span>
+                                ${d.is_mentor_post ? '<span class="badge badge-mentor">Pinned Mentor</span>' : ''}
+                            </div>
+                            <div style="font-size:0.95rem; color:var(--text-main); font-weight:600;">${escapeHTML(d.topic_text)}</div>
+                            <div style="display:flex; gap:12px; margin-top:10px; font-size:0.8rem; color:var(--text-muted);">
+                                <span><i class="fa-solid fa-reply"></i> Reply</span>
+                                <span><i class="fa-solid fa-hands-clapping"></i> Helpful</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function sortDiscussions(type) {
+            let sorted = [...currentDiscussions];
+            if (type === 'trending') sorted.sort((a,b) => (b.upvotes || 0) - (a.upvotes || 0));
+            else sorted.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+            renderDiscussions(sorted);
+        }
+
+        async function upvoteDiscussion(id, btn) {
+            const countSpan = btn.nextElementSibling;
+            let count = parseInt(countSpan.innerText) + 1;
+            countSpan.innerText = count;
+            await db.from('discussions').update({ upvotes: count }).eq('id', id);
         }
 
         function toggleDiscussionEditor(show) {
@@ -864,83 +785,100 @@
         }
 
         async function postDiscussion() {
-            if (sessionSecondsRemaining <= 0) return alert('Session time expired. Read-only mode active.');
-            
-            const text = document.getElementById('discussionInput').value.trim();
-            const category = document.getElementById('discussionCategory').value;
-            if (!text) return alert('Please enter a discussion topic.');
+            const input = document.getElementById('discussionInput');
+            const text = input.value.trim();
+            if (!text) return;
 
-            const formattedText = `[${category}] ${text}`;
-
-            const { error } = await db.from('discussions').insert([{
+            await db.from('discussions').insert([{
                 user_id: currentUser.id,
                 user_name: myProfile.first_name,
                 phase_name: myProfile.current_phase,
-                topic_text: formattedText
+                topic_text: text,
+                upvotes: 1
             }]);
 
-            if (error) {
-                alert('Failed to post discussion: ' + error.message);
-            } else {
-                document.getElementById('discussionInput').value = '';
-                toggleDiscussionEditor(false);
-                loadDiscussions();
-            }
+            input.value = '';
+            toggleDiscussionEditor(false);
+            loadDiscussions();
         }
 
-        async function loadDiscussions() {
-            if (!myProfile) return;
-            const { data: discussions } = await db.from('discussions')
+        async function loadJourneyTimeline() {
+            const { data: updates } = await db.from('daily_updates')
                 .select('*')
-                .ilike('phase_name', myProfile.current_phase)
+                .eq('user_id', currentUser.id)
                 .order('created_at', { ascending: false });
 
-            const list = document.getElementById('discussionsList');
-            if (!discussions || discussions.length === 0) {
-                list.innerHTML = `
-                <div class="card" style="padding:16px; margin-bottom:10px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span class="timer-badge" style="font-size:0.75rem;">General</span>
-                        <span style="font-size:0.8rem; color:var(--text-muted);">2h ago</span>
-                    </div>
-                    <div style="font-weight:700; margin-top:6px;">How did you find your first apartment?</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">25 Replies • Last active by Sarah</div>
-                </div>
-                <div class="card" style="padding:16px; margin-bottom:10px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span class="timer-badge" style="font-size:0.75rem; background:rgba(239,68,68,0.15); border-color:#ef4444; color:#f87171;">Need Help</span>
-                        <span style="font-size:0.8rem; color:var(--text-muted);">5h ago</span>
-                    </div>
-                    <div style="font-weight:700; margin-top:6px;">Feeling lonely after moving to a new city?</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">14 Replies • Last active by Omar</div>
-                </div>`;
+            const container = document.getElementById('journeyTimeline');
+            const streakElem = document.getElementById('statStreak');
+            const totalDaysElem = document.getElementById('statTotalDays');
+            const rateElem = document.getElementById('statCompletionRate');
+            const actionsElem = document.getElementById('statActions');
+            const badgesContainer = document.getElementById('badgesContainer');
+
+            if (!updates || updates.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-book-bookmark"></i>
+                        <h4 style="color:var(--text-main); margin-bottom:4px;">Your story starts today</h4>
+                        <p>Complete daily updates to build your phase history.</p>
+                    </div>`;
+                streakElem.innerText = '0 Days';
+                totalDaysElem.innerText = '0 Days';
+                rateElem.innerText = '0%';
+                actionsElem.innerText = '0';
                 return;
             }
 
-            list.innerHTML = discussions.map(d => `
-                <div class="card" style="padding:16px; margin-bottom:12px;">
-                    <div style="font-weight:700; color:var(--text-main);">${escapeHTML(d.topic_text)}</div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-size:0.8rem; color:var(--text-muted);">
-                        <span>Author: ${escapeHTML(d.user_name)}</span>
-                        <span>0 Replies • ${formatDate(d.created_at)}</span>
-                    </div>
+            const total = updates.length;
+            const streak = total > 0 ? total : 0; 
+            const calcRate = Math.min(100, Math.round((total / (parseInt(myProfile.duration) || 30)) * 100));
+
+            streakElem.innerText = `${streak} Days`;
+            totalDaysElem.innerText = `${total} Days`;
+            rateElem.innerText = `${calcRate}%`;
+            actionsElem.innerText = total;
+
+            document.getElementById('dashProgressBar').style.width = calcRate + '%';
+            document.getElementById('dashProgressPct').innerText = calcRate + '%';
+
+            // DYNAMIC BADGES CALCULATION
+            let badges = ['🌱 First Update'];
+            if (streak >= 7) badges.push('🔥 7 Day Streak');
+            if (total >= 10) badges.push('🎯 Goal Pioneer');
+            if (total >= 20) badges.push('🤝 Community Helper');
+            if (calcRate >= 100) badges.push('🏆 Phase Completed');
+
+            badgesContainer.innerHTML = badges.map(b => `<span class="badge badge-location" style="font-size:0.8rem;">${b}</span>`).join('');
+
+            container.innerHTML = updates.map(u => `
+                <div class="timeline-item">
+                    <div style="font-size:0.75rem; color:var(--text-muted);">${new Date(u.created_at).toLocaleDateString()}</div>
+                    <div style="font-weight:700; font-size:0.9rem; margin-top:2px;">${escapeHTML(u.update_text)}</div>
+                    ${u.reflection ? `<div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">"${escapeHTML(u.reflection)}"</div>` : ''}
                 </div>
             `).join('');
         }
 
         function markStepCompleted() {
             const btn = document.getElementById('btnMarkCompleted');
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> Completed!';
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Completed for Today';
             btn.style.background = '#22c55e';
-            
-            document.getElementById('feedTodayProgress').innerHTML = `
-                <div style="font-weight:700; color:#4ade80;">✔ Small Step Completed Today</div>
-                <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">You completed your daily focus milestone.</div>
-            `;
+        }
+
+        function setupRealtime() {
+            db.channel('public_updates')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'daily_updates' }, () => {
+                    loadHomeFeed();
+                })
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'discussions' }, () => {
+                    loadDiscussions();
+                })
+                .subscribe();
         }
 
         async function logout() {
             await db.auth.signOut();
+            localStorage.clear();
             location.reload();
         }
 
