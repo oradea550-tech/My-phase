@@ -166,7 +166,10 @@
                 <p style="color:var(--text-muted); font-size:0.9rem;">No activity logged for today yet.</p>
             </div>
 
-            <div style="font-weight:700; color:var(--accent-glow); margin: 18px 0 10px;"><i class="fa-solid fa-user-group"></i> Circle Updates</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin: 18px 0 10px;">
+                <div style="font-weight:700; color:var(--accent-glow);"><i class="fa-solid fa-user-group"></i> Circle Updates</div>
+                <button class="btn small ghost" onclick="retryMatchCircle()" style="padding:4px 10px; font-size:0.75rem;"><i class="fa-solid fa-rotate"></i> Sync Circle</button>
+            </div>
             <div id="feedCircleUpdates">Loading circle updates...</div>
         </div>
 
@@ -221,7 +224,10 @@
 
         <!-- 3. CIRCLE PAGE -->
         <div id="panelCircle" class="tab-panel">
-            <h4 style="color:var(--accent-glow); margin-bottom:14px;"><i class="fa-solid fa-users"></i> Your Support Circle Members</h4>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                <h4 style="color:var(--accent-glow);"><i class="fa-solid fa-users"></i> Your Support Circle Members</h4>
+                <button class="btn small ghost" onclick="retryMatchCircle()"><i class="fa-solid fa-rotate"></i> Rematch Circle</button>
+            </div>
             <div id="circleMembersList">Loading members...</div>
         </div>
 
@@ -372,7 +378,6 @@
                         <option value="CUSTOM_NEW">+ Create New Phase</option>
                     </select>
 
-                    <!-- CUSTOM PHASE INPUT CONTAINER (CREATE NEW PHASE) -->
                     <div id="customPhaseContainer" style="display:none; margin-top:-6px; margin-bottom:14px;">
                         <input id="customPhaseInput" class="form-control" type="text" placeholder="Enter your custom phase name...">
                     </div>
@@ -407,7 +412,15 @@
     <script>
         const SUPABASE_URL = "https://rvntpauzxgskmbedqmbw.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2bnRwYXV6eGdza21iZWRxbWJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NzUyMTcsImV4cCI6MjEwMTI1MTIxN30.KmJYRYHxIW0-OQ1n2N3aJKlc-JOJnoteewGoIsbFhkQ";
-        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // تفعيل الإبقاء على الجلسة بشكل إجباري لتجنب تسجيل الخروج عند التحديث
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true
+            }
+        });
 
         let currentUser = null;
         let myProfile = null;
@@ -438,7 +451,6 @@
             if (idx !== -1) document.querySelectorAll('.nav-tab')[idx].classList.add('active');
         }
 
-        /* 2-HOUR SESSION TIMER LOGIC */
         function startSessionTimer() {
             const container = document.getElementById('sessionTimerContainer');
             const display = document.getElementById('sessionTimer');
@@ -475,7 +487,6 @@
             }, 1000);
         }
 
-        /* CREATE NEW PHASE SELECTION HANDLER */
         function handlePhaseSelection(val) {
             const customContainer = document.getElementById('customPhaseContainer');
             const customInput = document.getElementById('customPhaseInput');
@@ -550,14 +561,26 @@
             btn.disabled = true;
 
             try {
+                // 1. إنشاء الحساب
                 const { data: authData, error: authErr } = await db.auth.signUp({
                     email: tempSignupData.email,
                     password: tempSignupData.password
                 });
                 if (authErr) throw authErr;
 
-                const userId = authData.user?.id || (await db.auth.getSession()).data.session?.user?.id;
+                // تسجيل الدخول الفوري لإنشاء Session كاملة ومباشرة
+                const { data: signInData, error: signInErr } = await db.auth.signInWithPassword({
+                    email: tempSignupData.email,
+                    password: tempSignupData.password
+                });
                 
+                const activeSession = signInData?.session || (await db.auth.getSession()).data.session;
+                const userId = activeSession?.user?.id;
+
+                if (!userId) throw new Error("Could not acquire session. Please try logging in.");
+
+                currentUser = activeSession.user;
+
                 let selectedPhase = document.getElementById('phaseSelect').value;
                 if (selectedPhase === 'CUSTOM_NEW') {
                     selectedPhase = document.getElementById('customPhaseInput').value.trim();
@@ -574,8 +597,10 @@
                     duration: parseInt(document.getElementById('duration').value, 10)
                 };
 
+                // 2. إدخال أو تحديث ملف المستخدم
                 await db.from('profiles').upsert([profilePayload], { onConflict: 'user_id' });
 
+                // 3. المطابقة السريعة مع الدائرة
                 await db.rpc('match_user_to_circle', {
                     p_user_id: userId,
                     p_phase: profilePayload.current_phase,
@@ -624,13 +649,20 @@
         async function loadUserProfile() {
             if (!currentUser) return;
 
-            const { data, error } = await db.from('profiles').select('*').eq('user_id', currentUser.id).single();
+            const { data, error } = await db.from('profiles').select('*').eq('user_id', currentUser.id).maybeSingle();
+            
             if (error || !data) {
                 showAuthModal();
                 return;
             }
 
             myProfile = data;
+
+            // إذا لم يكن مرتبطًا بـ circle حتى الآن، شغل المطابقة تلقائيًا
+            if (!myProfile.circle_id) {
+                await retryMatchCircle(false);
+            }
+
             document.getElementById('authModal').style.display = 'none';
             document.getElementById('userMenuContainer').style.display = 'block';
             document.getElementById('userAvatarBtn').innerText = (myProfile.first_name || 'U')[0].toUpperCase();
@@ -643,6 +675,29 @@
             await fetchCircleMembers();
             await fetchDiscussions();
             await fetchJourneyData();
+        }
+
+        async function retryMatchCircle(showSuccessAlert = true) {
+            if (!myProfile) return;
+            try {
+                await db.rpc('match_user_to_circle', {
+                    p_user_id: myProfile.user_id,
+                    p_phase: myProfile.current_phase,
+                    p_country: myProfile.country,
+                    p_city: myProfile.city,
+                    p_language: 'English'
+                });
+                
+                // جلب الملف المحدث
+                const { data } = await db.from('profiles').select('*').eq('user_id', currentUser.id).single();
+                if (data) myProfile = data;
+                
+                await fetchCircleMembers();
+                await fetchDashboardData();
+                if (showSuccessAlert) alert("Circle matched successfully!");
+            } catch (e) {
+                console.error("Match circle error:", e);
+            }
         }
 
         async function checkTodaySubmission() {
@@ -749,7 +804,7 @@
 
         async function fetchCircleMembers() {
             if (!myProfile.circle_id) {
-                document.getElementById('circleMembersList').innerHTML = `<div class="empty-state"><p>You are not assigned to a circle yet.</p></div>`;
+                document.getElementById('circleMembersList').innerHTML = `<div class="empty-state"><p>You are not assigned to a circle yet. Click "Rematch Circle" above.</p></div>`;
                 return;
             }
 
