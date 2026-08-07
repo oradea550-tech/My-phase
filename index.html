@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPhase — Structured Life Support</title>
+    <title>MyPhase — دعم الحياة المهيكل</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -22,16 +22,18 @@
             --warning: #f59e0b;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
         body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding-bottom: 90px; }
 
-        /* HEADER */
+        /* HEADER & SESSION TIMER */
         header { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.25); position: sticky; top: 0; z-index: 100; }
         .logo { font-weight: 800; font-size: 1.3rem; color: var(--accent-glow); display: flex; align-items: center; gap: 8px; }
 
+        .session-timer-badge { background: rgba(99, 102, 241, 0.15); border: 1px solid var(--accent-primary); color: var(--accent-glow); padding: 6px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+
         .user-menu-container { position: relative; display: none; }
         .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), var(--accent-glow)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; cursor: pointer; border: 2px solid var(--border); }
-        .dropdown-menu { position: absolute; right: 0; top: 50px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); width: 180px; box-shadow: var(--shadow-soft); display: none; flex-direction: column; overflow: hidden; z-index: 101; }
+        .dropdown-menu { position: absolute; left: 0; top: 50px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); width: 180px; box-shadow: var(--shadow-soft); display: none; flex-direction: column; overflow: hidden; z-index: 101; }
         .dropdown-menu.show { display: flex; }
         .dropdown-item { padding: 12px 16px; color: var(--text-main); font-size: 0.9rem; text-decoration: none; display: flex; align-items: center; gap: 10px; cursor: pointer; }
         .dropdown-item:hover { background: rgba(255,255,255,0.05); color: var(--accent-glow); }
@@ -94,53 +96,54 @@
         .upvote-btn:hover { color: var(--accent-glow); }
         .upvote-count { font-weight: 700; font-size: 0.85rem; }
 
-        /* TIMELINE STYLES FOR JOURNEY */
-        .timeline-item { border-left: 2px solid var(--accent-primary); padding-left: 16px; margin-bottom: 16px; position: relative; }
-        .timeline-item::before { content: ''; width: 10px; height: 10px; background: var(--accent-glow); border-radius: 50%; position: absolute; left: -6px; top: 4px; }
+        /* TIMELINE STYLES */
+        .timeline-item { border-right: 2px solid var(--accent-primary); padding-right: 16px; margin-bottom: 16px; position: relative; }
+        .timeline-item::before { content: ''; width: 10px; height: 10px; background: var(--accent-glow); border-radius: 50%; position: absolute; right: -6px; top: 4px; }
     </style>
 </head>
 <body>
 
     <header>
         <div class="logo"><i class="fa-solid fa-compass"></i> MyPhase</div>
+        
+        <!-- SESSION TIMER (2 HOURS) -->
+        <div class="session-timer-badge" id="sessionTimerContainer" style="display:none;">
+            <i class="fa-regular fa-clock"></i> الجلسة: <span id="sessionTimer">02:00:00</span>
+        </div>
+
         <div class="user-menu-container" id="userMenuContainer">
             <div class="user-avatar" id="userAvatarBtn" onclick="toggleDropdown()">U</div>
             <div class="dropdown-menu" id="dropdownMenu">
-                <div class="dropdown-item" onclick="switchTab('Journey'); toggleDropdown();"><i class="fa-solid fa-user"></i> Profile & Journey</div>
-                <div class="dropdown-item" style="color: #ef4444;" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</div>
+                <div class="dropdown-item" onclick="switchTab('Journey'); toggleDropdown();"><i class="fa-solid fa-user"></i> الملف الشخصي والرحلة</div>
+                <div class="dropdown-item" style="color: #ef4444;" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</div>
             </div>
         </div>
     </header>
 
     <main>
-        <!-- ==================================================== -->
-        <!-- 1. HOME PAGE (DAILY DASHBOARD ONLY) -->
-        <!-- ==================================================== -->
+        <!-- 1. HOME PAGE -->
         <div id="panelFeed" class="tab-panel active">
-            <!-- DAILY REMINDER / COMPLETED BANNER -->
             <div id="reminderBanner" class="card" style="background: rgba(99,102,241,0.1); border-color: var(--accent-primary); display:none; padding:14px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="font-size:0.9rem; font-weight:600;" id="reminderText">⏰ Reminder: You haven't submitted today's update yet.</div>
-                    <button class="btn small" style="width:auto;" onclick="switchTab('Update')">Action</button>
+                    <div style="font-size:0.9rem; font-weight:600;" id="reminderText">⏰ تذكير: لم تقم بتقديم تحديث اليوم بعد.</div>
+                    <button class="btn small" style="width:auto;" onclick="switchTab('Update')">تحديث الآن</button>
                 </div>
             </div>
 
-            <!-- WELCOME CARD -->
             <div class="card" id="welcomeCard">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                     <div>
-                        <h3 id="dashWelcomeName">👋 Welcome back</h3>
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;" id="dashPhaseSub">Phase Tracker</p>
+                        <h3 id="dashWelcomeName">👋 أهلاً بك</h3>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;" id="dashPhaseSub">متابع المرحلة</p>
                     </div>
                 </div>
 
-                <!-- CURRENT PHASE & METRICS (ALGORITHM COMPUTE) -->
                 <div style="margin-top: 16px; background: rgba(0,0,0,0.2); padding: 14px; border-radius: var(--radius-md); border:1px solid rgba(255,255,255,0.03);">
-                    <div style="font-size: 0.8rem; color: var(--accent-glow); font-weight: 700; text-transform:uppercase;">CURRENT PHASE</div>
-                    <div id="dashPhaseName" style="font-size: 1.1rem; font-weight: 800; margin-top: 2px;">Loading...</div>
+                    <div style="font-size: 0.8rem; color: var(--accent-glow); font-weight: 700; text-transform:uppercase;">المرحلة الحالية</div>
+                    <div id="dashPhaseName" style="font-size: 1.1rem; font-weight: 800; margin-top: 2px;">جاري التحميل...</div>
 
                     <div style="display:flex; justify-content:space-between; margin-top:14px; font-size:0.85rem; color:var(--text-muted);">
-                        <span>Effective Completion Progress</span>
+                        <span>نسبة الإنجاز الفعلي</span>
                         <span id="dashProgressPct" style="font-weight:700; color:var(--text-main);">0%</span>
                     </div>
                     <div class="progress-container">
@@ -149,36 +152,31 @@
                 </div>
             </div>
 
-            <!-- DAILY FOCUS TASK (ANSWERING: WHAT SHOULD I DO TODAY?) -->
             <div class="card">
-                <h4 style="color:var(--accent-glow); font-size:1.05rem; margin-bottom:12px;"><i class="fa-solid fa-bullseye"></i> Daily Focus Task</h4>
+                <h4 style="color:var(--accent-glow); font-size:1.05rem; margin-bottom:12px;"><i class="fa-solid fa-bullseye"></i> المهمة اليومية</h4>
                 <div style="background:var(--bg-main); padding:14px; border-radius:var(--radius-md); margin-bottom:12px;">
-                    <div style="font-size:0.8rem; color:var(--accent-glow); font-weight:700;">TODAY'S MISSION:</div>
-                    <div id="focusStep" style="font-size:0.95rem; margin-top:4px;">Execute your primary small action towards phase goals.</div>
+                    <div style="font-size:0.8rem; color:var(--accent-glow); font-weight:700;">مهمة اليوم:</div>
+                    <div id="focusStep" style="font-size:0.95rem; margin-top:4px;">قم بإنجاز خطوة صغيرة نحو هدف مرحلتك اليوم.</div>
                 </div>
-                <button class="btn small" id="btnMarkCompleted" onclick="markStepCompleted()"><i class="fa-solid fa-check"></i> Mark Today's Task Complete</button>
+                <button class="btn small" id="btnMarkCompleted" onclick="markStepCompleted()"><i class="fa-solid fa-check"></i> تعليم المهمة كـ مكتملة</button>
             </div>
 
-            <!-- TODAY'S PROGRESS -->
-            <div style="font-weight:700; color:var(--accent-glow); margin: 18px 0 10px;"><i class="fa-solid fa-chart-line"></i> Today's Progress</div>
+            <div style="font-weight:700; color:var(--accent-glow); margin: 18px 0 10px;"><i class="fa-solid fa-chart-line"></i> تقدم اليوم</div>
             <div id="feedTodayProgress" class="card" style="padding:14px;">
-                <p style="color:var(--text-muted); font-size:0.9rem;">No action logged yet for today.</p>
+                <p style="color:var(--text-muted); font-size:0.9rem;">لم يتم تسجيل أي نشاط اليوم حتى الآن.</p>
             </div>
 
-            <!-- LATEST 3 CIRCLE UPDATES ONLY -->
-            <div style="font-weight:700; color:var(--accent-glow); margin: 18px 0 10px;"><i class="fa-solid fa-user-group"></i> Latest 3 Circle Updates</div>
-            <div id="feedCircleUpdates">Loading circle updates...</div>
+            <div style="font-weight:700; color:var(--accent-glow); margin: 18px 0 10px;"><i class="fa-solid fa-user-group"></i> آخر تحديثات الدائرة</div>
+            <div id="feedCircleUpdates">جاري تحميل تحديثات الدائرة...</div>
         </div>
 
-        <!-- ==================================================== -->
-        <!-- 2. UPDATE PAGE (DAILY JOURNAL - LOCK AFTER SUBMIT) -->
-        <!-- ==================================================== -->
+        <!-- 2. UPDATE PAGE -->
         <div id="panelUpdate" class="tab-panel">
             <div class="card" id="updateFormContainer">
-                <h4 style="margin-bottom:16px; color:var(--accent-glow);"><i class="fa-solid fa-book-open"></i> Private Daily Journal</h4>
+                <h4 style="margin-bottom:16px; color:var(--accent-glow);"><i class="fa-solid fa-book-open"></i> المفكرة اليومية الخاصة</h4>
                 
                 <form id="dailyJournalForm" onsubmit="handleJournalSubmit(event)">
-                    <label>How are you feeling today?</label>
+                    <label>كيف تشعر اليوم؟</label>
                     <div class="mood-selector">
                         <button type="button" class="mood-btn selected" onclick="selectMood(this, '🚀')">🚀</button>
                         <button type="button" class="mood-btn" onclick="selectMood(this, '🔥')">🔥</button>
@@ -187,110 +185,103 @@
                         <button type="button" class="mood-btn" onclick="selectMood(this, '💡')">💡</button>
                     </div>
 
-                    <label>Small Win</label>
-                    <input id="updateWin" class="form-control" type="text" placeholder="What was your small victory today?" required>
+                    <label>إنجاز صغير</label>
+                    <input id="updateWin" class="form-control" type="text" placeholder="ما هو إنجازك الصغير اليوم؟" required>
 
-                    <label>Reflection</label>
-                    <textarea id="updateReflection" class="form-control" placeholder="What did you learn or observe today?" rows="3" required></textarea>
+                    <label>تأملات وتدوين</label>
+                    <textarea id="updateReflection" class="form-control" placeholder="ماذا تعلمت أو لاحظت اليوم؟" rows="3" required></textarea>
 
-                    <label>Help Request (Optional)</label>
-                    <input id="updateHelp" class="form-control" type="text" placeholder="Do you need guidance from your circle or mentor?">
+                    <label>طلب مساعدة (اختياري)</label>
+                    <input id="updateHelp" class="form-control" type="text" placeholder="هل تحتاج إلى توجيه من دائرتك أو الموجه؟">
 
-                    <button id="btnPostUpdate" type="submit" class="btn" style="margin-top:10px;">Submit Journal & Share Update</button>
+                    <button id="btnPostUpdate" type="submit" class="btn" style="margin-top:10px;">حفظ التدوينة ومشاركتها</button>
                 </form>
             </div>
 
-            <!-- SUBMISSION SUMMARY CARD (SHOWS WHEN LOCKED) -->
             <div class="card" id="submittedSummaryCard" style="display:none; border-color: var(--success);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-                    <h4 style="color:var(--success);"><i class="fa-solid fa-circle-check"></i> Today's Entry Submitted</h4>
-                    <span id="journalSubmitTime" style="font-size:0.75rem; color:var(--text-muted);">Timestamp</span>
+                    <h4 style="color:var(--success);"><i class="fa-solid fa-circle-check"></i> تم تقديم تحديث اليوم</h4>
+                    <span id="journalSubmitTime" style="font-size:0.75rem; color:var(--text-muted);">الوقت</span>
                 </div>
+
                 <div style="background:rgba(0,0,0,0.2); padding:14px; border-radius:var(--radius-md); margin-bottom:10px;">
-                    <div style="font-size:0.8rem; color:var(--text-muted);">MOOD & WIN</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">الشعور والإنجاز</div>
                     <div id="summaryMoodWin" style="font-size:0.95rem; font-weight:700; margin-top:2px;">-</div>
                 </div>
                 <div style="background:rgba(0,0,0,0.2); padding:14px; border-radius:var(--radius-md); margin-bottom:10px;">
-                    <div style="font-size:0.8rem; color:var(--text-muted);">REFLECTION</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">التأملات</div>
                     <div id="summaryReflection" style="font-size:0.9rem; margin-top:2px;">-</div>
                 </div>
-                <div style="background:rgba(0,0,0,0.2); padding:14px; border-radius:var(--radius-md);">
-                    <div style="font-size:0.8rem; color:var(--text-muted);">HELP REQUESTED</div>
-                    <div id="summaryHelp" style="font-size:0.9rem; margin-top:2px;">None</div>
+                <div style="background:rgba(0,0,0,0.2); padding:14px; border-radius:var(--radius-md); margin-bottom:10px;">
+                    <div style="font-size:0.8rem; color:var(--text-muted);">طلب المساعدة</div>
+                    <div id="summaryHelp" style="font-size:0.9rem; margin-top:2px;">لا يوجد</div>
                 </div>
-                <p style="text-align:center; color:var(--text-muted); font-size:0.85rem; margin-top:16px;">Journal locked until tomorrow. See you then!</p>
             </div>
         </div>
 
-        <!-- ==================================================== -->
-        <!-- 3. CIRCLE PAGE (PEOPLE FOCUSED & DYNAMIC MATCHING) -->
-        <!-- ==================================================== -->
+        <!-- 3. CIRCLE PAGE -->
         <div id="panelCircle" class="tab-panel">
-            <h4 style="color:var(--accent-glow); margin-bottom:14px;"><i class="fa-solid fa-users"></i> Support Circle Members</h4>
-            <div id="circleMembersList">Loading circle members...</div>
+            <h4 style="color:var(--accent-glow); margin-bottom:14px;"><i class="fa-solid fa-users"></i> أعضاء دائرة الدعم الخاصة بك</h4>
+            <div id="circleMembersList">جاري تحميل الأعضاء...</div>
         </div>
 
-        <!-- ==================================================== -->
-        <!-- 4. DISCUSSIONS PAGE (REDDIT STYLE WITH UPVOTES) -->
-        <!-- ==================================================== -->
+        <!-- 4. DISCUSSIONS PAGE -->
         <div id="panelDiscussions" class="tab-panel">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-                <h4 style="color:var(--accent-glow);"><i class="fa-solid fa-comments"></i> Community Discussions</h4>
+                <h4 style="color:var(--accent-glow);"><i class="fa-solid fa-comments"></i> نقاشات المجتمع</h4>
                 <div style="display:flex; gap:6px;">
-                    <button class="btn small ghost" onclick="sortDiscussions('new')">New</button>
-                    <button class="btn small ghost" onclick="sortDiscussions('trending')">Trending</button>
+                    <button class="btn small ghost" onclick="sortDiscussions('new')">الأحدث</button>
+                    <button class="btn small ghost" onclick="sortDiscussions('trending')">الأنشط</button>
                 </div>
             </div>
 
-            <div id="discussionsList">Loading active discussions...</div>
+            <div id="discussionsList">جاري تحميل النقاشات...</div>
 
             <div id="newDiscussionEditor" class="card" style="display:none; margin-top:16px;">
-                <h5 style="margin-bottom:10px;">Start Discussion Topic</h5>
-                <textarea id="discussionInput" class="form-control" placeholder="Ask a question or request advice..." rows="3"></textarea>
+                <h5 style="margin-bottom:10px;">طرح موضوع جديد</h5>
+                <textarea id="discussionInput" class="form-control" placeholder="اطرح سؤالاً أو شارك نصيحة..." rows="3"></textarea>
                 <div style="display:flex; gap:10px;">
-                    <button class="btn ghost" onclick="toggleDiscussionEditor(false)">Cancel</button>
-                    <button class="btn" onclick="postDiscussion()">Post Topic</button>
+                    <button class="btn ghost" onclick="toggleDiscussionEditor(false)">إلغاء</button>
+                    <button class="btn" onclick="postDiscussion()">نشر الموضوع</button>
                 </div>
             </div>
 
             <button id="btnOpenDiscussionEditor" class="btn" onclick="toggleDiscussionEditor(true)" style="margin-top:16px;">
-                <i class="fa-solid fa-plus"></i> Ask or Share Something
+                <i class="fa-solid fa-plus"></i> إضافة موضوع جديد
             </button>
         </div>
 
-        <!-- ==================================================== -->
-        <!-- 5. JOURNEY PAGE (PERSONAL TIMELINE & ACHIEVEMENTS) -->
-        <!-- ==================================================== -->
+        <!-- 5. JOURNEY PAGE -->
         <div id="panelJourney" class="tab-panel">
             <div class="card">
-                <h3 style="color:var(--accent-glow); margin-bottom:16px;"><i class="fa-solid fa-route"></i> Personal Journey Timeline</h3>
+                <h3 style="color:var(--accent-glow); margin-bottom:16px;"><i class="fa-solid fa-route"></i> الخط الزمني لرحلتك الشخصية</h3>
                 
                 <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; margin-bottom:20px;">
                     <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:var(--radius-md); text-align:center;">
-                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statStreak">0 Days</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Current Streak</div>
+                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statStreak">0 يوم</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">السلسلة الحالية</div>
                     </div>
                     <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:var(--radius-md); text-align:center;">
-                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statTotalDays">0 Days</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Total Active Days</div>
+                        <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statTotalDays">0 يوم</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">إجمالي الأيام النشطة</div>
                     </div>
                     <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:var(--radius-md); text-align:center;">
                         <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statCompletionRate">0%</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Completion Rate</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">معدل الإنجاز</div>
                     </div>
                     <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:var(--radius-md); text-align:center;">
                         <div style="font-size:1.2rem; font-weight:800; color:var(--accent-glow);" id="statActions">0</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Actions Logged</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">الأنشطة المسجلة</div>
                     </div>
                 </div>
 
                 <div style="margin-bottom:20px;">
-                    <label>Unlocked Badges & Achievements</label>
+                    <label>الأوسمة والإنجازات المكتسبة</label>
                     <div id="badgesContainer" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;"></div>
                 </div>
 
-                <div style="font-weight:700; color:var(--accent-glow); margin-bottom:12px;"><i class="fa-solid fa-timeline"></i> Activity Timeline</div>
-                <div id="journeyTimeline">Loading timeline...</div>
+                <div style="font-weight:700; color:var(--accent-glow); margin-bottom:12px;"><i class="fa-solid fa-timeline"></i> السجل الزمني النشط</div>
+                <div id="journeyTimeline">جاري تحميل السجل...</div>
             </div>
         </div>
     </main>
@@ -299,23 +290,23 @@
     <nav class="bottom-nav">
         <div class="nav-tab active" onclick="switchTab('Feed')">
             <i class="fa-solid fa-house"></i>
-            <span>Home</span>
+            <span>الرئيسية</span>
         </div>
         <div class="nav-tab" onclick="switchTab('Update')">
             <i class="fa-solid fa-pen-to-square"></i>
-            <span>Update</span>
+            <span>التحديث</span>
         </div>
         <div class="nav-tab" onclick="switchTab('Circle')">
             <i class="fa-solid fa-user-group"></i>
-            <span>Circle</span>
+            <span>الدائرة</span>
         </div>
         <div class="nav-tab" onclick="switchTab('Discussions')">
             <i class="fa-solid fa-comments"></i>
-            <span>Discussions</span>
+            <span>النقاشات</span>
         </div>
         <div class="nav-tab" onclick="switchTab('Journey')">
             <i class="fa-solid fa-route"></i>
-            <span>Journey</span>
+            <span>الرحلة</span>
         </div>
     </nav>
 
@@ -323,66 +314,92 @@
     <div id="authModal" class="modal-overlay" style="display:none;">
         <div class="modal-box">
             <div class="step-indicator" id="stepIndicator">
-                <div id="step1Pill" class="step-pill active">1 — Account</div>
-                <div id="step2Pill" class="step-pill">2 — Phase Setup</div>
+                <div id="step1Pill" class="step-pill active">1 — الحساب</div>
+                <div id="step2Pill" class="step-pill">2 — تحديد المرحلة</div>
             </div>
 
             <div id="step1">
-                <div class="onboard-title">Welcome to MyPhase</div>
-                <div class="onboard-sub">Step through life phases with trusted circles.</div>
+                <div class="onboard-title">مرحباً بك في MyPhase</div>
+                <div class="onboard-sub">تخطَّ مراحل حياتك بثبات مع دوائر دعم موثوقة.</div>
 
                 <form onsubmit="handleStep1(event)">
-                    <input id="firstName" class="form-control" type="text" placeholder="First Name" required>
-                    <input id="signupEmail" class="form-control" type="email" placeholder="Email" required>
-                    <input id="signupPassword" class="form-control" type="password" placeholder="Password (min 6 chars)" minlength="6" required>
-                    <button type="submit" class="btn" style="margin-top:8px;">Continue →</button>
+                    <input id="firstName" class="form-control" type="text" placeholder="الاسم الأول" required>
+                    <input id="signupEmail" class="form-control" type="email" placeholder="البريد الإلكتروني" required>
+                    <input id="signupPassword" class="form-control" type="password" placeholder="كلمة السر (6 أحرف على الأقل)" minlength="6" required>
+                    <button type="submit" class="btn" style="margin-top:8px;">المتابعة ←</button>
                 </form>
-                <p style="font-size:0.85rem; text-align:center; margin-top:14px; color:var(--text-muted);">Already registered? <span style="color:var(--accent-glow); font-weight:700; cursor:pointer;" onclick="showSignIn()">Sign In</span></p>
+                <p style="font-size:0.85rem; text-align:center; margin-top:14px; color:var(--text-muted);">لديك حساب بالفعل؟ <span style="color:var(--accent-glow); font-weight:700; cursor:pointer;" onclick="showSignIn()">تسجيل الدخول</span></p>
             </div>
 
             <div id="step2" style="display:none;">
-                <div class="onboard-title">Setup Phase Profile</div>
-                <div class="onboard-sub">Smart matching places you in small, local, active support circles.</div>
+                <div class="onboard-title">إعداد ملف المرحلة</div>
+                <div class="onboard-sub">يتم مطابقتك تلقائياً مع مجتمعات محلية نشطة ومماثلة لاهتماماتك.</div>
 
                 <form onsubmit="handleStep2(event)">
                     <div style="display:flex; gap:10px;">
-                        <input id="country" class="form-control" type="text" placeholder="Country" required>
-                        <input id="city" class="form-control" type="text" placeholder="City" required>
+                        <input id="country" class="form-control" type="text" placeholder="الدولة" required>
+                        <input id="city" class="form-control" type="text" placeholder="المدينة" required>
                     </div>
 
-                    <label for="phaseSelect">Current Phase</label>
-                    <select id="phaseSelect" class="form-control" required>
-                        <option value="">Select phase...</option>
-                        <option value="Starting a Startup">Starting a Startup</option>
-                        <option value="Career Change">Career Change</option>
-                        <option value="Learning Programming">Learning Programming</option>
-                        <option value="Personal Goal">Personal Goal</option>
-                        <option value="Health Recovery">Health Recovery</option>
+                    <label for="phaseSelect">المرحلة الحالية</label>
+                    <select id="phaseSelect" class="form-control" onchange="handlePhaseSelection(this.value)" required>
+                        <option value="">اختر مرحلتك الحالية...</option>
+                        <optgroup label="🚀 الريادة والإعمال">
+                            <option value="تأسيس مشروع ناشئ (Startup)">تأسيس مشروع ناشئ (Startup)</option>
+                            <option value="التجارة الإلكترونية والتسويق">التجارة الإلكترونية والتسويق</option>
+                            <option value="العمل الحر (Freelancing)">العمل الحر (Freelancing)</option>
+                        </optgroup>
+                        <optgroup label="🎓 التعليم والأكاديميا">
+                            <option value="الاستعداد للامتحانات والدراسة">الاستعداد للامتحانات والدراسة</option>
+                            <option value="كتابة الأطروحة والبحث العلمي">كتابة الأطروحة والبحث العلمي</option>
+                            <option value="تعلم لغة جديدة">تعلم لغة جديدة</option>
+                        </optgroup>
+                        <optgroup label="💻 البرمجة والتقنية">
+                            <option value="تعلم البرمجة وتطوير الويب">تعلم البرمجة وتطوير الويب</option>
+                            <option value="تطوير تطبيقات الهاتف">تطوير تطبيقات الهاتف</option>
+                            <option value="الذكاء الاصطناعي وعلم البيانات">الذكاء الاصطناعي وعلم البيانات</option>
+                        </optgroup>
+                        <optgroup label="🎨 المحتوى والإبداع">
+                            <option value="صناعة المحتوى الرقمي واليوتيوب">صناعة المحتوى الرقمي واليوتيوب</option>
+                            <option value="التصميم الجرافيكي والإنتاج المرئي">التصميم الجرافيكي والإنتاج المرئي</option>
+                            <option value="تأليف كتاب أو دليل">تأليف كتاب أو دليل</option>
+                        </optgroup>
+                        <optgroup label="🌱 التطوير الشخصي والصحة">
+                            <option value="تغيير المسار المهني (Career Change)">تغيير المسار المهني (Career Change)</option>
+                            <option value="تحسين الصحة واللياقة البدنية">تحسين الصحة واللياقة البدنية</option>
+                            <option value="إدارة الوقت والتنظيم الشخصي">إدارة الوقت والتنظيم الشخصي</option>
+                        </optgroup>
+                        <option value="CUSTOM_NEW">+ Create New Phase (إنشاء مرحلة جديدة)</option>
                     </select>
 
-                    <label for="goal">Your Main Objective</label>
-                    <textarea id="goal" class="form-control" placeholder="What is your focus for this phase?" required></textarea>
+                    <!-- CUSTOM PHASE INPUT CONTAINER (CREATE NEW PHASE) -->
+                    <div id="customPhaseContainer" style="display:none; margin-top:-6px; margin-bottom:14px;">
+                        <input id="customPhaseInput" class="form-control" type="text" placeholder="اكتب اسم المرحلة الجديدة هنا...">
+                    </div>
 
-                    <label for="duration">Target Duration</label>
+                    <label for="goal">الهدف الرئيسي للمرحلة</label>
+                    <textarea id="goal" class="form-control" placeholder="ما الذي ترغب في تركيز جهودك عليه خلال هذه المرحلة؟" required></textarea>
+
+                    <label for="duration">المدة الزمنية المستهدفة</label>
                     <select id="duration" class="form-control" required>
-                        <option value="30">30 Days</option>
-                        <option value="60">60 Days</option>
-                        <option value="90">90 Days</option>
-                        <option value="180">180 Days</option>
+                        <option value="30">30 يومًا</option>
+                        <option value="60">60 يومًا</option>
+                        <option value="90">90 يومًا</option>
+                        <option value="180">180 يومًا</option>
                     </select>
 
-                    <button id="btnSubmitStep2" type="submit" class="btn" style="margin-top:10px;">Complete Registration</button>
+                    <button id="btnSubmitStep2" type="submit" class="btn" style="margin-top:10px;">إكمال التسجيل والدخول</button>
                 </form>
             </div>
 
             <div id="signInView" style="display:none;">
-                <div class="onboard-title">Sign In</div>
+                <div class="onboard-title">تسجيل الدخول</div>
                 <form onsubmit="handleSignIn(event)">
-                    <input id="signinEmail" class="form-control" type="email" placeholder="Email" required>
-                    <input id="signinPassword" class="form-control" type="password" placeholder="Password" required>
-                    <button id="btnSubmitSignIn" type="submit" class="btn" style="margin-top:8px;">Sign In</button>
+                    <input id="signinEmail" class="form-control" type="email" placeholder="البريد الإلكتروني" required>
+                    <input id="signinPassword" class="form-control" type="password" placeholder="كلمة السر" required>
+                    <button id="btnSubmitSignIn" type="submit" class="btn" style="margin-top:8px;">دخول</button>
                 </form>
-                <p style="font-size:0.85rem; text-align:center; margin-top:14px; color:var(--text-muted);"><span style="color:var(--accent-glow); font-weight:700; cursor:pointer;" onclick="showStep(1)">Create an account</span></p>
+                <p style="font-size:0.85rem; text-align:center; margin-top:14px; color:var(--text-muted);"><span style="color:var(--accent-glow); font-weight:700; cursor:pointer;" onclick="showStep(1)">إنشاء حساب جديد</span></p>
             </div>
         </div>
     </div>
@@ -396,8 +413,7 @@
         let myProfile = null;
         let selectedMood = '🚀';
         let tempSignupData = {};
-        let todaySubmitted = false;
-        let currentDiscussions = [];
+        let sessionTimerInterval = null;
 
         function escapeHTML(str) {
             if (!str) return '';
@@ -422,10 +438,61 @@
             if (idx !== -1) document.querySelectorAll('.nav-tab')[idx].classList.add('active');
         }
 
+        /* 2-HOUR SESSION TIMER LOGIC */
+        function startSessionTimer() {
+            const container = document.getElementById('sessionTimerContainer');
+            const display = document.getElementById('sessionTimer');
+            container.style.display = 'inline-flex';
+
+            const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+            let sessionStartTime = localStorage.getItem('myphase_session_start');
+
+            if (!sessionStartTime) {
+                sessionStartTime = Date.now();
+                localStorage.setItem('myphase_session_start', sessionStartTime);
+            } else {
+                sessionStartTime = parseInt(sessionStartTime, 10);
+            }
+
+            if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+
+            sessionTimerInterval = setInterval(() => {
+                const elapsed = Date.now() - sessionStartTime;
+                const remaining = TWO_HOURS_MS - elapsed;
+
+                if (remaining <= 0) {
+                    clearInterval(sessionTimerInterval);
+                    localStorage.removeItem('myphase_session_start');
+                    alert('انتهاء مدة الجلسة (ساعتان). سيتم تسجيل الخروج لحماية حسابك.');
+                    logout();
+                } else {
+                    const hrs = Math.floor(remaining / (1000 * 60 * 60));
+                    const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                    const secs = Math.floor((remaining % (1000 * 60)) / 1000);
+
+                    display.innerText = `${hrs < 10 ? '0' : ''}${hrs}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                }
+            }, 1000);
+        }
+
+        /* CREATE NEW PHASE SELECTION HANDLER */
+        function handlePhaseSelection(val) {
+            const customContainer = document.getElementById('customPhaseContainer');
+            const customInput = document.getElementById('customPhaseInput');
+            if (val === 'CUSTOM_NEW') {
+                customContainer.style.display = 'block';
+                customInput.required = true;
+            } else {
+                customContainer.style.display = 'none';
+                customInput.required = false;
+            }
+        }
+
         async function initApp() {
             const { data: { session } } = await db.auth.getSession();
             if (session?.user) {
                 currentUser = session.user;
+                startSessionTimer();
                 await loadUserProfile();
                 setupRealtime();
             } else {
@@ -435,6 +502,7 @@
             db.auth.onAuthStateChange(async (evt, session) => {
                 if (session?.user) {
                     currentUser = session.user;
+                    startSessionTimer();
                     await loadUserProfile();
                 } else {
                     currentUser = null;
@@ -446,6 +514,7 @@
         function showAuthModal() {
             document.getElementById('authModal').style.display = 'flex';
             document.getElementById('userMenuContainer').style.display = 'none';
+            document.getElementById('sessionTimerContainer').style.display = 'none';
             showStep(1);
         }
 
@@ -489,15 +558,20 @@
 
                 const userId = authData.user?.id || (await db.auth.getSession()).data.session?.user?.id;
                 
+                let selectedPhase = document.getElementById('phaseSelect').value;
+                if (selectedPhase === 'CUSTOM_NEW') {
+                    selectedPhase = document.getElementById('customPhaseInput').value.trim();
+                }
+
                 const profilePayload = {
                     user_id: userId,
                     first_name: tempSignupData.first_name,
                     email: tempSignupData.email,
                     country: document.getElementById('country').value.trim(),
                     city: document.getElementById('city').value.trim(),
-                    current_phase: document.getElementById('phaseSelect').value,
+                    current_phase: selectedPhase,
                     goal: document.getElementById('goal').value.trim(),
-                    duration: document.getElementById('duration').value
+                    duration: parseInt(document.getElementById('duration').value, 10)
                 };
 
                 await db.from('profiles').upsert([profilePayload], { onConflict: 'user_id' });
@@ -511,9 +585,10 @@
                 });
 
                 document.getElementById('authModal').style.display = 'none';
-                await db.auth.signInWithPassword({ email: tempSignupData.email, password: tempSignupData.password });
+                startSessionTimer();
+                await loadUserProfile();
             } catch (err) {
-                alert(err.message);
+                alert('فشل إنشاء الحساب: ' + err.message);
             } finally {
                 btn.disabled = false;
             }
@@ -523,366 +598,281 @@
             e.preventDefault();
             const btn = document.getElementById('btnSubmitSignIn');
             btn.disabled = true;
-            const { error } = await db.auth.signInWithPassword({
-                email: document.getElementById('signinEmail').value.trim(),
-                password: document.getElementById('signinPassword').value
-            });
-            btn.disabled = false;
-            if (error) alert(error.message);
-            else document.getElementById('authModal').style.display = 'none';
+            try {
+                const { error } = await db.auth.signInWithPassword({
+                    email: document.getElementById('signinEmail').value,
+                    password: document.getElementById('signinPassword').value
+                });
+                if (error) throw error;
+                document.getElementById('authModal').style.display = 'none';
+                startSessionTimer();
+                await loadUserProfile();
+            } catch (err) {
+                alert('فشل تسجيل الدخول: ' + err.message);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function logout() {
+            localStorage.removeItem('myphase_session_start');
+            if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+            await db.auth.signOut();
+            location.reload();
         }
 
         async function loadUserProfile() {
             if (!currentUser) return;
 
-            // CACHE LOAD FIRST FOR PERFORMANCE
-            const cached = localStorage.getItem('myphase_profile_' + currentUser.id);
-            if (cached) {
-                myProfile = JSON.parse(cached);
-                renderDashboardHeader();
+            const { data, error } = await db.from('profiles').select('*').eq('user_id', currentUser.id).single();
+            if (error || !data) {
+                showAuthModal();
+                return;
             }
 
-            const { data } = await db.from('profiles').select('*').eq('user_id', currentUser.id).maybeSingle();
-            if (data) {
-                myProfile = data;
-                localStorage.setItem('myphase_profile_' + currentUser.id, JSON.stringify(data));
-                renderDashboardHeader();
-                
-                await Promise.all([
-                    checkTodayJournal(),
-                    loadCircleMembers(),
-                    loadHomeFeed(),
-                    loadDiscussions(),
-                    loadJourneyTimeline()
-                ]);
-            }
-        }
-
-        function renderDashboardHeader() {
+            myProfile = data;
+            document.getElementById('authModal').style.display = 'none';
             document.getElementById('userMenuContainer').style.display = 'block';
-            document.getElementById('userAvatarBtn').innerText = (myProfile.first_name || 'U').charAt(0).toUpperCase();
-            document.getElementById('dashWelcomeName').innerText = `👋 Welcome back, ${escapeHTML(myProfile.first_name)}`;
-            document.getElementById('dashPhaseSub').innerText = `${escapeHTML(myProfile.city || '')}, ${escapeHTML(myProfile.country || '')}`;
-            document.getElementById('dashPhaseName').innerText = escapeHTML(myProfile.current_phase);
+            document.getElementById('userAvatarBtn').innerText = (myProfile.first_name || 'U')[0].toUpperCase();
+            document.getElementById('dashWelcomeName').innerText = `👋 أهلاً بك، ${myProfile.first_name}`;
+            document.getElementById('dashPhaseName').innerText = myProfile.current_phase || 'المرحلة العامة';
+            document.getElementById('dashPhaseSub').innerText = `${myProfile.city || ''}, ${myProfile.country || ''}`;
+
+            await checkTodaySubmission();
+            await fetchDashboardData();
+            await fetchCircleMembers();
+            await fetchDiscussions();
+            await fetchJourneyData();
         }
 
-        async function checkTodayJournal() {
+        async function checkTodaySubmission() {
             const todayStr = new Date().toISOString().split('T')[0];
-            const { data } = await db.from('daily_updates')
+            const { data } = await db.from('journals')
                 .select('*')
                 .eq('user_id', currentUser.id)
                 .gte('created_at', todayStr + 'T00:00:00.000Z')
                 .maybeSingle();
 
-            const banner = document.getElementById('reminderBanner');
-            const reminderText = document.getElementById('reminderText');
+            const reminderBanner = document.getElementById('reminderBanner');
+            const updateForm = document.getElementById('updateFormContainer');
+            const summaryCard = document.getElementById('submittedSummaryCard');
 
             if (data) {
-                todaySubmitted = true;
-                banner.style.display = 'block';
-                banner.style.borderColor = 'var(--success)';
-                banner.style.background = 'rgba(34,197,94,0.1)';
-                reminderText.innerHTML = '🎉 Great job. See you tomorrow.';
-                banner.querySelector('button').style.display = 'none';
+                reminderBanner.style.display = 'none';
+                updateForm.style.display = 'none';
+                summaryCard.style.display = 'block';
 
-                // LOCK UPDATE PAGE
-                document.getElementById('updateFormContainer').style.display = 'none';
-                document.getElementById('submittedSummaryCard').style.display = 'block';
-                document.getElementById('journalSubmitTime').innerText = new Date(data.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                document.getElementById('summaryMoodWin').innerText = `${data.update_text.split('|')[0] || ''}`;
-                document.getElementById('summaryReflection').innerText = data.reflection || data.update_text;
-                document.getElementById('summaryHelp').innerText = data.help_request || 'None';
+                document.getElementById('journalSubmitTime').innerText = new Date(data.created_at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('summaryMoodWin').innerText = `${data.mood || '🚀'} ${data.win || ''}`;
+                document.getElementById('summaryReflection').innerText = data.reflection || '';
+                document.getElementById('summaryHelp').innerText = data.help_requested || 'لا يوجد';
 
                 document.getElementById('feedTodayProgress').innerHTML = `
-                    <div style="font-weight:700; color:var(--success);">✔ Journal & Progress Logged Today</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">"${escapeHTML(data.update_text)}"</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div><strong>${escapeHTML(data.mood)} ${escapeHTML(data.win)}</strong></div>
+                        <span class="badge badge-active">مكتمل</span>
+                    </div>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">${escapeHTML(data.reflection)}</p>
                 `;
             } else {
-                banner.style.display = 'block';
+                reminderBanner.style.display = 'block';
+                updateForm.style.display = 'block';
+                summaryCard.style.display = 'none';
             }
+        }
+
+        async function fetchDashboardData() {
+            const { count } = await db.from('journals').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id);
+            const totalDays = count || 0;
+            const targetDuration = myProfile.duration || 30;
+            const pct = Math.min(100, Math.round((totalDays / targetDuration) * 100));
+
+            document.getElementById('dashProgressPct').innerText = pct + '%';
+            document.getElementById('dashProgressBar').style.width = pct + '%';
+
+            if (myProfile.circle_id) {
+                const { data } = await db.from('journals')
+                    .select('*, profiles(first_name)')
+                    .eq('circle_id', myProfile.circle_id)
+                    .neq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false })
+                    .limit(3);
+
+                const container = document.getElementById('feedCircleUpdates');
+                if (data && data.length > 0) {
+                    container.innerHTML = data.map(item => `
+                        <div class="card" style="padding:14px; margin-bottom:10px;">
+                            <div style="font-size:0.85rem; font-weight:700; color:var(--accent-glow);">${escapeHTML(item.profiles?.first_name || 'عضو')}</div>
+                            <div style="font-size:0.9rem; margin-top:4px;">${escapeHTML(item.mood)} ${escapeHTML(item.win)}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>لا توجد تحديثات جديدة من أعضاء الدائرة بعد.</p></div>`;
+                }
+            } else {
+                document.getElementById('feedCircleUpdates').innerHTML = `<div class="empty-state"><p>جاري الربط مع دائرة محلية مناسبة لمرحلتك...</p></div>`;
+            }
+        }
+
+        async function markStepCompleted() {
+            const btn = document.getElementById('btnMarkCompleted');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-check-double"></i> تم إكمال المهمة اليوم`;
         }
 
         async function handleJournalSubmit(e) {
             e.preventDefault();
-            if (todaySubmitted) return;
-
-            const win = document.getElementById('updateWin').value.trim();
-            const reflection = document.getElementById('updateReflection').value.trim();
-            const help = document.getElementById('updateHelp').value.trim();
-
-            const fullText = `${selectedMood} ${win}`;
             const btn = document.getElementById('btnPostUpdate');
             btn.disabled = true;
 
-            const { error } = await db.from('daily_updates').insert([{
+            const journalPayload = {
                 user_id: currentUser.id,
-                user_name: myProfile.first_name,
-                phase_name: myProfile.current_phase,
-                update_text: fullText,
-                reflection: reflection,
-                help_request: help
-            }]);
+                circle_id: myProfile.circle_id || null,
+                mood: selectedMood,
+                win: document.getElementById('updateWin').value.trim(),
+                reflection: document.getElementById('updateReflection').value.trim(),
+                help_requested: document.getElementById('updateHelp').value.trim() || null
+            };
 
-            btn.disabled = false;
-            if (error) alert(error.message);
-            else {
-                await checkTodayJournal();
+            const { error } = await db.from('journals').insert([journalPayload]);
+
+            if (error) {
+                alert('حدث خطأ أثناء حفظ البيانات: ' + error.message);
+                btn.disabled = false;
+            } else {
+                await checkTodaySubmission();
+                await fetchDashboardData();
+                await fetchJourneyData();
                 switchTab('Feed');
-                loadHomeFeed();
             }
         }
 
-        async function loadCircleMembers() {
-            const list = document.getElementById('circleMembersList');
-
-            const { data: circleRel } = await db.from('circle_members')
-                .select('circle_id')
-                .eq('user_id', currentUser.id)
-                .maybeSingle();
-
-            if (!circleRel) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-compass-drafting"></i>
-                        <h4 style="color:var(--text-main); margin-bottom:4px;">Finding people in your phase</h4>
-                        <p>We are searching for active members matching your city, country, and duration.</p>
-                    </div>`;
+        async function fetchCircleMembers() {
+            if (!myProfile.circle_id) {
+                document.getElementById('circleMembersList').innerHTML = `<div class="empty-state"><p>لم يتم انضمامك إلى دائرة بعد.</p></div>`;
                 return;
             }
 
-            const { data: members } = await db.from('circle_members').select('user_id').eq('circle_id', circleRel.circle_id);
-            const userIds = members.map(m => m.user_id);
-            const { data: profiles } = await db.from('profiles').select('*').in('user_id', userIds);
+            const { data } = await db.from('profiles').select('*').eq('circle_id', myProfile.circle_id);
+            const container = document.getElementById('circleMembersList');
 
-            if (!profiles || profiles.length === 0) {
-                list.innerHTML = `<div class="empty-state"><p>We're finding people in your phase.</p></div>`;
-                return;
+            if (data && data.length > 0) {
+                container.innerHTML = data.map(m => `
+                    <div class="card" style="padding:16px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-weight:700;">${escapeHTML(m.first_name)} ${m.user_id === currentUser.id ? '(أنت)' : ''}</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHTML(m.current_phase)}</div>
+                        </div>
+                        <span class="badge badge-location">${escapeHTML(m.city || 'محلي')}</span>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = `<div class="empty-state"><p>لم يتم العثور على أعضاء آخرين في هذه الدائرة.</p></div>`;
             }
-
-            list.innerHTML = profiles.map(m => {
-                const isMe = m.user_id === currentUser.id ? " (You)" : "";
-                const sameCity = (m.city || '').toLowerCase() === (myProfile.city || '').toLowerCase();
-                const sameCountry = (m.country || '').toLowerCase() === (myProfile.country || '').toLowerCase();
-                
-                let locationBadge = sameCity ? '<span class="badge badge-location">Same City</span>' : (sameCountry ? '<span class="badge badge-location">Same Country</span>' : '');
-                let mentorBadge = m.is_mentor ? '<span class="badge badge-mentor">Mentor</span>' : '';
-
-                return `
-                <div class="card" style="padding:16px; margin-bottom:12px;">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <div style="display:flex; align-items:center; gap:12px;">
-                            <div class="user-avatar">${escapeHTML((m.first_name || 'U').charAt(0))}</div>
-                            <div>
-                                <div style="font-weight:700;">${escapeHTML(m.first_name)}${isMe}</div>
-                                <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHTML(m.city || '')}, ${escapeHTML(m.country || '')}</div>
-                            </div>
-                        </div>
-                        <div style="display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end;">
-                            ${locationBadge}
-                            ${mentorBadge}
-                            <span class="badge badge-active">Active</span>
-                        </div>
-                    </div>
-                    <div style="margin-top:12px; font-size:0.85rem; color:var(--text-muted);">
-                        Goal: <span style="color:var(--text-main);">${escapeHTML(m.goal || 'Phase Focus')}</span>
-                    </div>
-                    <div style="display:flex; gap:8px; margin-top:14px;">
-                        <button class="btn small ghost" onclick="alert('Profile view for ${escapeHTML(m.first_name)}')">View Profile</button>
-                        <button class="btn small ghost" onclick="alert('Encouragement sent!')">Send Support</button>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        async function loadHomeFeed() {
-            // LIMITED TO LATEST 3 CIRCLE UPDATES ONLY
-            const { data: posts } = await db.from('daily_updates')
-                .select('*')
-                .ilike('phase_name', myProfile.current_phase)
-                .order('created_at', { ascending: false })
-                .limit(3);
-
-            const circleFeed = document.getElementById('feedCircleUpdates');
-            if (!posts || posts.length === 0) {
-                circleFeed.innerHTML = `<div class="empty-state" style="padding:16px;"><p>No circle activity logged today.</p></div>`;
-                return;
-            }
-
-            circleFeed.innerHTML = posts.map(p => `
-                <div class="card" style="padding:14px; margin-bottom:10px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-weight:700; font-size:0.9rem; color:var(--accent-glow);">${escapeHTML(p.user_name)}</span>
-                        <span style="font-size:0.75rem; color:var(--text-muted);">${new Date(p.created_at).toLocaleTimeString([],{hour:'2-digit', minute:'2-digit'})}</span>
-                    </div>
-                    <div style="font-size:0.9rem; margin-top:6px;">${escapeHTML(p.update_text)}</div>
-                </div>
-            `).join('');
-        }
-
-        async function loadDiscussions() {
-            const { data } = await db.from('discussions')
-                .select('*')
-                .ilike('phase_name', myProfile.current_phase)
-                .order('created_at', { ascending: false })
-                .limit(20);
-
-            currentDiscussions = data || [];
-            renderDiscussions(currentDiscussions);
-        }
-
-        function renderDiscussions(items) {
-            const list = document.getElementById('discussionsList');
-            if (!items || items.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-comments"></i>
-                        <h4 style="color:var(--text-main); margin-bottom:4px;">No discussions yet</h4>
-                        <p>Be the first to help someone in your phase.</p>
-                    </div>`;
-                return;
-            }
-
-            list.innerHTML = items.map(d => `
-                <div class="card" style="padding:16px; margin-bottom:12px;">
-                    <div class="reddit-post">
-                        <div class="upvote-box">
-                            <button class="upvote-btn" onclick="upvoteDiscussion('${d.id}', this)"><i class="fa-solid fa-caret-up"></i></button>
-                            <span class="upvote-count">${d.upvotes || 0}</span>
-                        </div>
-                        <div style="flex:1;">
-                            <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                                <span style="font-weight:700; font-size:0.9rem;">${escapeHTML(d.user_name)}</span>
-                                ${d.is_mentor_post ? '<span class="badge badge-mentor">Pinned Mentor</span>' : ''}
-                            </div>
-                            <div style="font-size:0.95rem; color:var(--text-main); font-weight:600;">${escapeHTML(d.topic_text)}</div>
-                            <div style="display:flex; gap:12px; margin-top:10px; font-size:0.8rem; color:var(--text-muted);">
-                                <span><i class="fa-solid fa-reply"></i> Reply</span>
-                                <span><i class="fa-solid fa-hands-clapping"></i> Helpful</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function sortDiscussions(type) {
-            let sorted = [...currentDiscussions];
-            if (type === 'trending') sorted.sort((a,b) => (b.upvotes || 0) - (a.upvotes || 0));
-            else sorted.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-            renderDiscussions(sorted);
-        }
-
-        async function upvoteDiscussion(id, btn) {
-            const countSpan = btn.nextElementSibling;
-            let count = parseInt(countSpan.innerText) + 1;
-            countSpan.innerText = count;
-            await db.from('discussions').update({ upvotes: count }).eq('id', id);
         }
 
         function toggleDiscussionEditor(show) {
             document.getElementById('newDiscussionEditor').style.display = show ? 'block' : 'none';
-            document.getElementById('btnOpenDiscussionEditor').style.display = show ? 'none' : 'flex';
+            document.getElementById('btnOpenDiscussionEditor').style.display = show ? 'none' : 'block';
         }
 
-        async function postDiscussion() {
-            const input = document.getElementById('discussionInput');
-            const text = input.value.trim();
-            if (!text) return;
-
-            await db.from('discussions').insert([{
-                user_id: currentUser.id,
-                user_name: myProfile.first_name,
-                phase_name: myProfile.current_phase,
-                topic_text: text,
-                upvotes: 1
-            }]);
-
-            input.value = '';
-            toggleDiscussionEditor(false);
-            loadDiscussions();
-        }
-
-        async function loadJourneyTimeline() {
-            const { data: updates } = await db.from('daily_updates')
-                .select('*')
-                .eq('user_id', currentUser.id)
+        async function fetchDiscussions() {
+            const { data } = await db.from('discussions')
+                .select('*, profiles(first_name)')
                 .order('created_at', { ascending: false });
 
-            const container = document.getElementById('journeyTimeline');
-            const streakElem = document.getElementById('statStreak');
-            const totalDaysElem = document.getElementById('statTotalDays');
-            const rateElem = document.getElementById('statCompletionRate');
-            const actionsElem = document.getElementById('statActions');
-            const badgesContainer = document.getElementById('badgesContainer');
+            renderDiscussions(data || []);
+        }
 
-            if (!updates || updates.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-book-bookmark"></i>
-                        <h4 style="color:var(--text-main); margin-bottom:4px;">Your story starts today</h4>
-                        <p>Complete daily updates to build your phase history.</p>
-                    </div>`;
-                streakElem.innerText = '0 Days';
-                totalDaysElem.innerText = '0 Days';
-                rateElem.innerText = '0%';
-                actionsElem.innerText = '0';
+        function renderDiscussions(list) {
+            const container = document.getElementById('discussionsList');
+            if (list.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-comments"></i><p>لا توجد نقاشات حالياً. كن أول من يشارك!</p></div>`;
                 return;
             }
 
-            const total = updates.length;
-            const streak = total > 0 ? total : 0; 
-            const calcRate = Math.min(100, Math.round((total / (parseInt(myProfile.duration) || 30)) * 100));
-
-            streakElem.innerText = `${streak} Days`;
-            totalDaysElem.innerText = `${total} Days`;
-            rateElem.innerText = `${calcRate}%`;
-            actionsElem.innerText = total;
-
-            document.getElementById('dashProgressBar').style.width = calcRate + '%';
-            document.getElementById('dashProgressPct').innerText = calcRate + '%';
-
-            // DYNAMIC BADGES CALCULATION
-            let badges = ['🌱 First Update'];
-            if (streak >= 7) badges.push('🔥 7 Day Streak');
-            if (total >= 10) badges.push('🎯 Goal Pioneer');
-            if (total >= 20) badges.push('🤝 Community Helper');
-            if (calcRate >= 100) badges.push('🏆 Phase Completed');
-
-            badgesContainer.innerHTML = badges.map(b => `<span class="badge badge-location" style="font-size:0.8rem;">${b}</span>`).join('');
-
-            container.innerHTML = updates.map(u => `
-                <div class="timeline-item">
-                    <div style="font-size:0.75rem; color:var(--text-muted);">${new Date(u.created_at).toLocaleDateString()}</div>
-                    <div style="font-weight:700; font-size:0.9rem; margin-top:2px;">${escapeHTML(u.update_text)}</div>
-                    ${u.reflection ? `<div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">"${escapeHTML(u.reflection)}"</div>` : ''}
+            container.innerHTML = list.map(item => `
+                <div class="card reddit-post">
+                    <div class="upvote-box">
+                        <button class="upvote-btn" onclick="upvotePost('${item.id}', ${item.upvotes || 0})"><i class="fa-solid fa-caret-up"></i></button>
+                        <span class="upvote-count">${item.upvotes || 0}</span>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">نُشر بواسطة ${escapeHTML(item.profiles?.first_name || 'عضو')}</div>
+                        <div style="font-size:0.95rem;">${escapeHTML(item.content)}</div>
+                    </div>
                 </div>
             `).join('');
         }
 
-        function markStepCompleted() {
-            const btn = document.getElementById('btnMarkCompleted');
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> Completed for Today';
-            btn.style.background = '#22c55e';
+        async function postDiscussion() {
+            const content = document.getElementById('discussionInput').value.trim();
+            if (!content) return;
+
+            const { error } = await db.from('discussions').insert([{
+                user_id: currentUser.id,
+                content: content,
+                upvotes: 0
+            }]);
+
+            if (!error) {
+                document.getElementById('discussionInput').value = '';
+                toggleDiscussionEditor(false);
+                await fetchDiscussions();
+            }
+        }
+
+        async function upvotePost(id, currentCount) {
+            await db.from('discussions').update({ upvotes: currentCount + 1 }).eq('id', id);
+            await fetchDiscussions();
+        }
+
+        async function fetchJourneyData() {
+            const { data } = await db.from('journals')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
+
+            const logs = data || [];
+            const activeDays = logs.length;
+
+            document.getElementById('statTotalDays').innerText = `${activeDays} يوم`;
+            document.getElementById('statStreak').innerText = `${activeDays} يوم`;
+            document.getElementById('statActions').innerText = activeDays;
+
+            const targetDuration = myProfile.duration || 30;
+            const completionPct = Math.min(100, Math.round((activeDays / targetDuration) * 100));
+            document.getElementById('statCompletionRate').innerText = `${completionPct}%`;
+
+            const badgesContainer = document.getElementById('badgesContainer');
+            let badges = [];
+            if (activeDays >= 1) badges.push('<span class="badge badge-active"><i class="fa-solid fa-star"></i> الخطوة الأولى</span>');
+            if (activeDays >= 7) badges.push('<span class="badge badge-mentor"><i class="fa-solid fa-fire"></i> استمرار 7 أيام</span>');
+            if (activeDays >= 30) badges.push('<span class="badge badge-location"><i class="fa-solid fa-trophy"></i> منجز المرحلة</span>');
+            
+            badgesContainer.innerHTML = badges.length > 0 ? badges.join(' ') : `<span style="font-size:0.85rem; color:var(--text-muted);">واصل إرسال التحديثات اليومية لفتح الأوسمة.</span>`;
+
+            const timeline = document.getElementById('journeyTimeline');
+            if (logs.length > 0) {
+                timeline.innerHTML = logs.map(l => `
+                    <div class="timeline-item">
+                        <div style="font-size:0.75rem; color:var(--text-muted);">${new Date(l.created_at).toLocaleDateString('ar-EG')}</div>
+                        <div style="font-weight:700; font-size:0.9rem; margin-top:2px;">${escapeHTML(l.mood)} ${escapeHTML(l.win)}</div>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">${escapeHTML(l.reflection)}</p>
+                    </div>
+                `).join('');
+            } else {
+                timeline.innerHTML = `<div class="empty-state"><p>لا يوجد سجل نشاط مسجل حتى الآن.</p></div>`;
+            }
         }
 
         function setupRealtime() {
-            db.channel('public_updates')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'daily_updates' }, () => {
-                    loadHomeFeed();
-                })
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'discussions' }, () => {
-                    loadDiscussions();
-                })
+            db.channel('public:discussions')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'discussions' }, () => fetchDiscussions())
                 .subscribe();
         }
 
-        async function logout() {
-            await db.auth.signOut();
-            localStorage.clear();
-            location.reload();
-        }
-
-        initApp();
+        window.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
