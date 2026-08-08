@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MyPhase App</title>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -17,26 +17,34 @@
             --border-color: #334155;
         }
 
-        body {
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
+        }
+
+        body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            direction: rtl;
+            direction: ltr;
+            padding-bottom: 70px;
         }
 
         .navbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 24px;
+            padding: 16px 20px;
             background-color: var(--card-bg);
             border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .brand {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -45,8 +53,16 @@
 
         .container {
             max-width: 600px;
-            margin: 24px auto;
+            margin: 20px auto;
             padding: 0 16px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         .header-actions {
@@ -54,20 +70,27 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            gap: 12px;
+        }
+
+        .header-actions h2 {
+            font-size: 1.2rem;
         }
 
         .btn {
             background-color: var(--accent-color);
             color: white;
             border: none;
-            padding: 10px 18px;
+            padding: 10px 16px;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
+            font-size: 0.9rem;
+            white-space: nowrap;
         }
 
         .btn:hover {
@@ -90,7 +113,7 @@
             color: var(--accent-color);
             padding: 4px 10px;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
         }
 
@@ -112,59 +135,108 @@
             border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: space-around;
-            padding: 12px 0;
+            padding: 10px 0;
+            z-index: 1000;
         }
 
         .nav-item {
             color: var(--text-muted);
             text-decoration: none;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 4px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 25%;
         }
 
         .nav-item.active {
             color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
         }
     </style>
 </head>
 <body>
 
+    <!-- Header Navigation -->
     <div class="navbar">
-        <div class="brand">
-            <span>🧭 MyPhase</span>
+        <div id="sessionTimer" style="font-size: 0.85rem; color: var(--text-muted);">
+            Session: <span id="timerText">00:00:00</span> ⏱️
         </div>
-        <div id="sessionTimer" style="font-size: 0.9rem; color: var(--text-muted);">
-            ⏱️ Session: <span id="timerText">00:00:00</span>
+        <div class="brand">
+            <span>MyPhase</span> 🧭
         </div>
     </div>
 
     <div class="container">
-        <div class="header-actions">
-            <h2>👥 أعضاء المجموعة (Support Circle)</h2>
-            <button class="btn" onclick="retryMatchCircle(true)">
-                🔄 Rematch Circle
-            </button>
+        <!-- 1. Home Tab -->
+        <div id="homeTab" class="tab-content">
+            <div class="card" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                <h3>Welcome to MyPhase</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Connect with peers in your same life phase and location.</p>
+            </div>
         </div>
 
-        <div id="circleMembersList">
+        <!-- 2. Circle Tab (Active by default) -->
+        <div id="circleTab" class="tab-content active">
+            <div class="header-actions">
+                <button class="btn" onclick="retryMatchCircle(true)">
+                    🔄 Rematch Circle
+                </button>
+                <h2>👥 Support Circle Members</h2>
+            </div>
+
+            <div id="circleMembersList">
+                <div class="empty-state">
+                    <p>Loading circle members...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Discussions Tab -->
+        <div id="discussionsTab" class="tab-content">
             <div class="empty-state">
-                <p>جاري تحميل أعضاء الدائرة...</p>
+                <p>💬 Discussions feature coming soon!</p>
+            </div>
+        </div>
+
+        <!-- 4. Account Tab -->
+        <div id="accountTab" class="tab-content">
+            <div id="accountProfileInfo" class="card" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                <p style="color: var(--text-muted);">Loading profile information...</p>
             </div>
         </div>
     </div>
 
+    <!-- Bottom Navigation Bar -->
     <div class="bottom-nav">
-        <a href="#" class="nav-item">🏠 الصفحة الرئيسية</a>
-        <a href="#" class="nav-item active">👥 المجموعة</a>
-        <a href="#" class="nav-item">💬 المحادثات</a>
-        <a href="#" class="nav-item">👤 الحساب</a>
+        <button class="nav-item" onclick="switchTab('homeTab', this)">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
+        </button>
+        <button class="nav-item active" onclick="switchTab('circleTab', this)">
+            <span class="nav-icon">👥</span>
+            <span>Circle</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('discussionsTab', this)">
+            <span class="nav-icon">💬</span>
+            <span>Discussions</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('accountTab', this)">
+            <span class="nav-icon">👤</span>
+            <span>Account</span>
+        </button>
     </div>
 
     <script>
-        // 1. تهيئة Supabase Client (تأكد من وضع المفاتيح الخاصة بك)
+        // 1. Supabase Client Setup
         const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT_URL.supabase.co';
         const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -172,7 +244,6 @@
         let currentUser = null;
         let myProfile = null;
 
-        // دالة الهروب من النصوص الخبيثة (XSS Protection)
         function escapeHTML(str) {
             if (!str) return '';
             return str.replace(/[&<>'"]/g, 
@@ -180,7 +251,15 @@
             );
         }
 
-        // 2. عند تحميل الصفحة
+        // Navigation Switcher
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            element.classList.add('active');
+        }
+
         window.addEventListener('DOMContentLoaded', async () => {
             startSessionTimer();
             await initAuth();
@@ -191,7 +270,7 @@
             if (error || !user) {
                 console.warn("User not authenticated.");
                 document.getElementById('circleMembersList').innerHTML = `
-                    <div class="empty-state"><p>يرجى تسجيل الدخول لعرض أعضاء مجموعتك.</p></div>
+                    <div class="empty-state"><p>Please log in to view your support circle members.</p></div>
                 `;
                 return;
             }
@@ -212,7 +291,13 @@
 
             myProfile = data;
             
-            // إذا لم يكن مرتبطاً بدائرة بعد، تنفيذ المطابقة تلقائياً
+            // Render Account Info
+            document.getElementById('accountProfileInfo').innerHTML = `
+                <h3>${escapeHTML(myProfile.first_name || 'User')} Profile</h3>
+                <p style="color: var(--text-muted); font-size:0.9rem;">Phase: <b>${escapeHTML(myProfile.current_phase || 'N/A')}</b></p>
+                <p style="color: var(--text-muted); font-size:0.9rem;">Location: <b>${escapeHTML(myProfile.city || 'N/A')}, ${escapeHTML(myProfile.country || 'N/A')}</b></p>
+            `;
+
             if (!myProfile.circle_id) {
                 await retryMatchCircle(false);
             } else {
@@ -220,11 +305,9 @@
             }
         }
 
-        // 3. دالة المطابقة المحدثة لربط الحسابات فوراً
         async function retryMatchCircle(showSuccessAlert = true) {
             if (!myProfile) return;
             try {
-                // استدعاء دالة المطابقة من PostgreSQL
                 const { error: rpcError } = await db.rpc('match_user_to_circle', {
                     p_user_id: myProfile.user_id,
                     p_phase: myProfile.current_phase,
@@ -235,7 +318,6 @@
 
                 if (rpcError) throw rpcError;
 
-                // تحديث بيانات البروفايل المحلية بالـ circle_id الجديد
                 const { data: updatedProfile } = await db.from('profiles')
                     .select('*')
                     .eq('user_id', currentUser.id)
@@ -245,23 +327,21 @@
                     myProfile = updatedProfile;
                 }
 
-                // جلب قائمة الأعضاء فوراً
                 await fetchCircleMembers();
 
                 if (showSuccessAlert) {
-                    alert("تمت المطابقة وتحديث المجموعة بنجاح!");
+                    alert("Circle matched and updated successfully!");
                 }
             } catch (e) {
                 console.error("Match circle error:", e);
-                alert("حدث خطأ أثناء المطابقة: " + e.message);
+                alert("Match Error: " + e.message);
             }
         }
 
-        // 4. دالة جلب وعرض كافة أعضاء الدائرة
         async function fetchCircleMembers() {
             const container = document.getElementById('circleMembersList');
             if (!myProfile || !myProfile.circle_id) {
-                container.innerHTML = `<div class="empty-state"><p>لم يتم تعيين مجموعة لك بعد. اضغط على Rematch Circle.</p></div>`;
+                container.innerHTML = `<div class="empty-state"><p>No circle assigned. Tap Rematch Circle.</p></div>`;
                 return;
             }
 
@@ -271,7 +351,7 @@
 
             if (error) {
                 console.error("Error fetching members:", error);
-                container.innerHTML = `<div class="empty-state"><p>حدث خطأ أثناء جلب قائمة الأعضاء.</p></div>`;
+                container.innerHTML = `<div class="empty-state"><p>Error fetching circle members.</p></div>`;
                 return;
             }
 
@@ -280,21 +360,20 @@
                     <div class="card">
                         <div>
                             <div style="font-weight: 700; font-size: 1rem;">
-                                ${escapeHTML(m.first_name || 'عضو')} ${m.user_id === currentUser.id ? '<span style="color:var(--accent-color); font-size:0.8rem;">(أنت)</span>' : ''}
+                                ${escapeHTML(m.first_name || 'Member')} ${m.user_id === currentUser.id ? '<span style="color:var(--accent-color); font-size:0.8rem;">(You)</span>' : ''}
                             </div>
                             <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
-                                ${escapeHTML(m.current_phase || 'غير محدد')}
+                                ${escapeHTML(m.current_phase || 'Phase N/A')}
                             </div>
                         </div>
-                        <span class="badge">${escapeHTML(m.city || 'محلي')}</span>
+                        <span class="badge">${escapeHTML(m.city || 'Local')}</span>
                     </div>
                 `).join('');
             } else {
-                container.innerHTML = `<div class="empty-state"><p>لا يوجد أعضاء آخرين في هذه المجموعة حالياً.</p></div>`;
+                container.innerHTML = `<div class="empty-state"><p>No other members in this circle yet.</p></div>`;
             }
         }
 
-        // 5. عداد الجلسة
         function startSessionTimer() {
             let seconds = 0;
             const timerElement = document.getElementById('timerText');
