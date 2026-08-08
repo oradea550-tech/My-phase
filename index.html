@@ -106,7 +106,6 @@
     <header>
         <div class="logo"><i class="fa-solid fa-compass"></i> MyPhase</div>
         
-        <!-- SESSION TIMER (2 HOURS) -->
         <div class="session-timer-badge" id="sessionTimerContainer" style="display:none;">
             <i class="fa-regular fa-clock"></i> Session: <span id="sessionTimer">02:00:00</span>
         </div>
@@ -413,7 +412,7 @@
         const SUPABASE_URL = "https://rvntpauzxgskmbedqmbw.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2bnRwYXV6eGdza21iZWRxbWJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NzUyMTcsImV4cCI6MjEwMTI1MTIxN30.KmJYRYHxIW0-OQ1n2N3aJKlc-JOJnoteewGoIsbFhkQ";
         
-        // تفعيل الإبقاء على الجلسة بشكل إجباري لتجنب تسجيل الخروج عند التحديث
+        // تفعيل الإبقاء على الجلسة بشكل إجباري لمنع الخروج عند التحديث
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
             auth: {
                 persistSession: true,
@@ -568,7 +567,7 @@
                 });
                 if (authErr) throw authErr;
 
-                // تسجيل الدخول الفوري لإنشاء Session كاملة ومباشرة
+                // تسجيل الدخول الفوري لإنشاء Session محلياً بالكامل
                 const { data: signInData, error: signInErr } = await db.auth.signInWithPassword({
                     email: tempSignupData.email,
                     password: tempSignupData.password
@@ -597,10 +596,10 @@
                     duration: parseInt(document.getElementById('duration').value, 10)
                 };
 
-                // 2. إدخال أو تحديث ملف المستخدم
+                // 2. حفظ بيانات المستخدم
                 await db.from('profiles').upsert([profilePayload], { onConflict: 'user_id' });
 
-                // 3. المطابقة السريعة مع الدائرة
+                // 3. تنفيذ المطابقة
                 await db.rpc('match_user_to_circle', {
                     p_user_id: userId,
                     p_phase: profilePayload.current_phase,
@@ -624,14 +623,21 @@
             const btn = document.getElementById('btnSubmitSignIn');
             btn.disabled = true;
             try {
-                const { error } = await db.auth.signInWithPassword({
-                    email: document.getElementById('signinEmail').value,
+                // إلغاء الجلسات القديمة إن وجدت
+                await db.auth.signOut();
+
+                const { data, error } = await db.auth.signInWithPassword({
+                    email: document.getElementById('signinEmail').value.trim(),
                     password: document.getElementById('signinPassword').value
                 });
                 if (error) throw error;
-                document.getElementById('authModal').style.display = 'none';
-                startSessionTimer();
-                await loadUserProfile();
+
+                if (data?.session) {
+                    currentUser = data.session.user;
+                    document.getElementById('authModal').style.display = 'none';
+                    startSessionTimer();
+                    await loadUserProfile();
+                }
             } catch (err) {
                 alert('Sign in failed: ' + err.message);
             } finally {
@@ -649,32 +655,39 @@
         async function loadUserProfile() {
             if (!currentUser) return;
 
-            const { data, error } = await db.from('profiles').select('*').eq('user_id', currentUser.id).maybeSingle();
-            
-            if (error || !data) {
-                showAuthModal();
-                return;
+            try {
+                const { data, error } = await db.from('profiles')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .maybeSingle();
+
+                if (!data) {
+                    showStep(2);
+                    return;
+                }
+
+                myProfile = data;
+
+                // إذا لم يكن مرتبطًا بـ circle حتى الآن، شغل المطابقة تلقائيًا
+                if (!myProfile.circle_id) {
+                    await retryMatchCircle(false);
+                }
+
+                document.getElementById('authModal').style.display = 'none';
+                document.getElementById('userMenuContainer').style.display = 'block';
+                document.getElementById('userAvatarBtn').innerText = (myProfile.first_name || 'U')[0].toUpperCase();
+                document.getElementById('dashWelcomeName').innerText = `👋 Welcome, ${myProfile.first_name}`;
+                document.getElementById('dashPhaseName').innerText = myProfile.current_phase || 'General Phase';
+                document.getElementById('dashPhaseSub').innerText = `${myProfile.city || ''}, ${myProfile.country || ''}`;
+
+                await checkTodaySubmission();
+                await fetchDashboardData();
+                await fetchCircleMembers();
+                await fetchDiscussions();
+                await fetchJourneyData();
+            } catch (err) {
+                console.error("Error loading profile:", err);
             }
-
-            myProfile = data;
-
-            // إذا لم يكن مرتبطًا بـ circle حتى الآن، شغل المطابقة تلقائيًا
-            if (!myProfile.circle_id) {
-                await retryMatchCircle(false);
-            }
-
-            document.getElementById('authModal').style.display = 'none';
-            document.getElementById('userMenuContainer').style.display = 'block';
-            document.getElementById('userAvatarBtn').innerText = (myProfile.first_name || 'U')[0].toUpperCase();
-            document.getElementById('dashWelcomeName').innerText = `👋 Welcome, ${myProfile.first_name}`;
-            document.getElementById('dashPhaseName').innerText = myProfile.current_phase || 'General Phase';
-            document.getElementById('dashPhaseSub').innerText = `${myProfile.city || ''}, ${myProfile.country || ''}`;
-
-            await checkTodaySubmission();
-            await fetchDashboardData();
-            await fetchCircleMembers();
-            await fetchDiscussions();
-            await fetchJourneyData();
         }
 
         async function retryMatchCircle(showSuccessAlert = true) {
@@ -688,7 +701,7 @@
                     p_language: 'English'
                 });
                 
-                // جلب الملف المحدث
+                // جلب بيانات البروفايل المحدثة مع الـ circle_id الجديد
                 const { data } = await db.from('profiles').select('*').eq('user_id', currentUser.id).single();
                 if (data) myProfile = data;
                 
@@ -765,7 +778,7 @@
                     container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>No new updates from your circle members yet.</p></div>`;
                 }
             } else {
-                document.getElementById('feedCircleUpdates').innerHTML = `<div class="empty-state"><p>Connecting you to a suitable local support circle...</p></div>`;
+                document.getElementById('feedCircleUpdates').innerHTML = `<div class="empty-state"><p>Connecting you to a suitable support circle...</p></div>`;
             }
         }
 
