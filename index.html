@@ -8,6 +8,8 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     >
 
+    <meta name="theme-color" content="#070b18">
+
     <title>MyPhase</title>
 
     <!-- Font Awesome -->
@@ -16,23 +18,24 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     >
 
-    <!-- Supabase -->
+    <!-- IMPORTANT: Supabase MUST load before our JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
 
         /* =========================================================
-           ROOT
+           ROOT VARIABLES
         ========================================================= */
 
         :root {
-            --bg-main: #070b1a;
-            --bg-card: #11182b;
+            --bg-main: #070b18;
+            --bg-card: #111827;
+            --bg-card-2: #182235;
 
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
 
-            --border: #26344d;
+            --border: #263449;
 
             --accent-primary: #6366f1;
             --accent-glow: #818cf8;
@@ -41,39 +44,46 @@
             --warning: #f59e0b;
             --danger: #ef4444;
 
+            --radius-sm: 8px;
             --radius-md: 12px;
             --radius-lg: 18px;
 
             --shadow-soft:
-                0 10px 30px rgba(0, 0, 0, 0.25);
+                0 8px 30px rgba(0, 0, 0, 0.28);
         }
 
         /* =========================================================
-           GLOBAL RESET
+           RESET
         ========================================================= */
 
-        *,
-        *::before,
-        *::after {
+        * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         html {
             width: 100%;
-            max-width: 100%;
+            min-height: 100%;
             overflow-x: hidden;
             background: var(--bg-main);
         }
 
         body {
             width: 100%;
-            max-width: 100%;
             min-height: 100vh;
+            min-height: 100dvh;
 
-            margin: 0;
-            padding: 0 0 90px 0;
+            overflow-x: hidden;
 
-            background: var(--bg-main);
+            background:
+                radial-gradient(
+                    circle at top right,
+                    rgba(99, 102, 241, 0.10),
+                    transparent 35%
+                ),
+                var(--bg-main);
+
             color: var(--text-main);
 
             font-family:
@@ -87,14 +97,16 @@
                 Cantarell,
                 sans-serif;
 
-            overflow-x: hidden;
+            padding-bottom: 82px;
+
+            -webkit-font-smoothing: antialiased;
         }
 
         button,
         input,
         textarea,
         select {
-            font-family: inherit;
+            font: inherit;
         }
 
         button {
@@ -102,67 +114,135 @@
         }
 
         /* =========================================================
+           ERROR SCREEN
+        ========================================================= */
+
+        #fatalError {
+            display: none;
+
+            position: fixed;
+            inset: 0;
+
+            z-index: 99999;
+
+            padding: 20px;
+
+            background: #070b18;
+            color: white;
+
+            align-items: center;
+            justify-content: center;
+        }
+
+        #fatalErrorBox {
+            width: 100%;
+            max-width: 480px;
+
+            background: #111827;
+
+            border: 1px solid #334155;
+
+            border-radius: 18px;
+
+            padding: 24px;
+
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        #fatalErrorBox h2 {
+            color: #f87171;
+            margin-bottom: 12px;
+        }
+
+        #fatalErrorBox p {
+            color: #cbd5e1;
+            line-height: 1.6;
+            font-size: 0.9rem;
+            word-break: break-word;
+        }
+
+        /* =========================================================
            HEADER
         ========================================================= */
 
         header {
-            width: 100%;
-
-            background: var(--bg-card);
-            border-bottom: 1px solid var(--border);
-
-            padding: 14px 16px;
-
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-
             position: sticky;
             top: 0;
 
-            z-index: 100;
+            z-index: 1000;
+
+            width: 100%;
+
+            background: rgba(17, 24, 39, 0.96);
+
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+
+            border-bottom:
+                1px solid var(--border);
+
+            box-shadow:
+                0 4px 16px rgba(0, 0, 0, 0.25);
+
+            padding:
+                12px 16px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 10px;
         }
 
         .logo {
-            min-width: 0;
-
-            font-weight: 800;
-            font-size: 1.25rem;
-
-            color: var(--accent-glow);
-
             display: flex;
             align-items: center;
 
-            gap: 8px;
-        }
+            gap: 7px;
 
-        .session-timer-badge {
-            background: rgba(99, 102, 241, 0.15);
-
-            border: 1px solid var(--accent-primary);
+            font-weight: 800;
+            font-size: 1.15rem;
 
             color: var(--accent-glow);
-
-            padding: 6px 10px;
-
-            border-radius: 999px;
-
-            font-size: 0.75rem;
-            font-weight: 700;
-
-            display: none;
-            align-items: center;
-
-            gap: 5px;
 
             white-space: nowrap;
         }
 
+        .session-timer-badge {
+            display: none;
+
+            align-items: center;
+            justify-content: center;
+
+            gap: 5px;
+
+            padding: 5px 9px;
+
+            border-radius: 999px;
+
+            background:
+                rgba(99, 102, 241, 0.14);
+
+            border:
+                1px solid var(--accent-primary);
+
+            color: var(--accent-glow);
+
+            font-size: 0.68rem;
+            font-weight: 700;
+
+            white-space: nowrap;
+        }
+
+        /* =========================================================
+           USER MENU
+        ========================================================= */
+
         .user-menu-container {
             position: relative;
+
             display: none;
         }
 
@@ -182,38 +262,44 @@
             color: white;
 
             display: flex;
+
             align-items: center;
             justify-content: center;
 
-            font-weight: 700;
-            font-size: 1rem;
+            font-weight: 800;
 
             cursor: pointer;
 
-            border: 2px solid var(--border);
+            border:
+                2px solid var(--border);
         }
 
         .dropdown-menu {
             position: absolute;
 
             right: 0;
-            top: 48px;
+            top: 46px;
 
-            width: 180px;
+            width: 190px;
 
             background: var(--bg-card);
 
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
+            border:
+                1px solid var(--border);
 
-            box-shadow: var(--shadow-soft);
+            border-radius:
+                var(--radius-md);
+
+            box-shadow:
+                var(--shadow-soft);
 
             display: none;
+
             flex-direction: column;
 
             overflow: hidden;
 
-            z-index: 101;
+            z-index: 2000;
         }
 
         .dropdown-menu.show {
@@ -221,11 +307,13 @@
         }
 
         .dropdown-item {
-            padding: 12px 16px;
+            width: 100%;
+
+            padding: 13px 15px;
 
             color: var(--text-main);
 
-            font-size: 0.9rem;
+            font-size: 0.88rem;
 
             text-decoration: none;
 
@@ -235,10 +323,18 @@
             gap: 10px;
 
             cursor: pointer;
+
+            background: transparent;
+
+            border: none;
+
+            text-align: left;
         }
 
         .dropdown-item:hover {
-            background: rgba(255,255,255,0.05);
+            background:
+                rgba(255, 255, 255, 0.05);
+
             color: var(--accent-glow);
         }
 
@@ -248,69 +344,6064 @@
 
         main {
             width: 100%;
+
             max-width: 760px;
 
-            margin: 0 auto;
+            margin:
+                0 auto;
 
-            padding: 18px 16px;
+            padding:
+                14px;
         }
+
+        /* =========================================================
+           CARDS
+        ========================================================= */
 
         .card {
             width: 100%;
 
-            background: var(--bg-card);
+            background:
+                linear-gradient(
+                    180deg,
+                    rgba(17, 24, 39, 0.98),
+                    rgba(15, 23, 42, 0.98)
+                );
 
-            border: 1px solid var(--border);
+            border:
+                1px solid var(--border);
 
-            border-radius: var(--radius-lg);
+            border-radius:
+                var(--radius-lg);
 
-            padding: 20px;
+            padding:
+                18px;
 
-            margin-bottom: 16px;
+            margin-bottom:
+                14px;
 
-            box-shadow: var(--shadow-soft);
+            box-shadow:
+                var(--shadow-soft);
 
             overflow: hidden;
         }
 
         /* =========================================================
-           FORM
+           FORMS
         ========================================================= */
 
         .form-control {
             width: 100%;
-            max-width: 100%;
+
             min-width: 0;
 
-            padding: 13px;
+            padding:
+                13px 14px;
 
-            border-radius: var(--radius-md);
+            border-radius:
+                var(--radius-md);
 
-            border: 1px solid var(--border);
+            border:
+                1px solid var(--border);
 
-            background: rgba(255,255,255,0.03);
+            background:
+                rgba(255, 255, 255, 0.035);
 
-            color: var(--text-main);
+            color:
+                var(--text-main);
 
-            margin-bottom: 14px;
+            margin-bottom:
+                13px;
 
-            font-size: 16px;
+            font-size:
+                0.94rem;
 
-            outline: none;
+            outline:
+                none;
+
+            appearance:
+                none;
+        }
+
+        .form-control::placeholder {
+            color:
+                #64748b;
         }
 
         .form-control:focus {
-            border-color: var(--accent-glow);
-        }
+            border-color:
+                var(--accent-glow);
 
-        textarea.form-control {
-            min-height: 90px;
-            resize: vertical;
+            box-shadow:
+                0 0 0 3px
+                rgba(99, 102, 241, 0.12);
         }
 
         select.form-control {
-            appearance: auto;
+            background-color:
+                #111827;
+        }
+
+        textarea.form-control {
+            min-height:
+                90px;
+
+            resize:
+                vertical;
         }
 
         label {
-           
+            display:
+                block;
+
+            font-size:
+                0.82rem;
+
+            color:
+                var(--text-muted);
+
+            margin-bottom:
+                6px;
+
+            font-weight:
+                650;
+        }
+
+        /* =========================================================
+           BUTTONS
+        ========================================================= */
+
+        .btn {
+            width: 100%;
+
+            min-height: 46px;
+
+            padding:
+                12px 16px;
+
+            border-radius:
+                999px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--accent-primary),
+                    var(--accent-glow)
+                );
+
+            color:
+                white;
+
+            font-weight:
+                750;
+
+            border:
+                none;
+
+            cursor:
+                pointer;
+
+            text-align:
+                center;
+
+            font-size:
+                0.92rem;
+
+            display:
+                inline-flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            gap:
+                8px;
+
+            transition:
+                opacity 0.2s ease,
+                transform 0.1s ease;
+        }
+
+        .btn:active {
+            transform:
+                scale(0.98);
+        }
+
+        .btn:hover {
+            opacity:
+                0.92;
+        }
+
+        .btn:disabled {
+            opacity:
+                0.5;
+
+            cursor:
+                not-allowed;
+        }
+
+        .btn.ghost {
+            width:
+                auto;
+
+            background:
+                transparent;
+
+            border:
+                1px solid var(--border);
+
+            color:
+                var(--text-main);
+        }
+
+        .btn.small {
+            min-height:
+                36px;
+
+            padding:
+                8px 12px;
+
+            font-size:
+                0.78rem;
+
+            border-radius:
+                var(--radius-md);
+        }
+
+        /* =========================================================
+           BADGES
+        ========================================================= */
+
+        .badge {
+            display:
+                inline-flex;
+
+            align-items:
+                center;
+
+            gap:
+                4px;
+
+            padding:
+                4px 9px;
+
+            border-radius:
+                999px;
+
+            font-size:
+                0.7rem;
+
+            font-weight:
+                700;
+        }
+
+        .badge-location {
+            background:
+                rgba(99,102,241,0.15);
+
+            border:
+                1px solid var(--accent-primary);
+
+            color:
+                var(--accent-glow);
+        }
+
+        .badge-active {
+            background:
+                rgba(34,197,94,0.14);
+
+            border:
+                1px solid var(--success);
+
+            color:
+                #4ade80;
+        }
+
+        .badge-mentor {
+            background:
+                rgba(245,158,11,0.14);
+
+            border:
+                1px solid var(--warning);
+
+            color:
+                #fbbf24;
+        }
+
+        /* =========================================================
+           PROGRESS
+        ========================================================= */
+
+        .progress-container {
+            width:
+                100%;
+
+            height:
+                9px;
+
+            margin:
+                11px 0;
+
+            background:
+                rgba(255,255,255,0.06);
+
+            border-radius:
+                999px;
+
+            overflow:
+                hidden;
+        }
+
+        .progress-bar {
+            width:
+                0%;
+
+            height:
+                100%;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--accent-primary),
+                    var(--accent-glow)
+                );
+
+            transition:
+                width 0.4s ease;
+        }
+
+        /* =========================================================
+           NAVIGATION
+        ========================================================= */
+
+        .bottom-nav {
+            position:
+                fixed;
+
+            left:
+                0;
+
+            right:
+                0;
+
+            bottom:
+                0;
+
+            z-index:
+                3000;
+
+            width:
+                100%;
+
+            background:
+                rgba(17, 24, 39, 0.97);
+
+            backdrop-filter:
+                blur(12px);
+
+            -webkit-backdrop-filter:
+                blur(12px);
+
+            border-top:
+                1px solid var(--border);
+
+            display:
+                flex;
+
+            justify-content:
+                space-around;
+
+            padding:
+                7px 2px;
+
+            padding-bottom:
+                calc(7px + env(safe-area-inset-bottom));
+        }
+
+        .nav-tab {
+            min-width:
+                0;
+
+            flex:
+                1;
+
+            display:
+                flex;
+
+            flex-direction:
+                column;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            gap:
+                3px;
+
+            color:
+                var(--text-muted);
+
+            font-size:
+                0.62rem;
+
+            text-decoration:
+                none;
+
+            cursor:
+                pointer;
+
+            padding:
+                3px 1px;
+        }
+
+        .nav-tab i {
+            font-size:
+                1.05rem;
+        }
+
+        .nav-tab.active {
+            color:
+                var(--accent-glow);
+
+            font-weight:
+                750;
+        }
+
+        .tab-panel {
+            display:
+                none;
+        }
+
+        .tab-panel.active {
+            display:
+                block;
+        }
+
+        /* =========================================================
+           MODAL
+        ========================================================= */
+
+        .modal-overlay {
+            position:
+                fixed;
+
+            inset:
+                0;
+
+            z-index:
+                5000;
+
+            width:
+                100%;
+
+            min-height:
+                100dvh;
+
+            background:
+                rgba(2, 6, 23, 0.92);
+
+            display:
+                flex;
+
+            align-items:
+                flex-start;
+
+            justify-content:
+                center;
+
+            padding:
+                12px;
+
+            overflow-y:
+                auto;
+
+            overflow-x:
+                hidden;
+
+            backdrop-filter:
+                blur(8px);
+
+            -webkit-backdrop-filter:
+                blur(8px);
+        }
+
+        .modal-box {
+            width:
+                100%;
+
+            max-width:
+                520px;
+
+            margin:
+                0 auto;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #111827,
+                    #0f172a
+                );
+
+            border:
+                1px solid var(--border);
+
+            border-radius:
+                var(--radius-lg);
+
+            padding:
+                20px 16px;
+
+            box-shadow:
+                0 20px 70px rgba(0,0,0,0.55);
+
+            overflow:
+                hidden;
+        }
+
+        /* =========================================================
+           ONBOARDING
+        ========================================================= */
+
+        .onboard-title {
+            font-size:
+                1.35rem;
+
+            color:
+                var(--accent-glow);
+
+            font-weight:
+                800;
+
+            margin-bottom:
+                7px;
+
+            text-align:
+                center;
+
+            line-height:
+                1.25;
+        }
+
+        .onboard-sub {
+            color:
+                var(--text-muted);
+
+            font-size:
+                0.84rem;
+
+            line-height:
+                1.5;
+
+            margin-bottom:
+                20px;
+
+            text-align:
+                center;
+        }
+
+        .step-indicator {
+            width:
+                100%;
+
+            display:
+                flex;
+
+            gap:
+                6px;
+
+            justify-content:
+                center;
+
+            margin-bottom:
+                20px;
+        }
+
+        .step-pill {
+            flex:
+                1;
+
+            min-width:
+                0;
+
+            background:
+                rgba(255,255,255,0.045);
+
+            padding:
+                8px 4px;
+
+            border-radius:
+                999px;
+
+            font-size:
+                0.68rem;
+
+            color:
+                var(--text-muted);
+
+            text-align:
+                center;
+
+            white-space:
+                normal;
+        }
+
+        .step-pill.active {
+            background:
+                rgba(99,102,241,0.22);
+
+            color:
+                var(--accent-glow);
+
+            font-weight:
+                700;
+
+            border:
+                1px solid var(--accent-primary);
+        }
+
+        /* =========================================================
+           MOOD
+        ========================================================= */
+
+        .mood-selector {
+            display:
+                grid;
+
+            grid-template-columns:
+                repeat(5, 1fr);
+
+            gap:
+                7px;
+
+            margin-bottom:
+                13px;
+        }
+
+        .mood-btn {
+            min-width:
+                0;
+
+            min-height:
+                44px;
+
+            padding:
+                7px;
+
+            border-radius:
+                var(--radius-md);
+
+            border:
+                1px solid var(--border);
+
+            background:
+                rgba(255,255,255,0.03);
+
+            color:
+                var(--text-main);
+
+            cursor:
+                pointer;
+
+            font-size:
+                1.15rem;
+
+            text-align:
+                center;
+        }
+
+        .mood-btn.selected {
+            border-color:
+                var(--accent-glow);
+
+            background:
+                rgba(99,102,241,0.2);
+        }
+
+        /* =========================================================
+           EMPTY STATE
+        ========================================================= */
+
+        .empty-state {
+            width:
+                100%;
+
+            text-align:
+                center;
+
+            padding:
+                28px 14px;
+
+            background:
+                rgba(255,255,255,0.02);
+
+            border:
+                1px dashed var(--border);
+
+            border-radius:
+                var(--radius-lg);
+
+            margin-top:
+                10px;
+        }
+
+        .empty-state i {
+            font-size:
+                2rem;
+
+            color:
+                var(--accent-glow);
+
+            margin-bottom:
+                9px;
+
+            opacity:
+                0.8;
+        }
+
+        .empty-state p {
+            color:
+                var(--text-muted);
+
+            font-size:
+                0.84rem;
+
+            line-height:
+                1.5;
+        }
+
+        /* =========================================================
+           DISCUSSIONS
+        ========================================================= */
+
+        .reddit-post {
+            display:
+                flex;
+
+            gap:
+                10px;
+
+            border-bottom:
+                1px solid var(--border);
+
+            padding-bottom:
+                13px;
+
+            margin-bottom:
+                13px;
+        }
+
+        .upvote-box {
+            flex:
+                0 0 42px;
+
+            display:
+                flex;
+
+            flex-direction:
+                column;
+
+            align-items:
+                center;
+
+            justify-content:
+                flex-start;
+
+            gap:
+                3px;
+
+            background:
+                rgba(255,255,255,0.03);
+
+            border:
+                1px solid var(--border);
+
+            border-radius:
+                var(--radius-md);
+
+            padding:
+                5px;
+
+            height:
+                fit-content;
+        }
+
+        .upvote-btn {
+            background:
+                none;
+
+            border:
+                none;
+
+            color:
+                var(--text-muted);
+
+            cursor:
+                pointer;
+
+            font-size:
+                1rem;
+        }
+
+        .upvote-btn:hover {
+            color:
+                var(--accent-glow);
+        }
+
+        .upvote-count {
+            font-weight:
+                700;
+
+            font-size:
+                0.78rem;
+        }
+
+        /* =========================================================
+           TIMELINE
+        ========================================================= */
+
+        .timeline-item {
+            border-left:
+                2px solid var(--accent-primary);
+
+            padding-left:
+                14px;
+
+            margin-bottom:
+                16px;
+
+            position:
+                relative;
+        }
+
+        .timeline-item::before {
+            content:
+                "";
+
+            width:
+                9px;
+
+            height:
+                9px;
+
+            background:
+                var(--accent-glow);
+
+            border-radius:
+                50%;
+
+            position:
+                absolute;
+
+            left:
+                -5.5px;
+
+            top:
+                4px;
+        }
+
+        /* =========================================================
+           MOBILE
+        ========================================================= */
+
+        @media (max-width: 600px) {
+
+            main {
+                padding:
+                    11px;
+            }
+
+            .card {
+                padding:
+                    15px;
+
+                border-radius:
+                    15px;
+            }
+
+            header {
+                padding:
+                    11px 13px;
+            }
+
+            .logo {
+                font-size:
+                    1rem;
+            }
+
+            .session-timer-badge {
+                font-size:
+                    0.62rem;
+            }
+
+            .user-avatar {
+                width:
+                    36px;
+
+                height:
+                    36px;
+            }
+
+            .modal-overlay {
+                padding:
+                    8px 7px 90px;
+            }
+
+            .modal-box {
+                padding:
+                    18px 13px;
+
+                border-radius:
+                    15px;
+            }
+
+            .onboard-title {
+                font-size:
+                    1.25rem;
+            }
+
+            .onboard-sub {
+                font-size:
+                    0.8rem;
+            }
+
+            .step-pill {
+                font-size:
+                    0.64rem;
+
+                padding:
+                    7px 2px;
+            }
+
+            #step2 .location-row {
+                display:
+                    block !important;
+            }
+
+            #step2 .location-row .form-control {
+                width:
+                    100%;
+            }
+
+            .bottom-nav {
+                padding-left:
+                    1px;
+
+                padding-right:
+                    1px;
+            }
+
+            .nav-tab {
+                font-size:
+                    0.58rem;
+            }
+
+            .nav-tab i {
+                font-size:
+                    1rem;
+            }
+        }
+
+        /* =========================================================
+           VERY SMALL PHONES
+        ========================================================= */
+
+        @media (max-width: 360px) {
+
+            main {
+                padding:
+                    8px;
+            }
+
+            .card {
+                padding:
+                    13px;
+            }
+
+            .nav-tab {
+                font-size:
+                    0.54rem;
+            }
+
+            .nav-tab i {
+                font-size:
+                    0.9rem;
+            }
+
+            .session-timer-badge {
+                display:
+                    none !important;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- =========================================================
+         FATAL ERROR SCREEN
+    ========================================================= -->
+
+    <div id="fatalError">
+        <div id="fatalErrorBox">
+            <h2>
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                MyPhase Error
+            </h2>
+
+            <p id="fatalErrorMessage">
+                Something went wrong while loading MyPhase.
+            </p>
+
+            <button
+                class="btn"
+                style="margin-top:18px;"
+                onclick="location.reload()"
+            >
+                Reload App
+            </button>
+        </div>
+    </div>
+
+
+    <!-- =========================================================
+         HEADER
+    ========================================================= -->
+
+    <header>
+
+        <div class="logo">
+            <i class="fa-solid fa-compass"></i>
+            MyPhase
+        </div>
+
+        <div
+            class="session-timer-badge"
+            id="sessionTimerContainer"
+        >
+            <i class="fa-regular fa-clock"></i>
+
+            <span>Session:</span>
+
+            <span id="sessionTimer">
+                02:00:00
+            </span>
+        </div>
+
+        <div
+            class="user-menu-container"
+            id="userMenuContainer"
+        >
+
+            <div
+                class="user-avatar"
+                id="userAvatarBtn"
+                onclick="toggleDropdown()"
+            >
+                U
+            </div>
+
+            <div
+                class="dropdown-menu"
+                id="dropdownMenu"
+            >
+
+                <button
+                    class="dropdown-item"
+                    onclick="switchTab('Journey'); toggleDropdown();"
+                >
+                    <i class="fa-solid fa-user"></i>
+                    Profile & Journey
+                </button>
+
+                <button
+                    class="dropdown-item"
+                    style="color:#ef4444;"
+                    onclick="logout()"
+                >
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Sign Out
+                </button>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================================================
+         MAIN
+    ========================================================= -->
+
+    <main>
+
+        <!-- =====================================================
+             HOME
+        ===================================================== -->
+
+        <div
+            id="panelFeed"
+            class="tab-panel active"
+        >
+
+            <!-- Reminder -->
+
+            <div
+                id="reminderBanner"
+                class="card"
+                style="
+                    background:rgba(99,102,241,0.10);
+                    border-color:var(--accent-primary);
+                    display:none;
+                    padding:13px;
+                "
+            >
+
+                <div
+                    style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        gap:10px;
+                    "
+                >
+
+                    <div
+                        style="
+                            font-size:0.82rem;
+                            font-weight:600;
+                        "
+                        id="reminderText"
+                    >
+                        ⏰ You haven't submitted your update today.
+                    </div>
+
+                    <button
+                        class="btn small"
+                        style="width:auto; flex-shrink:0;"
+                        onclick="switchTab('Update')"
+                    >
+                        Update
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- Welcome -->
+
+            <div
+                class="card"
+                id="welcomeCard"
+            >
+
+                <div
+                    style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:flex-start;
+                        gap:10px;
+                    "
+                >
+
+                    <div>
+
+                        <h3 id="dashWelcomeName">
+                            👋 Welcome
+                        </h3>
+
+                        <p
+                            style="
+                                font-size:0.82rem;
+                                color:var(--text-muted);
+                                margin-top:3px;
+                            "
+                            id="dashPhaseSub"
+                        >
+                            Phase Tracker
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    style="
+                        margin-top:15px;
+                        background:rgba(0,0,0,0.20);
+                        padding:13px;
+                        border-radius:var(--radius-md);
+                        border:1px solid rgba(255,255,255,0.03);
+                    "
+                >
+
+                    <div
+                        style="
+                            font-size:0.75rem;
+                            color:var(--accent-glow);
+                            font-weight:700;
+                            text-transform:uppercase;
+                        "
+                    >
+                        Current Phase
+                    </div>
+
+                    <div
+                        id="dashPhaseName"
+                        style="
+                            font-size:1.05rem;
+                            font-weight:800;
+                            margin-top:3px;
+                            word-break:break-word;
+                        "
+                    >
+                        Loading...
+                    </div>
+
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:space-between;
+                            margin-top:13px;
+                            font-size:0.82rem;
+                            color:var(--text-muted);
+                        "
+                    >
+
+                        <span>
+                            Actual Completion
+                        </span>
+
+                        <span
+                            id="dashProgressPct"
+                            style="
+                                font-weight:700;
+                                color:var(--text-main);
+                            "
+                        >
+                            0%
+                        </span>
+
+                    </div>
+
+
+                    <div class="progress-container">
+
+                        <div
+                            class="progress-bar"
+                            id="dashProgressBar"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Daily Task -->
+
+            <div class="card">
+
+                <h4
+                    style="
+                        color:var(--accent-glow);
+                        font-size:1rem;
+                        margin-bottom:11px;
+                    "
+                >
+                    <i class="fa-solid fa-bullseye"></i>
+                    Daily Task
+                </h4>
+
+                <div
+                    style="
+                        background:var(--bg-main);
+                        padding:13px;
+                        border-radius:var(--radius-md);
+                        margin-bottom:11px;
+                    "
+                >
+
+                    <div
+                        style="
+                            font-size:0.76rem;
+                            color:var(--accent-glow);
+                            font-weight:700;
+                        "
+                    >
+                        Today's Focus:
+                    </div>
+
+                    <div
+                        id="focusStep"
+                        style="
+                            font-size:0.9rem;
+                            margin-top:4px;
+                            line-height:1.5;
+                        "
+                    >
+                        Take a small step towards your phase goal today.
+                    </div>
+
+                </div>
+
+                <button
+                    class="btn small"
+                    id="btnMarkCompleted"
+                    onclick="markStepCompleted()"
+                >
+                    <i class="fa-solid fa-check"></i>
+                    Mark Task as Complete
+                </button>
+
+            </div>
+
+
+            <!-- Today's Progress -->
+
+            <div
+                style="
+                    font-weight:700;
+                    color:var(--accent-glow);
+                    margin:17px 0 9px;
+                    font-size:0.9rem;
+                "
+            >
+                <i class="fa-solid fa-chart-line"></i>
+                Today's Progress
+            </div>
+
+            <div
+                id="feedTodayProgress"
+                class="card"
+                style="padding:13px;"
+            >
+                <p
+                    style="
+                        color:var(--text-muted);
+                        font-size:0.84rem;
+                    "
+                >
+                    No activity logged for today yet.
+                </p>
+            </div>
+
+
+            <!-- Circle -->
+
+            <div
+                style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    gap:8px;
+                    margin:17px 0 9px;
+                "
+            >
+
+                <div
+                    style="
+                        font-weight:700;
+                        color:var(--accent-glow);
+                        font-size:0.9rem;
+                    "
+                >
+                    <i class="fa-solid fa-user-group"></i>
+                    Circle Updates
+                </div>
+
+                <button
+                    class="btn small ghost"
+                    onclick="retryMatchCircle()"
+                    style="
+                        padding:5px 9px;
+                        font-size:0.68rem;
+                        flex-shrink:0;
+                    "
+                >
+                    <i class="fa-solid fa-rotate"></i>
+                    Sync
+                </button>
+
+            </div>
+
+            <div id="feedCircleUpdates">
+                Loading circle updates...
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             UPDATE
+        ===================================================== -->
+
+        <div
+            id="panelUpdate"
+            class="tab-panel"
+        >
+
+            <div
+                class="card"
+                id="updateFormContainer"
+            >
+
+                <h4
+                    style="
+                        margin-bottom:15px;
+                        color:var(--accent-glow);
+                    "
+                >
+                    <i class="fa-solid fa-book-open"></i>
+                    Daily Journal Log
+                </h4>
+
+
+                <form
+                    id="dailyJournalForm"
+                    onsubmit="handleJournalSubmit(event)"
+                >
+
+                    <label>
+                        How are you feeling today?
+                    </label>
+
+                    <div class="mood-selector">
+
+                        <button
+                            type="button"
+                            class="mood-btn selected"
+                            onclick="selectMood(this,'🚀')"
+                        >
+                            🚀
+                        </button>
+
+                        <button
+                            type="button"
+                            class="mood-btn"
+                            onclick="selectMood(this,'🔥')"
+                        >
+                            🔥
+                        </button>
+
+                        <button
+                            type="button"
+                            class="mood-btn"
+                            onclick="selectMood(this,'🌱')"
+                        >
+                            🌱
+                        </button>
+
+                        <button
+                            type="button"
+                            class="mood-btn"
+                            onclick="selectMood(this,'😴')"
+                        >
+                            😴
+                        </button>
+
+                        <button
+                            type="button"
+                            class="mood-btn"
+                            onclick="selectMood(this,'💡')"
+                        >
+                            💡
+                        </button>
+
+                    </div>
+
+
+                    <label>
+                        Small Win
+                    </label>
+
+                    <input
+                        id="updateWin"
+                        class="form-control"
+                        type="text"
+                        placeholder="What was your small win today?"
+                        required
+                    >
+
+
+                    <label>
+                        Reflections & Notes
+                    </label>
+
+                    <textarea
+                        id="updateReflection"
+                        class="form-control"
+                        placeholder="What did you learn or notice today?"
+                        rows="3"
+                        required
+                    ></textarea>
+
+
+                    <label>
+                        Ask for Help (Optional)
+                    </label>
+
+                    <input
+                        id="updateHelp"
+                        class="form-control"
+                        type="text"
+                        placeholder="Need guidance from your circle or mentor?"
+                    >
+
+
+                    <button
+                        id="btnPostUpdate"
+                        type="submit"
+                        class="btn"
+                        style="margin-top:8px;"
+                    >
+                        Save & Share Log
+                    </button>
+
+                </form>
+
+            </div>
+
+
+            <!-- Submitted -->
+
+            <div
+                class="card"
+                id="submittedSummaryCard"
+                style="
+                    display:none;
+                    border-color:var(--success);
+                "
+            >
+
+                <div
+                    style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        gap:8px;
+                        margin-bottom:13px;
+                    "
+                >
+
+                    <h4
+                        style="color:var(--success);"
+                    >
+                        <i class="fa-solid fa-circle-check"></i>
+                        Today's Update
+                    </h4>
+
+                    <span
+                        id="journalSubmitTime"
+                        style="
+                            font-size:0.68rem;
+                            color:var(--text-muted);
+                        "
+                    >
+                        Time
+                    </span>
+
+                </div>
+
+
+                <div
+                    style="
+                        background:rgba(0,0,0,0.2);
+                        padding:13px;
+                        border-radius:var(--radius-md);
+                        margin-bottom:9px;
+                    "
+                >
+
+                    <div
+                        style="
+                            font-size:0.75rem;
+                            color:var(--text-muted);
+                        "
+                    >
+                        Mood & Win
+                    </div>
+
+                    <div
+                        id="summaryMoodWin"
+                        style="
+                            font-size:0.9rem;
+                            font-weight:700;
+                            margin-top:3px;
+                            word-break:break-word;
+                        "
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div
+                    style="
+                        background:rgba(0,0,0,0.2);
+                        padding:13px;
+                        border-radius:var(--radius-md);
+                        margin-bottom:9px;
+                    "
+                >
+
+                    <div
+                        style="
+                            font-size:0.75rem;
+                            color:var(--text-muted);
+                        "
+                    >
+                        Reflections
+                    </div>
+
+                    <div
+                        id="summaryReflection"
+                        style="
+                            font-size:0.85rem;
+                            margin-top:3px;
+                            line-height:1.5;
+                            word-break:break-word;
+                        "
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div
+                    style="
+                        background:rgba(0,0,0,0.2);
+                        padding:13px;
+                        border-radius:var(--radius-md);
+                    "
+                >
+
+                    <div
+                        style="
+                            font-size:0.75rem;
+                            color:var(--text-muted);
+                        "
+                    >
+                        Help Requested
+                    </div>
+
+                    <div
+                        id="summaryHelp"
+                        style="
+                            font-size:0.85rem;
+                            margin-top:3px;
+                            word-break:break-word;
+                        "
+                    >
+                        None
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             CIRCLE
+        ===================================================== -->
+
+        <div
+            id="panelCircle"
+            class="tab-panel"
+        >
+
+            <div
+                style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    gap:8px;
+                    margin-bottom:13px;
+                "
+            >
+
+                <h4
+                    style="
+                        color:var(--accent-glow);
+                        font-size:0.95rem;
+                    "
+                >
+                    <i class="fa-solid fa-users"></i>
+                    Your Support Circle
+                </h4>
+
+                <button
+                    class="btn small ghost"
+                    onclick="retryMatchCircle()"
+                >
+                    <i class="fa-solid fa-rotate"></i>
+                    Rematch
+                </button>
+
+            </div>
+
+            <div id="circleMembersList">
+                Loading members...
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             DISCUSSIONS
+        ===================================================== -->
+
+        <div
+            id="panelDiscussions"
+            class="tab-panel"
+        >
+
+            <div
+                style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    gap:8px;
+                    margin-bottom:13px;
+                "
+            >
+
+                <h4
+                    style="
+                        color:var(--accent-glow);
+                        font-size:0.95rem;
+                    "
+                >
+                    <i class="fa-solid fa-comments"></i>
+                    Community
+                </h4>
+
+                <div
+                    style="
+                        display:flex;
+                        gap:5px;
+                    "
+                >
+
+                    <button
+                        class="btn small ghost"
+                        onclick="sortDiscussions('new')"
+                    >
+                        New
+                    </button>
+
+                    <button
+                        class="btn small ghost"
+                        onclick="sortDiscussions('trending')"
+                    >
+                        Trending
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div id="discussionsList">
+                Loading discussions...
+            </div>
+
+
+            <div
+                id="newDiscussionEditor"
+                class="card"
+                style="
+                    display:none;
+                    margin-top:13px;
+                "
+            >
+
+                <h5
+                    style="margin-bottom:9px;"
+                >
+                    Start a New Topic
+                </h5>
+
+                <textarea
+                    id="discussionInput"
+                    class="form-control"
+                    placeholder="Ask a question or share advice..."
+                    rows="3"
+                ></textarea>
+
+                <div
+                    style="
+                        display:flex;
+                        gap:8px;
+                    "
+                >
+
+                    <button
+                        class="btn ghost"
+                        onclick="toggleDiscussionEditor(false)"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        class="btn"
+                        onclick="postDiscussion()"
+                    >
+                        Post
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <button
+                id="btnOpenDiscussionEditor"
+                class="btn"
+                onclick="toggleDiscussionEditor(true)"
+                style="margin-top:13px;"
+            >
+                <i class="fa-solid fa-plus"></i>
+                Create New Topic
+            </button>
+
+        </div>
+
+
+        <!-- =====================================================
+             JOURNEY
+        ===================================================== -->
+
+        <div
+            id="panelJourney"
+            class="tab-panel"
+        >
+
+            <div class="card">
+
+                <h3
+                    style="
+                        color:var(--accent-glow);
+                        margin-bottom:15px;
+                        font-size:1.05rem;
+                    "
+                >
+                    <i class="fa-solid fa-route"></i>
+                    Your Personal Journey
+                </h3>
+
+
+                <div
+                    style="
+                        display:grid;
+                        grid-template-columns:repeat(2,1fr);
+                        gap:8px;
+                        margin-bottom:18px;
+                    "
+                >
+
+                    <div
+                        style="
+                            background:rgba(0,0,0,0.2);
+                            padding:11px;
+                            border-radius:var(--radius-md);
+                            text-align:center;
+                        "
+                    >
+
+                        <div
+                            style="
+                                font-size:1.05rem;
+                                font-weight:800;
+                                color:var(--accent-glow);
+                            "
+                            id="statStreak"
+                        >
+                            0 Days
+                        </div>
+
+                        <div
+                            style="
+                                font-size:0.68rem;
+                                color:var(--text-muted);
+                            "
+                        >
+                            Current Streak
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        style="
+                            background:rgba(0,0,0,0.2);
+                            padding:11px;
+                            border-radius:var(--radius-md);
+                            text-align:center;
+                        "
+                    >
+
+                        <div
+                            style="
+                                font-size:1.05rem;
+                                font-weight:800;
+                                color:var(--accent-glow);
+                            "
+                            id="statTotalDays"
+                        >
+                            0 Days
+                        </div>
+
+                        <div
+                            style="
+                                font-size:0.68rem;
+                                color:var(--text-muted);
+                            "
+                        >
+                            Active Days
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        style="
+                            background:rgba(0,0,0,0.2);
+                            padding:11px;
+                            border-radius:var(--radius-md);
+                            text-align:center;
+                        "
+                    >
+
+                        <div
+                            style="
+                                font-size:1.05rem;
+                                font-weight:800;
+                                color:var(--accent-glow);
+                            "
+                            id="statCompletionRate"
+                        >
+                            0%
+                        </div>
+
+                        <div
+                            style="
+                                font-size:0.68rem;
+                                color:var(--text-muted);
+                            "
+                        >
+                            Completion
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        style="
+                            background:rgba(0,0,0,0.2);
+                            padding:11px;
+                            border-radius:var(--radius-md);
+                            text-align:center;
+                        "
+                    >
+
+                        <div
+                            style="
+                                font-size:1.05rem;
+                                font-weight:800;
+                                color:var(--accent-glow);
+                            "
+                            id="statActions"
+                        >
+                            0
+                        </div>
+
+                        <div
+                            style="
+                                font-size:0.68rem;
+                                color:var(--text-muted);
+                            "
+                        >
+                            Activities
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    style="margin-bottom:18px;"
+                >
+
+                    <label>
+                        Earned Badges & Achievements
+                    </label>
+
+                    <div
+                        id="badgesContainer"
+                        style="
+                            display:flex;
+                            gap:7px;
+                            flex-wrap:wrap;
+                            margin-top:6px;
+                        "
+                    ></div>
+
+                </div>
+
+
+                <div
+                    style="
+                        font-weight:700;
+                        color:var(--accent-glow);
+                        margin-bottom:11px;
+                    "
+                >
+                    <i class="fa-solid fa-timeline"></i>
+                    Activity Timeline
+                </div>
+
+                <div id="journeyTimeline">
+                    Loading timeline...
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <!-- =========================================================
+         BOTTOM NAVIGATION
+    ========================================================= -->
+
+    <nav class="bottom-nav">
+
+        <div
+            class="nav-tab active"
+            onclick="switchTab('Feed')"
+        >
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </div>
+
+        <div
+            class="nav-tab"
+            onclick="switchTab('Update')"
+        >
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span>Update</span>
+        </div>
+
+        <div
+            class="nav-tab"
+            onclick="switchTab('Circle')"
+        >
+            <i class="fa-solid fa-user-group"></i>
+            <span>Circle</span>
+        </div>
+
+        <div
+            class="nav-tab"
+            onclick="switchTab('Discussions')"
+        >
+            <i class="fa-solid fa-comments"></i>
+            <span>Community</span>
+        </div>
+
+        <div
+            class="nav-tab"
+            onclick="switchTab('Journey')"
+        >
+            <i class="fa-solid fa-route"></i>
+            <span>Journey</span>
+        </div>
+
+    </nav>
+
+
+    <!-- =========================================================
+         AUTH MODAL
+    ========================================================= -->
+
+    <div
+        id="authModal"
+        class="modal-overlay"
+        style="display:none;"
+    >
+
+        <div class="modal-box">
+
+            <!-- STEP INDICATOR -->
+
+            <div
+                class="step-indicator"
+                id="stepIndicator"
+            >
+
+                <div
+                    id="step1Pill"
+                    class="step-pill active"
+                >
+                    1 — Account
+                </div>
+
+                <div
+                    id="step2Pill"
+                    class="step-pill"
+                >
+                    2 — Phase Profile
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 STEP 1
+            ================================================= -->
+
+            <div id="step1">
+
+                <div class="onboard-title">
+                    Welcome to MyPhase
+                </div>
+
+                <div class="onboard-sub">
+                    Navigate life transitions with structured support circles.
+                </div>
+
+
+                <form onsubmit="handleStep1(event)">
+
+                    <input
+                        id="firstName"
+                        class="form-control"
+                        type="text"
+                        placeholder="First Name"
+                        autocomplete="given-name"
+                        required
+                    >
+
+
+                    <input
+                        id="signupEmail"
+                        class="form-control"
+                        type="email"
+                        placeholder="Email Address"
+                        autocomplete="email"
+                        required
+                    >
+
+
+                    <input
+                        id="signupPassword"
+                        class="form-control"
+                        type="password"
+                        placeholder="Password (min. 6 characters)"
+                        autocomplete="new-password"
+                        minlength="6"
+                        required
+                    >
+
+
+                    <button
+                        type="submit"
+                        class="btn"
+                        style="margin-top:7px;"
+                    >
+                        Continue
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+
+                </form>
+
+
+                <p
+                    style="
+                        font-size:0.78rem;
+                        text-align:center;
+                        margin-top:13px;
+                        color:var(--text-muted);
+                    "
+                >
+                    Already have an account?
+
+                    <span
+                        style="
+                            color:var(--accent-glow);
+                            font-weight:700;
+                            cursor:pointer;
+                        "
+                        onclick="showSignIn()"
+                    >
+                        Sign In
+                    </span>
+                </p>
+
+            </div>
+
+
+            <!-- =================================================
+                 STEP 2
+            ================================================= -->
+
+            <div
+                id="step2"
+                style="display:none;"
+            >
+
+                <div class="onboard-title">
+                    Setup Your Phase Profile
+                </div>
+
+                <div class="onboard-sub">
+                    Your phase duration is automatically taken from the selected phase.
+                </div>
+
+
+                <form onsubmit="handleStep2(event)">
+
+                    <!-- LOCATION -->
+
+                    <div
+                        class="location-row"
+                        style="
+                            display:flex;
+                            gap:8px;
+                        "
+                    >
+
+                        <input
+                            id="country"
+                            class="form-control"
+                            type="text"
+                            placeholder="Country"
+                            autocomplete="country-name"
+                            required
+                        >
+
+                        <input
+                            id="city"
+                            class="form-control"
+                            type="text"
+                            placeholder="City"
+                            autocomplete="address-level2"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- PHASE -->
+
+                    <label for="phaseSelect">
+                        Current Phase
+                    </label>
+
+                    <select
+                        id="phaseSelect"
+                        class="form-control"
+                        required
+                    >
+
+                        <option value="">
+                            Loading phases...
+                        </option>
+
+                    </select>
+
+
+                    <!-- SELECTED PHASE INFO -->
+
+                    <div
+                        id="phaseInfo"
+                        style="
+                            display:none;
+                            margin-top:-5px;
+                            margin-bottom:14px;
+                            padding:10px 12px;
+                            border-radius:var(--radius-md);
+                            background:rgba(99,102,241,0.10);
+                            border:1px solid rgba(99,102,241,0.35);
+                        "
+                    >
+
+                        <div
+                            style="
+                                font-size:0.72rem;
+                                color:var(--text-muted);
+                            "
+                        >
+                            Phase Duration
+                        </div>
+
+                        <div
+                            id="phaseDurationDisplay"
+                            style="
+                                margin-top:3px;
+                                color:var(--accent-glow);
+                                font-weight:800;
+                                font-size:0.9rem;
+                            "
+                        >
+                            -
+                        </div>
+
+                    </div>
+
+
+                    <!-- GOAL -->
+
+                    <label for="goal">
+                        Primary Phase Goal
+                    </label>
+
+                    <textarea
+                        id="goal"
+                        class="form-control"
+                        placeholder="What is your main focus during this phase?"
+                        rows="3"
+                        required
+                    ></textarea>
+
+
+                    <!--
+                        IMPORTANT:
+                        THERE IS NO DURATION SELECT HERE.
+                        duration comes automatically from phases.duration_days.
+                    -->
+
+
+                    <button
+                        id="btnSubmitStep2"
+                        type="submit"
+                        class="btn"
+                        style="margin-top:5px;"
+                    >
+                        Complete Setup & Join
+                    </button>
+
+                </form>
+
+            </div>
+
+
+            <!-- =================================================
+                 SIGN IN
+            ================================================= -->
+
+            <div
+                id="signInView"
+                style="display:none;"
+            >
+
+                <div class="onboard-title">
+                    Sign In
+                </div>
+
+                <div class="onboard-sub">
+                    Continue your MyPhase journey.
+                </div>
+
+
+                <form onsubmit="handleSignIn(event)">
+
+                    <input
+                        id="signinEmail"
+                        class="form-control"
+                        type="email"
+                        placeholder="Email Address"
+                        autocomplete="email"
+                        required
+                    >
+
+
+                    <input
+                        id="signinPassword"
+                        class="form-control"
+                        type="password"
+                        placeholder="Password"
+                        autocomplete="current-password"
+                        required
+                    >
+
+
+                    <button
+                        id="btnSubmitSignIn"
+                        type="submit"
+                        class="btn"
+                        style="margin-top:7px;"
+                    >
+                        Sign In
+                    </button>
+
+                </form>
+
+
+                <p
+                    style="
+                        font-size:0.78rem;
+                        text-align:center;
+                        margin-top:13px;
+                        color:var(--text-muted);
+                    "
+                >
+
+                    <span
+                        style="
+                            color:var(--accent-glow);
+                            font-weight:700;
+                            cursor:pointer;
+                        "
+                        onclick="showStep(1)"
+                    >
+                        Create New Account
+                    </span>
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         JAVASCRIPT
+    ========================================================= -->
+
+    <script>
+
+        "use strict";
+
+
+        /* =========================================================
+           CONFIG
+        ========================================================= */
+
+        const SUPABASE_URL =
+            "https://rvntpauzxgskmbedqmbw.supabase.co";
+
+        const SUPABASE_KEY =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2bnRwYXV6eGdza21pZCI6ImJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NzUyMTcsImV4cCI6MjEwMTI1MTIxN30.KmJYRYHxIW0-OQ1n2N3aJKlc-JOJnoteewGoIsbFhkQ";
+
+
+        /* =========================================================
+           GLOBAL VARIABLES
+        ========================================================= */
+
+        let db = null;
+
+        let currentUser = null;
+
+        let myProfile = null;
+
+        let selectedMood = "🚀";
+
+        let tempSignupData = {};
+
+        let availablePhases = [];
+
+        let selectedPhaseData = null;
+
+        let sessionTimerInterval = null;
+
+        let realtimeChannel = null;
+
+        let discussionsCache = [];
+
+        let currentDiscussionSort = "new";
+
+
+        /* =========================================================
+           FATAL ERROR HANDLER
+        ========================================================= */
+
+        function showFatalError(message) {
+
+            const box =
+                document.getElementById("fatalError");
+
+            const text =
+                document.getElementById("fatalErrorMessage");
+
+            if (text) {
+                text.innerText =
+                    message || "Unknown application error.";
+            }
+
+            if (box) {
+                box.style.display =
+                    "flex";
+            }
+
+            console.error(
+                "MyPhase Fatal Error:",
+                message
+            );
+        }
+
+
+        window.addEventListener(
+            "error",
+            function(event) {
+
+                console.error(
+                    "Global Error:",
+                    event.error || event.message
+                );
+
+            }
+        );
+
+
+        window.addEventListener(
+            "unhandledrejection",
+            function(event) {
+
+                console.error(
+                    "Unhandled Promise Error:",
+                    event.reason
+                );
+
+            }
+        );
+
+
+        /* =========================================================
+           INITIALIZE SUPABASE
+        ========================================================= */
+
+        function initializeSupabase() {
+
+            if (
+                typeof window.supabase === "undefined"
+            ) {
+
+                throw new Error(
+                    "Supabase library did not load. Check your internet connection or CDN access."
+                );
+
+            }
+
+            db =
+                window.supabase.createClient(
+                    SUPABASE_URL,
+                    SUPABASE_KEY,
+                    {
+                        auth: {
+                            persistSession: true,
+                            autoRefreshToken: true,
+                            detectSessionInUrl: true
+                        }
+                    }
+                );
+        }
+
+
+        /* =========================================================
+           ESCAPE HTML
+        ========================================================= */
+
+        function escapeHTML(value) {
+
+            if (
+                value === null ||
+                value === undefined
+            ) {
+                return "";
+            }
+
+            return String(value).replace(
+                /[&<>'"]/g,
+                function(tag) {
+
+                    const chars = {
+                        "&": "&amp;",
+                        "<": "&lt;",
+                        ">": "&gt;",
+                        "'": "&#39;",
+                        '"': "&quot;"
+                    };
+
+                    return chars[tag];
+                }
+            );
+        }
+
+
+        /* =========================================================
+           DROPDOWN
+        ========================================================= */
+
+        function toggleDropdown() {
+
+            const menu =
+                document.getElementById(
+                    "dropdownMenu"
+                );
+
+            if (!menu) return;
+
+            menu.classList.toggle("show");
+        }
+
+
+        document.addEventListener(
+            "click",
+            function(event) {
+
+                const container =
+                    document.getElementById(
+                        "userMenuContainer"
+                    );
+
+                const menu =
+                    document.getElementById(
+                        "dropdownMenu"
+                    );
+
+                if (
+                    container &&
+                    menu &&
+                    !container.contains(event.target)
+                ) {
+                    menu.classList.remove("show");
+                }
+
+            }
+        );
+
+
+        /* =========================================================
+           MOOD
+        ========================================================= */
+
+        function selectMood(
+            button,
+            mood
+        ) {
+
+            document
+                .querySelectorAll(".mood-btn")
+                .forEach(function(btn) {
+
+                    btn.classList.remove(
+                        "selected"
+                    );
+
+                });
+
+            button.classList.add(
+                "selected"
+            );
+
+            selectedMood =
+                mood;
+        }
+
+
+        /* =========================================================
+           TAB NAVIGATION
+        ========================================================= */
+
+        function switchTab(tabName) {
+
+            document
+                .querySelectorAll(".tab-panel")
+                .forEach(function(panel) {
+
+                    panel.classList.remove(
+                        "active"
+                    );
+
+                });
+
+            document
+                .querySelectorAll(".nav-tab")
+                .forEach(function(tab) {
+
+                    tab.classList.remove(
+                        "active"
+                    );
+
+                });
+
+
+            const panel =
+                document.getElementById(
+                    "panel" + tabName
+                );
+
+            if (panel) {
+
+                panel.classList.add(
+                    "active"
+                );
+
+            }
+
+
+            const tabs = [
+                "Feed",
+                "Update",
+                "Circle",
+                "Discussions",
+                "Journey"
+            ];
+
+            const index =
+                tabs.indexOf(tabName);
+
+            if (index !== -1) {
+
+                const navTabs =
+                    document.querySelectorAll(
+                        ".nav-tab"
+                    );
+
+                if (navTabs[index]) {
+
+                    navTabs[index].classList.add(
+                        "active"
+                    );
+
+                }
+
+            }
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+        }
+
+
+        /* =========================================================
+           SESSION TIMER
+        ========================================================= */
+
+        function startSessionTimer() {
+
+            const container =
+                document.getElementById(
+                    "sessionTimerContainer"
+                );
+
+            const display =
+                document.getElementById(
+                    "sessionTimer"
+                );
+
+            if (!container || !display) {
+                return;
+            }
+
+            container.style.display =
+                "inline-flex";
+
+
+            const TWO_HOURS_MS =
+                2 * 60 * 60 * 1000;
+
+
+            let sessionStartTime =
+                localStorage.getItem(
+                    "myphase_session_start"
+                );
+
+
+            if (!sessionStartTime) {
+
+                sessionStartTime =
+                    Date.now();
+
+                localStorage.setItem(
+                    "myphase_session_start",
+                    String(sessionStartTime)
+                );
+
+            } else {
+
+                sessionStartTime =
+                    parseInt(
+                        sessionStartTime,
+                        10
+                    );
+
+            }
+
+
+            if (
+                sessionTimerInterval
+            ) {
+
+                clearInterval(
+                    sessionTimerInterval
+                );
+
+            }
+
+
+            function updateTimer() {
+
+                const elapsed =
+                    Date.now() -
+                    sessionStartTime;
+
+                const remaining =
+                    TWO_HOURS_MS -
+                    elapsed;
+
+
+                if (remaining <= 0) {
+
+                    clearInterval(
+                        sessionTimerInterval
+                    );
+
+                    localStorage.removeItem(
+                        "myphase_session_start"
+                    );
+
+                    alert(
+                        "Your 2-hour session has expired. Please sign in again."
+                    );
+
+                    logout();
+
+                    return;
+                }
+
+
+                const hrs =
+                    Math.floor(
+                        remaining /
+                        (1000 * 60 * 60)
+                    );
+
+                const mins =
+                    Math.floor(
+                        (remaining %
+                            (1000 * 60 * 60)) /
+                        (1000 * 60)
+                    );
+
+                const secs =
+                    Math.floor(
+                        (remaining %
+                            (1000 * 60)) /
+                        1000
+                    );
+
+
+                display.innerText =
+                    `${hrs < 10 ? "0" : ""}${hrs}:` +
+                    `${mins < 10 ? "0" : ""}${mins}:` +
+                    `${secs < 10 ? "0" : ""}${secs}`;
+            }
+
+
+            updateTimer();
+
+
+            sessionTimerInterval =
+                setInterval(
+                    updateTimer,
+                    1000
+                );
+        }
+
+
+        /* =========================================================
+           AUTH MODAL
+        ========================================================= */
+
+        function showAuthModal() {
+
+            const modal =
+                document.getElementById(
+                    "authModal"
+                );
+
+            if (modal) {
+
+                modal.style.display =
+                    "flex";
+
+            }
+
+
+            const userMenu =
+                document.getElementById(
+                    "userMenuContainer"
+                );
+
+            if (userMenu) {
+
+                userMenu.style.display =
+                    "none";
+
+            }
+
+
+            const timer =
+                document.getElementById(
+                    "sessionTimerContainer"
+                );
+
+            if (timer) {
+
+                timer.style.display =
+                    "none";
+
+            }
+
+
+            showStep(1);
+        }
+
+
+        function hideAuthModal() {
+
+            const modal =
+                document.getElementById(
+                    "authModal"
+                );
+
+            if (modal) {
+
+                modal.style.display =
+                    "none";
+
+            }
+        }
+
+
+        function showStep(stepNumber) {
+
+            const step1 =
+                document.getElementById(
+                    "step1"
+                );
+
+            const step2 =
+                document.getElementById(
+                    "step2"
+                );
+
+            const signIn =
+                document.getElementById(
+                    "signInView"
+                );
+
+            const indicator =
+                document.getElementById(
+                    "stepIndicator"
+                );
+
+
+            if (step1) {
+
+                step1.style.display =
+                    stepNumber === 1
+                        ? "block"
+                        : "none";
+
+            }
+
+
+            if (step2) {
+
+                step2.style.display =
+                    stepNumber === 2
+                        ? "block"
+                        : "none";
+
+            }
+
+
+            if (signIn) {
+
+                signIn.style.display =
+                    "none";
+
+            }
+
+
+            if (indicator) {
+
+                indicator.style.display =
+                    "flex";
+
+            }
+
+
+            const pill1 =
+                document.getElementById(
+                    "step1Pill"
+                );
+
+            const pill2 =
+                document.getElementById(
+                    "step2Pill"
+                );
+
+
+            if (pill1) {
+
+                pill1.classList.toggle(
+                    "active",
+                    stepNumber === 1
+                );
+
+            }
+
+
+            if (pill2) {
+
+                pill2.classList.toggle(
+                    "active",
+                    stepNumber === 2
+                );
+
+            }
+
+
+            if (stepNumber === 2) {
+
+                loadPhases();
+
+            }
+        }
+
+
+        function showSignIn() {
+
+            document.getElementById(
+                "step1"
+            ).style.display = "none";
+
+            document.getElementById(
+                "step2"
+            ).style.display = "none";
+
+            document.getElementById(
+                "stepIndicator"
+            ).style.display = "none";
+
+            document.getElementById(
+                "signInView"
+            ).style.display = "block";
+        }
+
+
+        /* =========================================================
+           STEP 1
+        ========================================================= */
+
+        function handleStep1(event) {
+
+            event.preventDefault();
+
+
+            const firstName =
+                document
+                    .getElementById(
+                        "firstName"
+                    )
+                    .value
+                    .trim();
+
+
+            const email =
+                document
+                    .getElementById(
+                        "signupEmail"
+                    )
+                    .value
+                    .trim();
+
+
+            const password =
+                document
+                    .getElementById(
+                        "signupPassword"
+                    )
+                    .value;
+
+
+            if (!firstName) {
+
+                alert(
+                    "Please enter your first name."
+                );
+
+                return;
+            }
+
+
+            if (!email) {
+
+                alert(
+                    "Please enter your email."
+                );
+
+                return;
+            }
+
+
+            if (
+                !password ||
+                password.length < 6
+            ) {
+
+                alert(
+                    "Password must be at least 6 characters."
+                );
+
+                return;
+            }
+
+
+            tempSignupData = {
+                first_name:
+                    firstName,
+
+                email:
+                    email,
+
+                password:
+                    password
+            };
+
+
+            showStep(2);
+        }
+
+
+        /* =========================================================
+           LOAD PHASES
+        ========================================================= */
+
+        async function loadPhases() {
+
+            const select =
+                document.getElementById(
+                    "phaseSelect"
+                );
+
+            if (!select) return;
+
+
+            select.innerHTML =
+                `
+                    <option value="">
+                        Loading phases...
+                    </option>
+                `;
+
+
+            try {
+
+                const {
+                    data,
+                    error
+                } = await db
+                    .from("phases")
+                    .select(
+                        "id,name,duration_days,description"
+                    )
+                    .order(
+                        "name",
+                        {
+                            ascending: true
+                        }
+                    );
+
+
+                if (error) {
+                    throw error;
+                }
+
+
+                availablePhases =
+                    data || [];
+
+
+                if (
+                    availablePhases.length === 0
+                ) {
+
+                    select.innerHTML =
+                        `
+                            <option value="">
+                                No phases available
+                            </option>
+                        `;
+
+                    return;
+                }
+
+
+                select.innerHTML =
+                    `
+                        <option value="">
+                            Select your current phase...
+                        </option>
+                    `;
+
+
+                availablePhases.forEach(
+                    function(phase) {
+
+                        const option =
+                            document.createElement(
+                                "option"
+                            );
+
+                        option.value =
+                            String(phase.id);
+
+                        option.textContent =
+                            phase.name;
+
+                        select.appendChild(
+                            option
+                        );
+
+                    }
+                );
+
+
+                select.onchange =
+                    function() {
+
+                        handlePhaseSelection(
+                            this.value
+                        );
+
+                    };
+
+
+            } catch (error) {
+
+                console.error(
+                    "Load phases error:",
+                    error
+                );
+
+
+                select.innerHTML =
+                    `
+                        <option value="">
+                            Unable to load phases
+                        </option>
+                    `;
+
+
+                alert(
+                    "Could not load phases from the database: " +
+                    error.message
+                );
+            }
+        }
+
+
+        /* =========================================================
+           PHASE SELECTION
+        ========================================================= */
+
+        function handlePhaseSelection(
+            phaseId
+        ) {
+
+            const info =
+                document.getElementById(
+                    "phaseInfo"
+                );
+
+            const durationDisplay =
+                document.getElementById(
+                    "phaseDurationDisplay"
+                );
+
+
+            selectedPhaseData =
+                availablePhases.find(
+                    function(phase) {
+
+                        return String(
+                            phase.id
+                        ) === String(
+                            phaseId
+                        );
+
+                    }
+                ) || null;
+
+
+            if (
+                !selectedPhaseData
+            ) {
+
+                if (info) {
+
+                    info.style.display =
+                        "none";
+
+                }
+
+                return;
+            }
+
+
+            const duration =
+                Number(
+                    selectedPhaseData.duration_days
+                );
+
+
+            if (
+                !Number.isFinite(duration) ||
+                duration <= 0
+            ) {
+
+                alert(
+                    "This phase does not have a valid duration_days value."
+                );
+
+                selectedPhaseData =
+                    null;
+
+                return;
+            }
+
+
+            if (durationDisplay) {
+
+                durationDisplay.innerText =
+                    `${duration} Days`;
+
+            }
+
+
+            if (info) {
+
+                info.style.display =
+                    "block";
+
+            }
+        }
+
+
+        /* =========================================================
+           STEP 2
+        ========================================================= */
+
+        async function handleStep2(event) {
+
+            event.preventDefault();
+
+
+            const button =
+                document.getElementById(
+                    "btnSubmitStep2"
+                );
+
+
+            if (button) {
+
+                button.disabled =
+                    true;
+
+                button.innerHTML =
+                    `
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        Creating your profile...
+                    `;
+            }
+
+
+            try {
+
+                /* -------------------------------------------------
+                   VALIDATE PHASE
+                ------------------------------------------------- */
+
+                const phaseSelect =
+                    document.getElementById(
+                        "phaseSelect"
+                    );
+
+
+                const phaseId =
+                    phaseSelect
+                        ? phaseSelect.value
+                        : "";
+
+
+                if (!phaseId) {
+
+                    throw new Error(
+                        "Please select your current phase."
+                    );
+
+                }
+
+
+                selectedPhaseData =
+                    availablePhases.find(
+                        function(phase) {
+
+                            return String(
+                                phase.id
+                            ) === String(
+                                phaseId
+                            );
+
+                        }
+                    );
+
+
+                if (
+                    !selectedPhaseData
+                ) {
+
+                    throw new Error(
+                        "The selected phase could not be found."
+                    );
+
+                }
+
+
+                /*
+                    THIS IS THE IMPORTANT PART.
+
+                    Duration comes directly from:
+
+                    phases.duration_days
+
+                    It is NOT selected by the user.
+                */
+
+                const durationDays =
+                    Number(
+                        selectedPhaseData.duration_days
+                    );
+
+
+                if (
+                    !Number.isFinite(
+                        durationDays
+                    ) ||
+                    durationDays <= 0
+                ) {
+
+                    throw new Error(
+                        "The selected phase has an invalid duration_days value."
+                    );
+
+                }
+
+
+                /* -------------------------------------------------
+                   SIGN UP
+                ------------------------------------------------- */
+
+                const {
+                    data: authData,
+                    error: authError
+                } = await db.auth.signUp({
+
+                    email:
+                        tempSignupData.email,
+
+                    password:
+                        tempSignupData.password
+
+                });
+
+
+                if (authError) {
+
+                    throw authError;
+
+                }
+
+
+                let activeSession =
+                    authData &&
+                    authData.session
+                        ? authData.session
+                        : null;
+
+
+                /*
+                    If Supabase email confirmation is disabled,
+                    signUp should already provide a session.
+
+                    If confirmation is enabled, there may be
+                    no session yet.
+                */
+
+                if (!activeSession) {
+
+                    const {
+                        data: sessionData
+                    } = await db.auth.getSession();
+
+
+                    activeSession =
+                        sessionData
+                            ? sessionData.session
+                            : null;
+
+                }
+
+
+                /*
+                    If there is no session, ask the user to verify
+                    their email instead of producing a broken state.
+                */
+
+                if (!activeSession) {
+
+                    alert(
+                        "Your account was created. Please verify your email, then sign in."
+                    );
+
+                    showSignIn();
+
+                    return;
+                }
+
+
+                currentUser =
+                    activeSession.user;
+
+
+                const userId =
+                    currentUser.id;
+
+
+                /* -------------------------------------------------
+                   PROFILE PAYLOAD
+                ------------------------------------------------- */
+
+                const profilePayload = {
+
+                    user_id:
+                        userId,
+
+                    first_name:
+                        tempSignupData.first_name,
+
+                    email:
+                        tempSignupData.email,
+
+                    country:
+                        document
+                            .getElementById(
+                                "country"
+                            )
+                            .value
+                            .trim(),
+
+                    city:
+                        document
+                            .getElementById(
+                                "city"
+                            )
+                            .value
+                            .trim(),
+
+                    current_phase:
+                        selectedPhaseData.name,
+
+                    goal:
+                        document
+                            .getElementById(
+                                "goal"
+                            )
+                            .value
+                            .trim(),
+
+                    /*
+                        AUTOMATIC DURATION
+                    */
+                    duration:
+                        durationDays
+                };
+
+
+                if (
+                    !profilePayload.country
+                ) {
+
+                    throw new Error(
+                        "Please enter your country."
+                    );
+
+                }
+
+
+                if (
+                    !profilePayload.city
+                ) {
+
+                    throw new Error(
+                        "Please enter your city."
+                    );
+
+                }
+
+
+                if (
+                    !profilePayload.goal
+                ) {
+
+                    throw new Error(
+                        "Please enter your phase goal."
+                    );
+
+                }
+
+
+                /* -------------------------------------------------
+                   SAVE PROFILE
+                ------------------------------------------------- */
+
+                const {
+                    error: profileError
+                } = await db
+                    .from("profiles")
+                    .upsert(
+                        [profilePayload],
+                        {
+                            onConflict:
+                                "user_id"
+                        }
+                    );
+
+
+                if (profileError) {
+
+                    throw profileError;
+
+                }
+
+
+                /* -------------------------------------------------
+                   MATCH USER TO CIRCLE
+                ------------------------------------------------- */
+
+                const {
+                    error: matchError
+                } = await db.rpc(
+                    "match_user_to_circle",
+                    {
+                        p_user_id:
+                            userId,
+
+                        p_phase:
+                            profilePayload.current_phase,
+
+                        p_country:
+                            profilePayload.country,
+
+                        p_city:
+                            profilePayload.city,
+
+                        p_language:
+                            "English"
+                    }
+                );
+
+
+                if (matchError) {
+
+                    console.warn(
+                        "Circle matching failed:",
+                        matchError
+                    );
+
+                }
+
+
+                /* -------------------------------------------------
+                   FINISH
+                ------------------------------------------------- */
+
+                hideAuthModal();
+
+                startSessionTimer();
+
+                await loadUserProfile();
+
+            } catch (error) {
+
+                console.error(
+                    "handleStep2 error:",
+                    error
+                );
+
+
+                alert(
+                    "Sign up failed: " +
+                    (error.message ||
+                        "Unknown error")
+                );
+
+            } finally {
+
+                if (button) {
+
+                    button.disabled =
+                        false;
+
+                    button.innerHTML =
+                        `
+                            Complete Setup & Join
+                        `;
+
+                }
+
+            }
+        }
+
+
+        /* =========================================================
+           SIGN IN
+        ========================================================= */
+
+        async function handleSignIn(
+            event
+        ) {
+
+            event.preventDefault();
+
+
+            const button =
+                document.getElementById(
+                    "btnSubmitSignIn"
+                );
+
+
+            if (button) {
+
+                button.disabled =
+                    true;
+
+                button.innerHTML =
+                    `
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        Signing In...
+                    `;
+
+            }
+
+
+            try {
+
+                const email =
+                    document
+                        .getElementById(
+                            "signinEmail"
+                        )
+                        .value
+                        .trim();
+
+
+                const password =
+                    document
+                        .getElementById(
+                            "signinPassword"
+                        )
+                        .value;
+
+
+                const {
+                    data,
+                    error
+                } = await db.auth.signInWithPassword({
+
+                    email:
+                        email,
+
+                    password:
+                        password
+
+                });
+
+
+                if (error) {
+
+                    throw error;
+
+                }
+
+
+                currentUser =
+                    data.user;
+
+
+                hideAuthModal();
+
+                startSessionTimer();
+
+                await loadUserProfile();
+
+
+            } catch (error) {
+
+                console.error(
+                    "Sign in error:",
+                    error
+                );
+
+
+                alert(
+                    "Sign in failed: " +
+                    error.message
+                );
+
+            } finally {
+
+                if (button) {
+
+                    button.disabled =
+                        false;
+
+                    button.innerText =
+                        "Sign In";
+
+                }
+
+            }
+        }
+
+
+        /* =========================================================
+           LOGOUT
+        ========================================================= */
+
+        async function logout() {
+
+            try {
+
+                localStorage.removeItem(
+                    "myphase_session_start"
+                );
+
+
+                if (
+                    sessionTimerInterval
+                ) {
+
+                    clearInterval(
+                        sessionTimerInterval
+                    );
+
+                    sessionTimerInterval =
+                        null;
+
+                }
+
+
+                if (
+                    realtimeChannel
+                ) {
+
+                    await db.removeChannel(
+                        realtimeChannel
+                    );
+
+                    realtimeChannel =
+                        null;
+
+                }
+
+
+                if (db) {
+
+                    await db.auth.signOut();
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Logout error:",
+                    error
+                );
+
+            } finally {
+
+                location.reload();
+
+            }
+        }
+
+
+        /* =========================================================
+           INITIAL APP
+        ========================================================= */
+
+        async function initApp() {
+
+            try {
+
+                initializeSupabase();
+
+
+                /*
+                    Get current session
+                */
+
+                const {
+                    data: sessionData,
+                    error: sessionError
+                } = await db.auth.getSession();
+
+
+                if (sessionError) {
+
+                    throw sessionError;
+
+                }
+
+
+                const session =
+                    sessionData
+                        ? sessionData.session
+                        : null;
+
+
+                if (
+                    session &&
+                    session.user
+                ) {
+
+                    currentUser =
+                        session.user;
+
+
+                    startSessionTimer();
+
+
+                    await loadUserProfile();
+
+
+                    setupRealtime();
+
+                } else {
+
+                    showAuthModal();
+
+                }
+
+
+                /*
+                    Auth listener
+                */
+
+                db.auth.onAuthStateChange(
+                    async function(
+                        event,
+                        session
+                    ) {
+
+                        console.log(
+                            "Auth event:",
+                            event
+                        );
+
+
+                        if (
+                            session &&
+                            session.user
+                        ) {
+
+                            currentUser =
+                                session.user;
+
+                            startSessionTimer();
+
+                            /*
+                                Avoid unnecessary
+                                duplicate loading
+                                after initial session.
+                            */
+
+                            if (
+                                event !==
+                                "INITIAL_SESSION"
+                            ) {
+
+                                await loadUserProfile();
+
+                            }
+
+                        } else {
+
+                            currentUser =
+                                null;
+
+                            myProfile =
+                                null;
+
+                            showAuthModal();
+
+                        }
+
+                    }
+                );
+
+
+            } catch (error) {
+
+                showFatalError(
+                    error.message ||
+                    "Unable to initialize MyPhase."
+                );
+
+            }
+        }
+
+
+        /* =========================================================
+           LOAD USER PROFILE
+        ========================================================= */
+
+        async function loadUserProfile() {
+
+            if (!currentUser) {
+                return;
+            }
+
+
+            try {
+
+                const {
+                    data,
+                    error
+                } = await db
+                    .from("profiles")
+                    .select("*")
+                    .eq(
+                        "user_id",
+                        currentUser.id
+                    )
+                    .maybeSingle();
+
+
+                if (error) {
+
+                    throw error;
+
+                }
+
+
+                if (!data) {
+
+                    /*
+                        User exists but profile
+                        does not.
+                    */
+
+                    showAuthModal();
+
+                    return;
+
+                }
+
+
+                myProfile =
+                    data;
+
+
+                /*
+                    Match circle if needed.
+                */
+
+                if (
+                    !myProfile.circle_id
+                ) {
+
+                    await retryMatchCircle(
+                        false
+                    );
+
+                }
+
+
+                hideAuthModal();
+
+
+                const userMenu =
+                    document.getElementById(
+                        "userMenuContainer"
+                    );
+
+                if (userMenu) {
+
+                    userMenu.style.display =
+                        "block";
+
+                }
+
+
+                const avatar =
+                    document.getElementById(
+                        "userAvatarBtn"
+                    );
+
+                if (avatar) {
+
+                    avatar.innerText =
+                        (
+                            myProfile.first_name ||
+                            "U"
+                        )[0].toUpperCase();
+
+                }
+
+
+                const welcome =
+                    document.getElementById(
+                        "dashWelcomeName"
+                    );
+
+                if (welcome) {
+
+                    welcome.innerText =
+                        `👋 Welcome, ${
+                            myProfile.first_name ||
+                            "there"
+                        }`;
+
+                }
+
+
+                const phaseName =
+                    document.getElementById(
+                        "dashPhaseName"
+                    );
+
+                if (phaseName) {
+
+                    phaseName.innerText =
+                        myProfile.current_phase ||
+                        "General Phase";
+
+                }
+
+
+                const phaseSub =
+                    document.getElementById(
+                        "dashPhaseSub"
+                    );
+
+                if (phaseSub) {
+
+                    phaseSub.innerText =
+                        `${myProfile.city || ""}${
+                            myProfile.city &&
+                            myProfile.country
+                                ? ", "
+                                : ""
+                        }${
+                            myProfile.country ||
+                            ""
+                        }`;
+
+                }
+
+
+                await checkTodaySubmission();
+
+                await fetchDashboardData();
+
+                await fetchCircleMembers();
+
+                await fetchDiscussions();
+
+                await fetchJourneyData();
+
+
+            } catch (error) {
+
+                console.error(
+                    "loadUserProfile error:",
+                    error
+                );
+
+
+                alert(
+                    "Could not load your profile: " +
+                    error.message
+                );
+
+            }
+        }
+
+
+        /* =========================================================
+           MATCH CIRCLE
+        ========================================================= */
+
+        async function retryMatchCircle(
+            showSuccessAlert = true
+        ) {
+
+            if (!myProfile) {
+                return;
+            }
+
+
+            try {
+
+                const {
+                    error
+                } = await db.rpc(
+                    "match_user_to_circle",
+                    {
+                        p_user_id:
+                            myProfile.user_id,
+
+                        p_phase:
+                            myProfile.current_phase,
+
+                        p_country:
+                            myProfile.country,
+
+                        p_city:
+                            myProfile.city,
+
+                        p_language:
+                            "English"
+                    }
+                );
+
+
+                if (error) {
+
+                    throw error;
+
+                }
+
+
+                const {
+                    data,
+                    error:
+                        profileError
+                } = await db
+                    .from("profiles")
+                    .select("*")
+                    .eq(
+                        "user_id",
+                        currentUser.id
+                    )
+                    .maybeSingle();
+
+
+                if (
+                    profileError
+                ) {
+
+                    throw profileError;
+
+                }
+
+
+                if (data) {
+
+                    myProfile =
+                        data;
+
+                }
+
+
+                await fetchCircleMembers();
+
+                await fetchDashboardData();
+
+
+                if (
+                    showSuccessAlert
+                ) {
+
+                    alert(
+                        "Circle synced successfully!"
+                    );
+
+                }
+
+
+            } catch (error) {
+
+                console.error(
+                    "Match circle error:",
+                    error
+                );
+
+
+                if (
+                    showSuccessAlert
+                ) {
+
+                    alert(
+                        "Could not sync circle: " +
+                        error.message
+                    );
+
+                }
+
+            }
+        }
+
+
+        /* =========================================================
+           TODAY SUBMISSION
+        ========================================================= */
+
+        async function checkTodaySubmission() {
+
+            if (!currentUser) {
+                return;
+            }
+
+
+            const start =
+                new Date();
+
+
+            start.setHours(
+                0,
+                0,
+                0,
+                0
+            );
+
+
+            const end =
+                new Date(
+                    start
+                );
+
+
+            end.setDate(
+                end.getDate() + 1
+            );
+
+
+            const {
+                data,
+                error
+            } = await db
+                .from("journals")
+                .select("*")
+                .eq(
+                    "user_id",
+                    currentUser.id
+                )
+                .gte(
+                    "created_at",
+                    start.toISOString()
+                )
+                .lt(
+                    "created_at",
+                    end.toISOString()
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                )
+                .limit(1)
+                .maybeSingle();
+
+
+            if (error) {
+
+                console.error(
+                    "Today's submission error:",
+                    error
+                );
+
+                return;
+            }
+
+
+            const reminder =
+                document.getElementById(
+                    "reminderBanner"
+                );
+
+            const form =
+                document.getElementById(
+                    "updateFormContainer"
+                );
+
+            const summary =
+                document.getElementById(
+                    "submittedSummaryCard"
+                );
+
+
+            if (data) {
+
+                if (reminder) {
+                    reminder.style.display =
+                        "none";
+                }
+
+                if (form) {
+                    form.style.display =
+                        "none";
+                }
+
+                if (summary) {
+                    summary.style.display =
+                        "block";
+                }
+
+
+                document.getElementById(
+                    "journalSubmitTime"
+                ).innerText =
+                    new Date(
+                        data.created_at
+                    ).toLocaleTimeString(
+                        "en-US",
+                        {
+                            hour:
+                                "2-digit",
+
+                            minute:
+                                "2-digit"
+                        }
+                    );
+
+
+                document.getElementById(
+                    "summaryMoodWin"
+                ).innerText =
+                    `${data.mood || "🚀"} ${
+                        data.win || ""
+                    }`;
+
+
+                document.getElementById(
+                    "summaryReflection"
+                ).innerText =
+                    data.reflection ||
+                    "";
+
+
+                document.getElementById(
+                    "summaryHelp"
+                ).innerText =
+                    data.help_requested ||
+                    "None";
+
+
+                const progress =
+                    document.getElementById(
+                        "feedTodayProgress"
+                    );
+
+
+                if (progress) {
+
+                    progress.innerHTML =
+                        `
+                            <div
+                                style="
+                                    display:flex;
+                                    justify-content:space-between;
+                                    align-items:center;
+                                    gap:8px;
+                                "
+                            >
+
+                                <div
+                                    style="
+                                        font-weight:700;
+                                        font-size:0.85rem;
+                                    "
+                                >
+                                    ${escapeHTML(
+                                        data.mood
+                                    )}
+                                    ${escapeHTML(
+                                        data.win
+                                    )}
+                                </div>
+
+                                <span
+                                    class="badge badge-active"
+                                >
+                                    Completed
+                                </span>
+
+                            </div>
+
+                            <p
+                                style="
+                                    font-size:0.82rem;
+                                    color:var(--text-muted);
+                                    margin-top:6px;
+                                    line-height:1.5;
+                                "
+                            >
+                                ${escapeHTML(
+                                    data.reflection
+                                )}
+                            </p>
+                        `;
+
+                }
+
+
+            } else {
+
+                if (reminder) {
+                    reminder.style.display =
+                        "block";
+                }
+
+                if (form) {
+                    form.style.display =
+                        "block";
+                }
+
+                if (summary) {
+                    summary.style.display =
+                        "none";
+                }
+
+            }
+        }
+
+
+        /* =========================================================
+           DASHBOARD
+        ========================================================= */
+
+        async function fetchDashboardData() {
+
+            if (!currentUser) {
+                return;
+            }
+
+
+            const {
+                count,
+                error
+            } = await db
+                .from("journals")
+                .select(
+                    "id",
+                    {
+                        count:
+                            "exact",
+                        head:
+                            true
+                    }
+                )
+                .eq(
+                    "user_id",
+                    currentUser.id
+                );
+
+
+            if (error) {
+
+                console.error(
+                    "Dashboard count error:",
+                    error
+                );
+
+            }
+
+
+            const totalDays =
+                count || 0;
+
+
+            /*
+                Duration comes from profile.
+
+                profile.duration was already populated
+                from phases.duration_days during signup.
+            */
+
+            const targetDuration =
+                Number(
+                    myProfile?.duration
+                ) || 30;
+
+
+            const pct =
+                Math.min(
+                    100,
+                    Math.round(
+                        (
+                            totalDays /
+                            targetDuration
+                        ) * 100
+                    )
+                );
+
+
+            const pctElement =
+                document.getElementById(
+                    "dashProgressPct"
+                );
+
+            const barElement =
+                document.getElementById(
+                    "dashProgressBar"
+                );
+
+
+            if (pctElement) {
+
+                pctElement.innerText =
+                    pct + "%";
+
+            }
+
+
+            if (barElement) {
+
+                barElement.style.width =
+                    pct + "%";
+
+            }
+
+
+            /*
+                Circle updates
+            */
+
+            const container =
+                document.getElementById(
+                    "feedCircleUpdates"
+                );
+
+
+            if (!myProfile?.circle_id) {
+
+                if (container) {
+
+                    container.innerHTML =
+                        `
+                            <div class="empty-state">
+
+                                <i
+                                    class="fa-solid fa-users"
+                                ></i>
+
+                                <p>
+                                    Connecting you to a suitable support circle...
+                                </p>
+
+                            </div>
+                        `;
+
+                }
+
+                return;
+            }
+
+
+            const {
+                data,
+                error:
+                    journalError
+            } = await db
+                .from("journals")
+                .select(
+                    "*, profiles(first_name)"
+                )
+                .eq(
+                    "circle_id",
+                    myProfile.circle_id
+                )
+                .neq(
+                    "user_id",
+                    currentUser.id
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                )
+                .limit(3);
+
+
+            if (
+                journalError
+            ) {
+
+                console.error(
+                    "Circle updates error:",
+                    journalError
+                );
+
+                return;
+            }
+
+
+            if (!container) {
+                return;
+            }
+
+
+            if (
+                data &&
+                data.length > 0
+            ) {
+
+                container.innerHTML =
+                    data.map(
+                        function(item) {
+
+                            return `
+                                <div
+                                    class="card"
+                                    style="
+                                        padding:13px;
+                                        margin-bottom:9px;
+                                    "
+                                >
+
+                                    <div
+                                        style="
+                                            font-size:0.78rem;
+                                            font-weight:700;
+                                            color:var(--accent-glow);
+                                        "
+                                    >
+                                        ${escapeHTML(
+                                            item.profiles?.first_name ||
+                                            "Member"
+                                        )}
+                                    </div>
+
+                                    <div
+                                        style="
+                                            font-size:0.86rem;
+                                            margin-top:4px;
+                                        "
+                                    >
+                                        ${escapeHTML(
+                                            item.mood
+                                        )}
+                                        ${escapeHTML(
+                                            item.win
+                                        )}
+                                    </div>
+
+                                </div>
+                            `;
+
+                        }
+                    ).join("");
+
+
+            } else {
+
+                container.innerHTML =
+                    `
+                        <div class="empty-state">
+
+                            <i
+                                class="fa-solid fa-users-slash"
+                            ></i>
+
+                            <p>
+                                No new updates from your circle members yet.
+                            </p>
+
+                        </div>
+                    `;
+
+            }
+        }
+
+
+        /* =========================================================
+           MARK DAILY TASK
+        ========================================================= */
+
+        function markStepCompleted() {
+
+            const button =
+                document.getElementById(
+                    "btnMarkCompleted"
+                );
+
+
+            if (!button) {
+                return;
+            }
+
+
+            button.disabled =
+                true;
+
+
+            button.innerHTML =
+                `
+                    <i class="fa-solid fa-check-double"></i>
+                    Task Completed Today
+                `;
+        }
+
+
+        /* =========================================================
+           JOURNAL SUBMIT
+        ========================================================= */
+
+        async function handleJournalSubmit(
+            event
+        ) {
+
+            event.preventDefault();
+
+
+            if (!currentUser) {
+
+                alert(
+                    "Please sign in first."
+                );
+
+                return;
+            }
+
+
+            const button =
+                document.getElementById(
+                    "btnPostUpdate"
+                );
+
+
+            button.disabled =
+                true;
+
+
+            button.innerHTML =
+                `
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    Saving...
+                `;
+
+
+            try {
+
+                const payload = {
+
+                    user_id:
+                        currentUser.id,
+
+                    circle_id:
+                        myProfile?.circle_id ||
+                        null,
+
+                    mood:
+                        selectedMood,
+
+                    win:
+                        document
+                            .getElementById(
+                                "updateWin"
+                            )
+                            .value
+                            .trim(),
+
+                    reflection:
+                        document
+                            .getElementById(
+                                "updateReflection"
+                            )
+                            .value
+                            .trim(),
+
+                    help_requested:
+                        document
+                            .getElementById(
+                                "updateHelp"
+                            )
+                            .value
+                            .trim() ||
+                        null
+                };
+
+
+                if (
+                    !payload.win ||
+                    !payload.reflection
+                ) {
+
+                    throw new Error(
+                        "Please complete the required fields."
+                    );
+
+                }
+
+
+                const {
+                    error
+                } = await db
+                    .from("journals")
+                    .insert(
+                        [payload]
+                    );
+
+
+                if (error) {
+
+                    throw error;
+
+                }
+
+
+                document.getElementById(
+                    "dailyJournalForm"
+                ).reset();
+
+
+                selectedMood =
+                    "🚀";
+
+
+                document
+                    .querySelectorAll(
+                        ".mood-btn"
+                    )
+                    .forEach(
+                        function(btn, index) {
+
+                            btn.classList.toggle(
+                                "selected",
+                                index === 0
+                            );
+
+                        }
+                    );
+
+
+                await checkTodaySubmission();
+
+                await fetchDashboardData();
+
+                await fetchJourneyData();
+
+
+                switchTab(
+                    "Feed"
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Journal submit error:",
+                    error
+                );
+
+
+                alert(
+                    "Error saving log: " +
+                    error.message
+                );
+
+            } finally {
+
+                button.disabled =
+                    false;
+
+                button.innerHTML =
+                    "Save & Share Log";
+
+            }
+        }
+
+
+        /* =========================================================
+           CIRCLE MEMBERS
+        ========================================================= */
+
+        async function fetchCircleMembers() {
+
+            const container =
+                document.getElementById(
+                    "circleMembersList"
+                );
+
+
+            if (!container) {
+                return;
+            }
+
+
+            if (!myProfile?.circle_id) {
+
+                container.innerHTML =
+                    `
+                        <div class="empty-state">
+
+                            <i
+                                class="fa-solid fa-users"
+                            ></i>
+
+                            <p>
+                                You are not assigned to a circle yet.
+                            </p>
+
+                            <button
+                                class="btn small"
+                                style="
+                                    margin-top:12px;
+                                    max-width:180px;
+                                "
+                                onclick="retryMatchCircle()"
+                            >
+                                Sync Circle
+                            </button>
+
+                        </div>
+                    `;
+
+                return;
+            }
+
+
+            const {
+                data,
+                error
+            } = await db
+                .from("profiles")
+                .select("*")
+                .eq(
+                    "circle_id",
+                    myProfile.circle_id
+                );
+
+
+            if (error) {
+
+                console.error(
+                    "Circle members error:",
+                    error
+                );
+
+
+                container.innerHTML =
+                    `
+                        <div class="empty-state">
+
+                            <p>
+                                Could not load circle members.
+                            </p>
+
+                        </div>
+                    `;
+
+                return;
+            }
+
+
+            if (
+                data &&
+                data.length > 0
+            ) {
+
+                container.innerHTML =
+                    data.map(
+                        function(member) {
+
+                            return `
+                                <div
+                                    class="card"
+                                    style="
+                                        padding:14px;
+                                        margin-bottom:10px;
+                                        display:flex;
+                                        justify-content:space-between;
+                                        align-items:center;
+                                        gap:10px;
+                                    "
+                                >
+
+                                    <div
+                                        style="
+                                            min-width:0;
+                                        "
+                                    >
+
+                                        <div
+                                            style="
+                                                font-weight:700;
+                                                font-size:0.88rem;
+                                                word-break:break-word;
+                                            "
+                                        >
+                                            ${escapeHTML(
+                                                member.first_name
+                                            )}
+
+                                            ${
+                                                member.user_id ===
+                                                currentUser.id
+                                                    ? "(You)"
+                                                    : ""
+                                            }
+                                        </div>
+
+                                        <div
+                                            style="
+                                                font-size:0.73rem;
+                                                color:var(--text-muted);
+                                                margin-top:3px;
+                                                word-break:break-word;
+                                            "
+                                        >
+                                            ${escapeHTML(
+                                                member.current_phase ||
+                                                ""
+                                            )}
+                                        </div>
+
+                                    </div>
+
+
+                                    <span
+                                        class="badge badge-location"
+                                        style="flex-shrink:0;"
+                                    >
+                                        ${escapeHTML(
+                                            member.city ||
+                                            "Local"
+                                        )}
+                                    </span>
+
+                                </div>
+                            `;
+
+                        }
+                    ).join("");
+
+
+            } else {
+
+                container.innerHTML =
+                    `
+                        <div class="empty-state">
+
+                            <p>
+                                No other members found in this circle yet.
+                            </p>
+
+                        </div>
+                    `;
+
+            }
+        }
+
+
+        /* =========================================================
+           DISCUSSION EDITOR
+        ========================================================= */
+
+        function toggleDiscussionEditor(
+            show
+        ) {
+
+            const editor =
+                document.getElementById(
+                    "newDiscussionEditor"
+                );
+
+            const openButton =
+                document.getElementById(
+                    "btnOpenDiscussionEditor"
+                );
+
+
+            if (editor) {
+
+                editor.style.display =
+                    show
+                        ? "block"
+                        : "none";
+
+            }
+
+
+            if (openButton) {
+
+                openButton.style.display =
+                    show
+                        ? "none"
+                        : "block";
+
+            }
+
+        }
+
+
+        /* =========================================================
+           FETCH DISCUSSIONS
+        ========================================================= */
+
+        async function fetchDiscussions() {
+
+            if (!currentUser) {
+                return;
+            }
+
+
+            const {
+                data,
+                error
+            } = await db
+                .from("discussions")
+                .select(
+                    "*, profiles(first_name)"
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                );
+
+
+            if (error) {
+
+                console.error(
+                    "Discussions error:",
+                    error
+                );
+
+                return;
+            }
+
+
+            discussionsCache =
+                data || [];
+
+
+            renderDiscussions(
+                discussionsCache
+            );
+        }
+
+
+        /* =========================================================
+           SORT DISCUSSIONS
+        ========================================================= */
+
+        function sortDiscussions(
+            type
+        ) {
+
+            currentDiscussionSort =
+                type;
+
+
+            let list =
+                [...discussionsCache];
+
+
+            if (type === "trending") {
+
+                list.sort(
+                    function(a, b) {
+
+                        return (
+                            (b.upvotes || 0) -
+                            (a.upvotes || 0)
+                        );
+
+                    }
+                );
+
+            } else {
+
+                list.sort(
+                    function(a, b) {
+
+                        return (
+                            new Date(
+                                b.created_at
+                            ) -
+                            new Date(
+                                a.created_at
+                            )
+                        );
+
+                    }
+                );
+
+            }
+
+
+            renderDiscussions(
+                list
+            );
+        }
+
+
+        /* =========================================================
+           RENDER DISCUSSIONS
+        ========================================================= */
+
+        function renderDiscussions(
+            list
+        ) {
+
+            const container =
+                document.getElementById(
+                    "discussionsList"
+                );
+
+
+            if (!container) {
+                return;
+            }
+
+
+            if (
+                !list ||
+                list.length === 0
+            ) {
+
+                container.innerHTML =
+                    `
+                        <div class="empty-state">
+
+                            <i
+                                class="fa-solid fa-comments"
+                            ></i>
+
+                            <p>
+                                No discussions yet.
+                                Be the first to share!
+                            </p>
+
+                        </div>
+                    `;
+
+                return;
+            }
+
+
+            container.innerHTML =
+                list.map(
+                    function(item) {
+
+                        return `
+                            <div
+                                class="card reddit-post"
+                            >
+
+                                <div class="upvote-box">
+
+                                    <button
+                                        class="upvote-btn"
+                                        onclick="
+                                            upvotePost(
+                                                '${escapeHTML(item.id)}',
+                                                ${Number(item.upvotes || 0)}
+                                            )
+                                        "
+                                    >
+                                        <i
+                                            class="fa-solid fa-caret-up"
+                                        ></i>
+                                    </button>
+
+                                    <span
+                                        class="upvote-count"
+                                    >
+                                        ${Number(
+                                            item.upvotes ||
+                                            0
+                                        )}
+                                    </span>
+
+                                </div>
+
+
+                                <div
+                                    style="
+                                        flex:1;
+                                        min-width:0;
+                                    "
+                                >
+
+                                    <div
+                                        style="
+                                            font-size:0.7rem;
+                                            color:var(--text-muted);
+                                            margin-bottom:4px;
+                                        "
+                                    >
+                                        Posted by
+                                        ${escapeHTML(
+                                            item.profiles?.first_name ||
+                                            "Member"
+                                        )}
+                                    </div>
+
+                                    <div
+                                        style="
+                                            font-size:0.86rem;
+                                            line-height:1.5;
+                                            word-break:break-word;
+                                        "
+                                    >
+                                        ${escapeHTML(
+                                            item.content
+                                        )}
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        `;
+
+                    }
+                ).join("");
+        }
+
+
+        /* =========================================================
+           POST DISCUSSION
+        ========================================================= */
+
+        async function postDiscussion() {
+
+            const input =
+                document.getElementById(
+                    "discussionInput"
+                );
+
+
+            if (!input) {
+                return;
+            }
+
+
+            const content =
+                input.value.trim();
+
+
+            if (!content) {
+
+                alert(
+                    "Please write something first."
+                );
+
+                return;
+            }
+
+
+            try {
+
+                const {
+                    error
+                } = await db
+                    .from("discussions")
+                    .insert([
+                        {
+                            user_id:
+                                currentUser.id,
+
+                            content:
+                                content,
+
+                            upvotes:
+                                0
+                        }
+                    ]);
+
+
+                if (error) {
+
+                    throw error;
+
+                }
+
+
+                input.value =
+                    "";
+
+
+                toggleDiscussionEditor(
+                    false
+                );
+
+
+                await fetchDiscussions();
+
+
+            } catch (error) {
+
+                console.error(
+                    "Post discussion error:",
+                    error
+                );
+
+
+                alert(
+                    "Could not post topic: " +
+                    error.message
+                );
+
+            }
+        }
+
+
+        /* =========================================================
+           UPVOTE
+        ========================================================= */
+
+        async function upvotePost(
+            id,
+            currentCount
+        ) {
+
+            try {
+
+                const {
+                    error
+                } = await db
+                    .from("discussions")
+                    .update({
+                        upvotes:
+                            Number(
+                                currentCount
+                            ) + 1
+                    })
+                    .eq(
+                        "id",
+                        id
+                    );
+
+
+                if (error) {
+
+                    throw error;
+
+                }
+
+
+                await fetchDiscussions();
+
+
+            } catch (error) {
+
+                console.error(
+                    "Upvote error:",
+                    error
+                );
+
+            }
+        }
+
+
+        /* =========================================================
+           JOURNEY
+        ========================================================= */
+
+        async function fetchJourneyData() {
+
+            if (!currentUser) {
+                return;
+            }
+
+
+            const {
+                data,
+                error
+            } = await db
+                .from("journals")
+                .select("*")
+                .eq(
+                    "user_id",
+                    currentUser.id
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                );
+
+
+            if (error) {
+
+                console.error(
+                    "Journey error:",
+                    error
+                );
+
+                return;
+            }
+
+
+            const logs =
+                data || [];
+
+
+            const activeDays =
+                logs.length;
+
+
+            document.getElementById(
+                "statTotalDays"
+            ).innerText =
+                `${activeDays} Days`;
+
+
+            /*
+                NOTE:
+                This is total logged days, not a real consecutive streak.
+                We calculate the real streak below.
+            */
+
+            const streak =
+                calculateCurrentStreak(
+                    logs
+                );
+
+
+            document.getElementById(
+                "statStreak"
+            ).innerText =
+                `${streak} Days`;
+
+
+            document.getElementById(
+                "statActions"
+            ).innerText =
+                activeDays;
+
+
+            const targetDuration =
+                Number(
+                    myProfile?.duration
+                ) || 30;
+
+
+            const completion =
+                Math.min(
+                    100,
+                    Math.round(
+                        (
+                            activeDays /
+                            targetDuration
+                        ) * 100
+                    )
+                );
+
+
+            document.getElementById(
+                "statCompletionRate"
+            ).innerText =
+                `${completion}%`;
+
+
+            /* -----------------------------------------------------
+               BADGES
+            ----------------------------------------------------- */
+
+            const badgesContainer =
+                document.getElementById(
+                    "badgesContainer"
+                );
+
+
+            let badges = [];
+
+
+            if (
+                activeDays >= 1
+            ) {
+
+                badges.push(
+                    `
+                        <span class="badge badge-active">
+                            <i class="fa-solid fa-star"></i>
+                            First Step
+                        </span>
+                    `
+                );
+
+            }
+
+
+            if (
+                streak >= 7
+            ) {
+
+                badges.push(
+                    `
+                        <span class="badge badge-mentor">
+                            <i class="fa-solid fa-fire"></i>
+                            7-Day Streak
+                        </span>
+                    `
+                );
+
+            }
+
+
+            if (
+                activeDays >= targetDuration
+            ) {
+
+                badges.push(
+                    `
+                        <span class="badge badge-location">
+                            <i class="fa-solid fa-trophy"></i>
+                            Phase Finisher
+                        </span>
+                    `
+                );
+
+            }
+
+
+            badgesContainer.innerHTML =
+                badges.length > 0
+                    ? badges.join(" ")
+                    :
+                    `
+                        <span
+                            style="
+                                font-size:0.78rem;
+                                color:var(--text-muted);
+                            "
+                        >
+                            Keep updating daily to unlock achievements.
+                        </span>
+                    `;
+
+
+            /* -----------------------------------------------------
+               TIMELINE
+            ----------------------------------------------------- */
+
+            const timeline =
+                document.getElementById(
+                    "journeyTimeline"
+                );
+
+
+            if (
+                logs.length > 0
+            ) {
+
+                timeline.innerHTML =
+                    logs.map(
+                        function(log) {
+
+                            return `
+                                <div class="timeline-item">
+
+                                    <div
+                                        style="
+                                            font-size:0.7rem;
+                                            color:var(--text-muted);
+                                        "
+                                    >
+                                        ${new Date(
+                                            log.created_at
+                                        ).toLocaleDateString(
+                                            "en-US"
+                                        )}
+                                    </div>
+
+                                    <div
+                                        style="
+                                            font-weight:700;
+                                            font-size:0.85rem;
+                                            margin-top:3px;
+                                            word-break:break-word;
+                                        "
+                                    >
+                                        ${escapeHTML(
+                                            log.mood
+                                        )}
+                                        ${escapeHTML(
+                                            log.win
+                                        )}
+                                    </div>
+
+                                    <p
+                                        style="
+                                            font-size:0.78rem;
+                                            color:var(--text-muted);
+                                            margin-top:3px;
+                                            line-height:1.5;
+                                            word-break:break-word;
+                                        "
+                                    >
+                                        ${escapeHTML(
+                                            log.reflection
+                                        )}
+                                    </p>
+
+                                </div>
+                            `;
+
+                        }
+                    ).join("");
+
+
+            } else {
+
+                timeline.innerHTML =
+                    `
+                        <div class="empty-state">
+
+                            <p>
+                                No activity logs recorded yet.
+                            </p>
+
+                        </div>
+                    `;
+
+            }
+        }
+
+
+        /* =========================================================
+           REAL STREAK CALCULATION
+        ========================================================= */
+
+        function calculateCurrentStreak(
+            logs
+        ) {
+
+            if (
+                !logs ||
+                logs.length === 0
+            ) {
+
+                return 0;
+
+            }
+
+
+            const uniqueDays =
+                new Set();
+
+
+            logs.forEach(
+                function(log) {
+
+                    if (!log.created_at) {
+                        return;
+                    }
+
+
+                    const date =
+                        new Date(
+                            log.created_at
+                        );
+
+
+                    const key =
+                        `${date.getFullYear()}-${
+                            String(
+                                date.getMonth() + 1
+                            ).padStart(
+                                2,
+                                "0"
+                            )
+                        }-${
+                            String(
+                                date.getDate()
+                            ).padStart(
+                                2,
+                                "0"
+                            )
+                        }`;
+
+
+                    uniqueDays.add(
+                        key
+                    );
+
+                }
+            );
+
+
+            let streak = 0;
+
+            const today =
+                new Date();
+
+
+            today.setHours(
+                0,
+                0,
+                0,
+                0
+            );
+
+
+            let currentDate =
+                new Date(
+                    today
+                );
+
+
+            while (true) {
+
+                const key =
+                    `${currentDate.getFullYear()}-${
+                        String(
+                            currentDate.getMonth() + 1
+                        ).padStart(
+                            2,
+                            "0"
+                        )
+                    }-${
+                        String(
+                            currentDate.getDate()
+                        ).padStart(
+                            2,
+                            "0"
+                        )
+                    }`;
+
+
+                if (
+                    uniqueDays.has(key)
+                ) {
+
+                    streak++;
+
+                    currentDate.setDate(
+                        currentDate.getDate() - 1
+                    );
+
+                } else {
+
+                    break;
+
+                }
+
+            }
+
+
+            return streak;
+        }
+
+
+        /* =========================================================
+           REALTIME
+        ========================================================= */
+
+        function setupRealtime() {
+
+            if (
+                !db ||
+                !currentUser
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                realtimeChannel
+            ) {
+
+                return;
+
+            }
+
+
+            realtimeChannel =
+                db
+                    .channel(
+                        "myphase-discussions"
+                    )
+                    .on(
+                        "postgres_changes",
+                        {
+                            event:
+                                "*",
+
+                            schema:
+                                "public",
+
+                            table:
+                                "discussions"
+                        },
+                        function() {
+
+                            fetchDiscussions();
+
+                        }
+                    )
+                    .subscribe(
+                        function(status) {
+
+                            console.log(
+                                "Realtime status:",
+                                status
+                            );
+
+                        }
+                    );
+        }
+
+
+        /* =========================================================
+           START APP
+        ========================================================= */
+
+        window.addEventListener(
+            "DOMContentLoaded",
+            function() {
+
+                initApp();
+
+            }
+        );
+
+    </script>
+
+</body>
+</html>
