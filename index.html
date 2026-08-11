@@ -1337,6 +1337,30 @@
             }
         }
 
+    
+        /* FINAL MOBILE RESPONSIVE SAFETY */
+        img, video, canvas, svg { max-width: 100%; height: auto; }
+        .row, .grid, .flex-row, .two-column, .three-column { min-width: 0; max-width: 100%; }
+        @media (max-width: 600px) {
+            main { padding: 10px; }
+            .card { padding: 14px; border-radius: 15px; }
+            header { padding: 10px 12px; }
+            .logo { font-size: 1.02rem; }
+            .modal-overlay { padding: 8px; }
+            .modal-box { max-width: 100%; padding: 17px 13px; border-radius: 16px; max-height: calc(100dvh - 16px); overflow-y: auto; }
+            .form-control { min-height: 44px; font-size: 16px; }
+            textarea.form-control { min-height: 82px; }
+            .btn { min-height: 44px; }
+            .nav-tab { font-size: 0.58rem; }
+            .nav-tab i { font-size: 1rem; }
+        }
+        @media (max-width: 380px) {
+            .card { padding: 12px; }
+            .step-pill { font-size: 0.60rem; }
+            .mood-selector { gap: 5px; }
+            .mood-btn { min-height: 40px; }
+        }
+
     </style>
 </head>
 
@@ -1478,7 +1502,7 @@
                         "
                         id="reminderText"
                     >
-                        âڈ° You haven't submitted your update today.
+                        ⏰ You haven't submitted your update today.
                     </div>
 
                     <button
@@ -1513,7 +1537,7 @@
                     <div>
 
                         <h3 id="dashWelcomeName">
-                            ًں‘‹ Welcome
+                            👋 Welcome
                         </h3>
 
                         <p
@@ -1780,41 +1804,41 @@
                         <button
                             type="button"
                             class="mood-btn selected"
-                            onclick="selectMood(this,'ًںڑ€')"
+                            onclick="selectMood(this,'🚀')"
                         >
-                            ًںڑ€
+                            🚀
                         </button>
 
                         <button
                             type="button"
                             class="mood-btn"
-                            onclick="selectMood(this,'ًں”¥')"
+                            onclick="selectMood(this,'🔥')"
                         >
-                            ًں”¥
+                            🔥
                         </button>
 
                         <button
                             type="button"
                             class="mood-btn"
-                            onclick="selectMood(this,'ًںŒ±')"
+                            onclick="selectMood(this,'🌱')"
                         >
-                            ًںŒ±
+                            🌱
                         </button>
 
                         <button
                             type="button"
                             class="mood-btn"
-                            onclick="selectMood(this,'ًںک´')"
+                            onclick="selectMood(this,'😴')"
                         >
-                            ًںک´
+                            😴
                         </button>
 
                         <button
                             type="button"
                             class="mood-btn"
-                            onclick="selectMood(this,'ًں’،')"
+                            onclick="selectMood(this,'💡')"
                         >
-                            ًں’،
+                            💡
                         </button>
 
                     </div>
@@ -2458,14 +2482,14 @@
                     id="step1Pill"
                     class="step-pill active"
                 >
-                    1 â€” Account
+                    1 — Account
                 </div>
 
                 <div
                     id="step2Pill"
                     class="step-pill"
                 >
-                    2 â€” Phase Profile
+                    2 — Phase Profile
                 </div>
 
             </div>
@@ -2812,7 +2836,7 @@
 
         let myProfile = null;
 
-        let selectedMood = "ًںڑ€";
+        let selectedMood = "🚀";
 
         let tempSignupData = {};
 
@@ -3497,6 +3521,18 @@
 
 
         /* =========================================================
+           PHASE NAME HELPER
+        ========================================================= */
+
+        function formatPhaseName(value) {
+            if (!value) return "Unknown Phase";
+            return String(value)
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, function(char) { return char.toUpperCase(); });
+        }
+
+
+        /* =========================================================
            LOAD PHASES
         ========================================================= */
 
@@ -3526,10 +3562,14 @@
                 } = await db
                     .from("phases")
                     .select(
-                        "id,name,duration_days,description"
+                        "id,phase_name,phase_order,is_active,duration_days"
+                    )
+                    .eq(
+                        "is_active",
+                        true
                     )
                     .order(
-                        "name",
+                        "phase_order",
                         {
                             ascending: true
                         }
@@ -3580,7 +3620,7 @@
                             String(phase.id);
 
                         option.textContent =
-                            phase.name;
+                            formatPhaseName(phase.phase_name);
 
                         select.appendChild(
                             option
@@ -3933,7 +3973,7 @@
                             .trim(),
 
                     current_phase:
-                        selectedPhaseData.name,
+                        selectedPhaseData.phase_name,
 
                     goal:
                         document
@@ -4442,13 +4482,12 @@
                 */
 
                 if (
-                    !myProfile.circle_id
+                    !myProfile.circle_id &&
+                    myProfile.current_phase &&
+                    myProfile.country &&
+                    myProfile.city
                 ) {
-
-                    await retryMatchCircle(
-                        false
-                    );
-
+                    await retryMatchCircle(false);
                 }
 
 
@@ -4492,7 +4531,7 @@
                 if (welcome) {
 
                     welcome.innerText =
-                        `ًں‘‹ Welcome, ${
+                        `👋 Welcome, ${
                             myProfile.first_name ||
                             "there"
                         }`;
@@ -4508,7 +4547,7 @@
                 if (phaseName) {
 
                     phaseName.innerText =
-                        myProfile.current_phase ||
+                        formatPhaseName(myProfile.current_phase) ||
                         "General Phase";
 
                 }
@@ -4570,110 +4609,50 @@
         async function retryMatchCircle(
             showSuccessAlert = true
         ) {
+            if (!myProfile || !currentUser) return;
 
-            if (!myProfile) {
+            if (!myProfile.current_phase || !myProfile.country || !myProfile.city) {
+                const message = "Complete your phase, country and city first, then sync your circle.";
+                console.warn("Circle sync skipped:", message);
+                if (showSuccessAlert) alert(message);
                 return;
             }
 
-
             try {
+                const { error } = await db.rpc("match_user_to_circle", {
+                    p_user_id: currentUser.id,
+                    p_phase: myProfile.current_phase,
+                    p_country: myProfile.country,
+                    p_city: myProfile.city,
+                    p_language: myProfile.language || "English"
+                });
 
-                const {
-                    error
-                } = await db.rpc(
-                    "match_user_to_circle",
-                    {
-                        p_user_id:
-                            myProfile.user_id,
+                if (error) throw error;
 
-                        p_phase:
-                            myProfile.current_phase,
-
-                        p_country:
-                            myProfile.country,
-
-                        p_city:
-                            myProfile.city,
-
-                        p_language:
-                            "English"
-                    }
-                );
-
-
-                if (error) {
-
-                    throw error;
-
-                }
-
-
-                const {
-                    data,
-                    error:
-                        profileError
-                } = await db
+                const { data, error: profileError } = await db
                     .from("profiles")
                     .select("*")
-                    .eq(
-                        "user_id",
-                        currentUser.id
-                    )
+                    .eq("user_id", currentUser.id)
                     .maybeSingle();
 
-
-                if (
-                    profileError
-                ) {
-
-                    throw profileError;
-
-                }
-
-
-                if (data) {
-
-                    myProfile =
-                        data;
-
-                }
-
+                if (profileError) throw profileError;
+                if (data) myProfile = data;
 
                 await fetchCircleMembers();
-
                 await fetchDashboardData();
 
-
-                if (
-                    showSuccessAlert
-                ) {
-
+                if (showSuccessAlert) {
                     alert(
-                        "Circle synced successfully!"
+                        myProfile.circle_id
+                            ? "Circle synced successfully!"
+                            : "No matching circle is available yet. Try again later."
                     );
-
                 }
-
-
             } catch (error) {
-
-                console.error(
-                    "Match circle error:",
-                    error
-                );
-
-
-                if (
-                    showSuccessAlert
-                ) {
-
-                    alert(
-                        "Could not sync circle: " +
-                        error.message
-                    );
-
+                console.error("Circle sync error:", error);
+                if (showSuccessAlert) {
+                    alert("Could not sync circle: " + (error.message || "Unknown error"));
                 }
-
             }
         }
 
@@ -4805,7 +4784,7 @@
                 document.getElementById(
                     "summaryMoodWin"
                 ).innerText =
-                    `${data.mood || "ًںڑ€"} ${
+                    `${data.mood || "🚀"} ${
                         data.win || ""
                     }`;
 
@@ -5294,7 +5273,7 @@
 
 
                 selectedMood =
-                    "ًںڑ€";
+                    "🚀";
 
 
                 document
