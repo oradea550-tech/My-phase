@@ -1333,7 +1333,27 @@
 
             .session-timer-badge {
                 display:
-                    none !important;
+                    inline-flex !important;
+                flex:
+                    0 0 auto;
+                max-width:
+                    92px;
+                padding:
+                    4px 6px;
+                gap:
+                    3px;
+                font-size:
+                    0.60rem;
+            }
+
+            .session-timer-badge span:first-of-type {
+                display:
+                    none;
+            }
+
+            #sessionTimer {
+                font-variant-numeric:
+                    tabular-nums;
             }
         }
 
@@ -1345,6 +1365,23 @@
             main { padding: 10px; }
             .card { padding: 14px; border-radius: 15px; }
             header { padding: 10px 12px; }
+
+            .session-timer-badge {
+                display: inline-flex !important;
+                flex: 0 0 auto;
+                max-width: 96px;
+                padding: 4px 6px;
+                gap: 3px;
+                font-size: 0.60rem;
+            }
+
+            .session-timer-badge span:first-of-type {
+                display: none;
+            }
+
+            #sessionTimer {
+                font-variant-numeric: tabular-nums;
+            }
             .logo { font-size: 1.02rem; }
             .modal-overlay { padding: 8px; }
             .modal-box { max-width: 100%; padding: 17px 13px; border-radius: 16px; max-height: calc(100dvh - 16px); overflow-y: auto; }
@@ -1411,7 +1448,10 @@
 
             <span>Session:</span>
 
-            <span id="sessionTimer">
+            <span
+                id="sessionTimer"
+                title="Your 2-hour session time remaining"
+            >
                 02:00:00
             </span>
         </div>
@@ -3532,12 +3572,54 @@
         }
 
 
+        /*
+            Convert older/manual phase values to the exact canonical
+            MyPhase phase name. This prevents small differences such as:
+
+                "Moving to new place"
+                "moving to a new place"
+
+            from creating separate circles.
+        */
+        function canonicalPhaseName(value) {
+            if (!value) return "";
+
+            const raw =
+                String(value)
+                    .trim()
+                    .toLowerCase()
+                    .replace(/_/g, " ")
+                    .replace(/\s+/g, " ");
+
+            const aliases = {
+                "new job": "New Job",
+                "new dad": "New Dad",
+                "new mom": "New Mom",
+                "moving to a new place": "Moving to a New Place",
+                "moving to new place": "Moving to a New Place",
+                "starting college": "Starting College",
+                "career change": "Career Change",
+                "starting a business": "Starting a Business",
+                "new relationship": "New Relationship",
+                "divorce / separation": "Divorce / Separation",
+                "divorce/separation": "Divorce / Separation",
+                "quitting a habit": "Quitting a Habit",
+                "retirement": "Retirement",
+                "grief & loss": "Grief & Loss",
+                "grief and loss": "Grief & Loss",
+                "personal growth": "Personal Growth"
+            };
+
+            return aliases[raw] ||
+                formatPhaseName(value);
+        }
+
+
         /* =========================================================
            LOAD PHASES
         ========================================================= */
 
         async function loadPhases() {
-
             const select =
                 document.getElementById(
                     "phaseSelect"
@@ -3545,122 +3627,117 @@
 
             if (!select) return;
 
+            /*
+                LIFE PHASES
+
+                The database `phases` table currently contains technical
+                workflow values such as onboarding/discovery/execution.
+                Those are NOT the phases users should choose.
+
+                We therefore use the real MyPhase life phases here.
+                The selected phase is saved as text in
+                profiles.current_phase and sent to the circle matcher.
+            */
+            availablePhases = [
+                {
+                    id: "new-job",
+                    phase_name: "New Job",
+                    duration_days: 90
+                },
+                {
+                    id: "new-dad",
+                    phase_name: "New Dad",
+                    duration_days: 180
+                },
+                {
+                    id: "new-mom",
+                    phase_name: "New Mom",
+                    duration_days: 180
+                },
+                {
+                    id: "moving-to-a-new-place",
+                    phase_name: "Moving to a New Place",
+                    duration_days: 90
+                },
+                {
+                    id: "starting-college",
+                    phase_name: "Starting College",
+                    duration_days: 180
+                },
+                {
+                    id: "career-change",
+                    phase_name: "Career Change",
+                    duration_days: 180
+                },
+                {
+                    id: "starting-a-business",
+                    phase_name: "Starting a Business",
+                    duration_days: 180
+                },
+                {
+                    id: "new-relationship",
+                    phase_name: "New Relationship",
+                    duration_days: 90
+                },
+                {
+                    id: "divorce-or-separation",
+                    phase_name: "Divorce / Separation",
+                    duration_days: 180
+                },
+                {
+                    id: "quitting-a-habit",
+                    phase_name: "Quitting a Habit",
+                    duration_days: 90
+                },
+                {
+                    id: "retirement",
+                    phase_name: "Retirement",
+                    duration_days: 180
+                },
+                {
+                    id: "grief-and-loss",
+                    phase_name: "Grief & Loss",
+                    duration_days: 180
+                },
+                {
+                    id: "personal-growth",
+                    phase_name: "Personal Growth",
+                    duration_days: 90
+                }
+            ];
 
             select.innerHTML =
                 `
                     <option value="">
-                        Loading phases...
+                        Select your current phase...
                     </option>
                 `;
 
+            availablePhases.forEach(
+                function(phase) {
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
 
-            try {
+                    option.value =
+                        String(phase.id);
 
-                const {
-                    data,
-                    error
-                } = await db
-                    .from("phases")
-                    .select(
-                        "id,phase_name,phase_order,is_active,duration_days"
-                    )
-                    .eq(
-                        "is_active",
-                        true
-                    )
-                    .order(
-                        "phase_order",
-                        {
-                            ascending: true
-                        }
+                    option.textContent =
+                        phase.phase_name;
+
+                    select.appendChild(
+                        option
                     );
-
-
-                if (error) {
-                    throw error;
                 }
+            );
 
-
-                availablePhases =
-                    data || [];
-
-
-                if (
-                    availablePhases.length === 0
-                ) {
-
-                    select.innerHTML =
-                        `
-                            <option value="">
-                                No phases available
-                            </option>
-                        `;
-
-                    return;
-                }
-
-
-                select.innerHTML =
-                    `
-                        <option value="">
-                            Select your current phase...
-                        </option>
-                    `;
-
-
-                availablePhases.forEach(
-                    function(phase) {
-
-                        const option =
-                            document.createElement(
-                                "option"
-                            );
-
-                        option.value =
-                            String(phase.id);
-
-                        option.textContent =
-                            formatPhaseName(phase.phase_name);
-
-                        select.appendChild(
-                            option
-                        );
-
-                    }
-                );
-
-
-                select.onchange =
-                    function() {
-
-                        handlePhaseSelection(
-                            this.value
-                        );
-
-                    };
-
-
-            } catch (error) {
-
-                console.error(
-                    "Load phases error:",
-                    error
-                );
-
-
-                select.innerHTML =
-                    `
-                        <option value="">
-                            Unable to load phases
-                        </option>
-                    `;
-
-
-                alert(
-                    "Could not load phases from the database: " +
-                    error.message
-                );
-            }
+            select.onchange =
+                function() {
+                    handlePhaseSelection(
+                        this.value
+                    );
+                };
         }
 
 
@@ -4619,9 +4696,48 @@
             }
 
             try {
+                const canonicalPhase =
+                    canonicalPhaseName(
+                        myProfile.current_phase
+                    );
+
+                /*
+                    Keep the profile itself canonical so all users who chose
+                    the same life phase are matched using exactly the same
+                    value.
+                */
+                if (
+                    canonicalPhase &&
+                    canonicalPhase !==
+                        myProfile.current_phase
+                ) {
+                    const {
+                        error: phaseUpdateError
+                    } = await db
+                        .from("profiles")
+                        .update({
+                            current_phase:
+                                canonicalPhase
+                        })
+                        .eq(
+                            "user_id",
+                            currentUser.id
+                        );
+
+                    if (phaseUpdateError) {
+                        console.warn(
+                            "Could not normalize phase:",
+                            phaseUpdateError
+                        );
+                    } else {
+                        myProfile.current_phase =
+                            canonicalPhase;
+                    }
+                }
+
                 const { error } = await db.rpc("match_user_to_circle", {
                     p_user_id: currentUser.id,
-                    p_phase: myProfile.current_phase,
+                    p_phase: canonicalPhase,
                     p_country: myProfile.country,
                     p_city: myProfile.city,
                     p_language: myProfile.language || "English"
@@ -5557,11 +5673,9 @@
         ========================================================= */
 
         async function fetchDiscussions() {
-
             if (!currentUser) {
                 return;
             }
-
 
             const {
                 data,
@@ -5569,7 +5683,7 @@
             } = await db
                 .from("discussions")
                 .select(
-                    "*, profiles(first_name)"
+                    "id,user_id,user_name,phase_name,topic_text,created_at"
                 )
                 .order(
                     "created_at",
@@ -5578,21 +5692,34 @@
                     }
                 );
 
-
             if (error) {
-
                 console.error(
                     "Discussions error:",
                     error
                 );
 
+                const container =
+                    document.getElementById(
+                        "discussionsList"
+                    );
+
+                if (container) {
+                    container.innerHTML =
+                        `
+                            <div class="empty-state">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <p>
+                                    Could not load discussions.
+                                </p>
+                            </div>
+                        `;
+                }
+
                 return;
             }
 
-
             discussionsCache =
                 data || [];
-
 
             renderDiscussions(
                 discussionsCache
@@ -5607,47 +5734,29 @@
         function sortDiscussions(
             type
         ) {
-
             currentDiscussionSort =
                 type;
-
 
             let list =
                 [...discussionsCache];
 
-
-            if (type === "trending") {
-
-                list.sort(
-                    function(a, b) {
-
-                        return (
-                            (b.upvotes || 0) -
-                            (a.upvotes || 0)
-                        );
-
-                    }
-                );
-
-            } else {
-
-                list.sort(
-                    function(a, b) {
-
-                        return (
-                            new Date(
-                                b.created_at
-                            ) -
-                            new Date(
-                                a.created_at
-                            )
-                        );
-
-                    }
-                );
-
-            }
-
+            /*
+                The current discussions table has no upvotes column.
+                Therefore Trending safely falls back to newest topics
+                instead of querying a missing column.
+            */
+            list.sort(
+                function(a, b) {
+                    return (
+                        new Date(
+                            b.created_at
+                        ) -
+                        new Date(
+                            a.created_at
+                        )
+                    );
+                }
+            );
 
             renderDiscussions(
                 list
@@ -5662,27 +5771,22 @@
         function renderDiscussions(
             list
         ) {
-
             const container =
                 document.getElementById(
                     "discussionsList"
                 );
 
-
             if (!container) {
                 return;
             }
-
 
             if (
                 !list ||
                 list.length === 0
             ) {
-
                 container.innerHTML =
                     `
                         <div class="empty-state">
-
                             <i
                                 class="fa-solid fa-comments"
                             ></i>
@@ -5691,89 +5795,107 @@
                                 No discussions yet.
                                 Be the first to share!
                             </p>
-
                         </div>
                     `;
 
                 return;
             }
 
-
             container.innerHTML =
                 list.map(
                     function(item) {
+                        const author =
+                            item.user_name ||
+                            "Member";
+
+                        const phase =
+                            item.phase_name ||
+                            "General";
+
+                        const topic =
+                            item.topic_text ||
+                            "";
+
+                        const created =
+                            item.created_at
+                                ? new Date(
+                                    item.created_at
+                                ).toLocaleString(
+                                    "en-US",
+                                    {
+                                        dateStyle: "medium",
+                                        timeStyle: "short"
+                                    }
+                                )
+                                : "";
 
                         return `
                             <div
                                 class="card reddit-post"
                             >
-
-                                <div class="upvote-box">
-
-                                    <button
-                                        class="upvote-btn"
-                                        onclick="
-                                            upvotePost(
-                                                '${escapeHTML(item.id)}',
-                                                ${Number(item.upvotes || 0)}
-                                            )
-                                        "
-                                    >
-                                        <i
-                                            class="fa-solid fa-caret-up"
-                                        ></i>
-                                    </button>
-
-                                    <span
-                                        class="upvote-count"
-                                    >
-                                        ${Number(
-                                            item.upvotes ||
-                                            0
-                                        )}
-                                    </span>
-
-                                </div>
-
-
                                 <div
                                     style="
                                         flex:1;
                                         min-width:0;
                                     "
                                 >
-
                                     <div
                                         style="
-                                            font-size:0.7rem;
-                                            color:var(--text-muted);
-                                            margin-bottom:4px;
+                                            display:flex;
+                                            align-items:center;
+                                            justify-content:space-between;
+                                            gap:8px;
+                                            flex-wrap:wrap;
+                                            margin-bottom:6px;
                                         "
                                     >
-                                        Posted by
-                                        ${escapeHTML(
-                                            item.profiles?.first_name ||
-                                            "Member"
-                                        )}
+                                        <div
+                                            style="
+                                                font-size:0.76rem;
+                                                color:var(--text-muted);
+                                            "
+                                        >
+                                            Posted by
+                                            ${escapeHTML(
+                                                author
+                                            )}
+                                        </div>
+
+                                        <span
+                                            class="badge badge-location"
+                                        >
+                                            ${escapeHTML(
+                                                phase
+                                            )}
+                                        </span>
                                     </div>
 
                                     <div
                                         style="
-                                            font-size:0.86rem;
-                                            line-height:1.5;
+                                            font-size:0.90rem;
+                                            line-height:1.55;
                                             word-break:break-word;
                                         "
                                     >
                                         ${escapeHTML(
-                                            item.content
+                                            topic
                                         )}
                                     </div>
 
+                                    <div
+                                        style="
+                                            font-size:0.68rem;
+                                            color:var(--text-muted);
+                                            margin-top:8px;
+                                        "
+                                    >
+                                        ${escapeHTML(
+                                            created
+                                        )}
+                                    </div>
                                 </div>
-
                             </div>
                         `;
-
                     }
                 ).join("");
         }
@@ -5784,24 +5906,19 @@
         ========================================================= */
 
         async function postDiscussion() {
-
             const input =
                 document.getElementById(
                     "discussionInput"
                 );
 
-
             if (!input) {
                 return;
             }
 
-
             const content =
                 input.value.trim();
 
-
             if (!content) {
-
                 alert(
                     "Please write something first."
                 );
@@ -5809,9 +5926,25 @@
                 return;
             }
 
+            if (!currentUser) {
+                alert(
+                    "Please sign in first."
+                );
+
+                return;
+            }
+
+            const author =
+                myProfile?.first_name ||
+                currentUser.user_metadata?.first_name ||
+                currentUser.email?.split("@")[0] ||
+                "Member";
+
+            const phase =
+                myProfile?.current_phase ||
+                "General";
 
             try {
-
                 const {
                     error
                 } = await db
@@ -5821,96 +5954,55 @@
                             user_id:
                                 currentUser.id,
 
-                            content:
-                                content,
+                            user_name:
+                                author,
 
-                            upvotes:
-                                0
+                            phase_name:
+                                phase,
+
+                            topic_text:
+                                content
                         }
                     ]);
 
-
                 if (error) {
-
                     throw error;
-
                 }
-
 
                 input.value =
                     "";
-
 
                 toggleDiscussionEditor(
                     false
                 );
 
-
                 await fetchDiscussions();
 
-
             } catch (error) {
-
                 console.error(
                     "Post discussion error:",
                     error
                 );
 
-
                 alert(
                     "Could not post topic: " +
                     error.message
                 );
-
             }
         }
 
 
-        /* =========================================================
-           UPVOTE
-        ========================================================= */
+        /*
+            Compatibility guard.
 
-        async function upvotePost(
-            id,
-            currentCount
-        ) {
-
-            try {
-
-                const {
-                    error
-                } = await db
-                    .from("discussions")
-                    .update({
-                        upvotes:
-                            Number(
-                                currentCount
-                            ) + 1
-                    })
-                    .eq(
-                        "id",
-                        id
-                    );
-
-
-                if (error) {
-
-                    throw error;
-
-                }
-
-
-                await fetchDiscussions();
-
-
-            } catch (error) {
-
-                console.error(
-                    "Upvote error:",
-                    error
-                );
-
-            }
+            The current discussions table has no `upvotes` column, so the
+            old upvote UPDATE caused an error. This prevents an old cached
+            button from breaking the page.
+        */
+        async function upvotePost() {
+            alert(
+                "Reactions are not enabled in the current discussions table yet."
+            );
         }
 
 
