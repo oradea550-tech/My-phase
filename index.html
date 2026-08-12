@@ -2914,10 +2914,6 @@
     ========================================================= -->
 
     <script>
-
-        "use strict";
-
-
         /* =========================================================
            CONFIG
         ========================================================= */
@@ -4828,578 +4824,165 @@
         ========================================================= */
 
         async function checkTodaySubmission() {
+            if (!currentUser || !db) return;
 
-            if (!currentUser) {
-                return;
-            }
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(start);
+            end.setDate(end.getDate() + 1);
 
-
-            const start =
-                new Date();
-
-
-            start.setHours(
-                0,
-                0,
-                0,
-                0
-            );
-
-
-            const end =
-                new Date(
-                    start
-                );
-
-
-            end.setDate(
-                end.getDate() + 1
-            );
-
-
-            const {
-                data,
-                error
-            } = await db
-                .from("journals")
-                .select("*")
-                .eq(
-                    "user_id",
-                    currentUser.id
-                )
-                .gte(
-                    "created_at",
-                    start.toISOString()
-                )
-                .lt(
-                    "created_at",
-                    end.toISOString()
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending: false
-                    }
-                )
+            const { data, error } = await db
+                .from("daily_updates")
+                .select("id, user_id, user_name, phase_name, update_text, created_at")
+                .eq("user_id", currentUser.id)
+                .gte("created_at", start.toISOString())
+                .lt("created_at", end.toISOString())
+                .order("created_at", { ascending: false })
                 .limit(1)
                 .maybeSingle();
 
-
             if (error) {
-
-                console.error(
-                    "Today's submission error:",
-                    error
-                );
-
+                console.error("Today's update error:", error);
                 return;
             }
 
-
-            const reminder =
-                document.getElementById(
-                    "reminderBanner"
-                );
-
-            const form =
-                document.getElementById(
-                    "updateFormContainer"
-                );
-
-            const summary =
-                document.getElementById(
-                    "submittedSummaryCard"
-                );
-
+            const reminder = document.getElementById("reminderBanner");
+            const form = document.getElementById("updateFormContainer");
+            const summary = document.getElementById("submittedSummaryCard");
+            const progress = document.getElementById("feedTodayProgress");
 
             if (data) {
+                if (reminder) reminder.style.display = "none";
+                if (form) form.style.display = "none";
+                if (summary) summary.style.display = "block";
 
-                if (reminder) {
-                    reminder.style.display =
-                        "none";
-                }
+                const time = document.getElementById("journalSubmitTime");
+                if (time) time.innerText = new Date(data.created_at).toLocaleTimeString("en-US", {
+                    hour: "2-digit", minute: "2-digit"
+                });
 
-                if (form) {
-                    form.style.display =
-                        "none";
-                }
+                const text = data.update_text || "";
+                const summaryMoodWin = document.getElementById("summaryMoodWin");
+                const summaryReflection = document.getElementById("summaryReflection");
+                const summaryHelp = document.getElementById("summaryHelp");
 
-                if (summary) {
-                    summary.style.display =
-                        "block";
-                }
-
-
-                document.getElementById(
-                    "journalSubmitTime"
-                ).innerText =
-                    new Date(
-                        data.created_at
-                    ).toLocaleTimeString(
-                        "en-US",
-                        {
-                            hour:
-                                "2-digit",
-
-                            minute:
-                                "2-digit"
-                        }
-                    );
-
-
-                document.getElementById(
-                    "summaryMoodWin"
-                ).innerText =
-                    `${data.mood || "🚀"} ${
-                        data.win || ""
-                    }`;
-
-
-                document.getElementById(
-                    "summaryReflection"
-                ).innerText =
-                    data.reflection ||
-                    "";
-
-
-                document.getElementById(
-                    "summaryHelp"
-                ).innerText =
-                    data.help_requested ||
-                    "None";
-
-
-                const progress =
-                    document.getElementById(
-                        "feedTodayProgress"
-                    );
-
+                if (summaryMoodWin) summaryMoodWin.innerText = text;
+                if (summaryReflection) summaryReflection.innerText = "";
+                if (summaryHelp) summaryHelp.innerText = "";
 
                 if (progress) {
-
-                    progress.innerHTML =
-                        `
-                            <div
-                                style="
-                                    display:flex;
-                                    justify-content:space-between;
-                                    align-items:center;
-                                    gap:8px;
-                                "
-                            >
-
-                                <div
-                                    style="
-                                        font-weight:700;
-                                        font-size:0.85rem;
-                                    "
-                                >
-                                    ${escapeHTML(
-                                        data.mood
-                                    )}
-                                    ${escapeHTML(
-                                        data.win
-                                    )}
-                                </div>
-
-                                <span
-                                    class="badge badge-active"
-                                >
-                                    Completed
-                                </span>
-
+                    progress.innerHTML = `
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                            <div style="font-weight:700;font-size:0.85rem;word-break:break-word;">
+                                ${escapeHTML(text)}
                             </div>
-
-                            <p
-                                style="
-                                    font-size:0.82rem;
-                                    color:var(--text-muted);
-                                    margin-top:6px;
-                                    line-height:1.5;
-                                "
-                            >
-                                ${escapeHTML(
-                                    data.reflection
-                                )}
-                            </p>
-                        `;
-
+                            <span class="badge badge-active">Completed</span>
+                        </div>`;
                 }
-
-
             } else {
-
-                if (reminder) {
-                    reminder.style.display =
-                        "block";
-                }
-
-                if (form) {
-                    form.style.display =
-                        "block";
-                }
-
-                if (summary) {
-                    summary.style.display =
-                        "none";
-                }
-
+                if (reminder) reminder.style.display = "block";
+                if (form) form.style.display = "block";
+                if (summary) summary.style.display = "none";
             }
         }
 
 
-        /* =========================================================
-           DASHBOARD
-        ========================================================= */
-
         async function fetchDashboardData() {
+            if (!currentUser || !db) return;
 
-            if (!currentUser) {
-                return;
-            }
-
-            /* ---------------------------------------------------------
-               JOURNAL COUNT / PHASE PROGRESS
-            --------------------------------------------------------- */
-            const {
-                count,
-                error: countError
-            } = await db
-                .from("journals")
-                .select("id", {
-                    count: "exact",
-                    head: true
-                })
+            const { count, error: countError } = await db
+                .from("daily_updates")
+                .select("id", { count: "exact", head: true })
                 .eq("user_id", currentUser.id);
 
-            if (countError) {
-                console.error("Dashboard count error:", countError);
-            }
+            if (countError) console.error("Dashboard count error:", countError);
 
             const totalDays = count || 0;
+            const targetDuration = Number(myProfile?.duration) || 30;
+            const pct = Math.min(100, Math.round((totalDays / targetDuration) * 100));
 
-            const targetDuration =
-                Number(myProfile?.duration) || 30;
+            const pctElement = document.getElementById("dashProgressPct");
+            const barElement = document.getElementById("dashProgressBar");
+            if (pctElement) pctElement.innerText = pct + "%";
+            if (barElement) barElement.style.width = pct + "%";
 
-            const pct = Math.min(
-                100,
-                Math.round((totalDays / targetDuration) * 100)
-            );
-
-            const pctElement =
-                document.getElementById("dashProgressPct");
-
-            const barElement =
-                document.getElementById("dashProgressBar");
-
-            if (pctElement) {
-                pctElement.innerText = pct + "%";
-            }
-
-            if (barElement) {
-                barElement.style.width = pct + "%";
-            }
-
-            /* ---------------------------------------------------------
-               HOME — UPDATES FROM THE SAME SUPPORT CIRCLE / PHASE
-
-               IMPORTANT:
-               Older journals may have circle_id = NULL because they
-               were created before the user was matched to a circle.
-               Therefore Home must NOT filter journals by journals.circle_id.
-
-               Instead:
-               1. Get the users belonging to the current circle.
-               2. Get their journals by user_id.
-
-               This guarantees that existing updates are still visible.
-            --------------------------------------------------------- */
-            const container =
-                document.getElementById("feedCircleUpdates");
-
-            if (!container) {
-                return;
-            }
+            const container = document.getElementById("feedCircleUpdates");
+            if (!container) return;
 
             let members = [];
 
             if (myProfile?.circle_id) {
-                const {
-                    data: circleMembers,
-                    error: membersError
-                } = await db
+                const { data: circleMembers, error } = await db
                     .from("profiles")
-                    .select(
-                        "user_id, first_name, current_phase, circle_id"
-                    )
+                    .select("user_id, first_name, current_phase, circle_id")
                     .eq("circle_id", myProfile.circle_id);
-
-                if (membersError) {
-                    console.error(
-                        "Home circle members error:",
-                        membersError
-                    );
-                } else {
-                    members = circleMembers || [];
-                }
+                if (error) console.error("Home circle members error:", error);
+                else members = circleMembers || [];
             }
 
-            /*
-               Fallback: if there is no circle yet, use the same phase
-               (and location when available). This keeps Home useful
-               even while matching is still being completed.
-            */
-            if (
-                members.length === 0 &&
-                myProfile?.current_phase
-            ) {
-                let phaseQuery = db
+            if (members.length === 0 && myProfile?.current_phase) {
+                const phase = canonicalPhaseName(myProfile.current_phase);
+                let q = db
                     .from("profiles")
-                    .select(
-                        "user_id, first_name, current_phase, circle_id"
-                    )
-                    .eq(
-                        "current_phase",
-                        canonicalPhaseName(myProfile.current_phase)
-                    );
+                    .select("user_id, first_name, current_phase, circle_id")
+                    .eq("current_phase", phase);
+                if (myProfile.country) q = q.eq("country", myProfile.country);
+                if (myProfile.city) q = q.eq("city", myProfile.city);
 
-                if (myProfile.country) {
-                    phaseQuery = phaseQuery.eq(
-                        "country",
-                        myProfile.country
-                    );
-                }
-
-                if (myProfile.city) {
-                    phaseQuery = phaseQuery.eq(
-                        "city",
-                        myProfile.city
-                    );
-                }
-
-                const {
-                    data: phaseMembers,
-                    error: phaseMembersError
-                } = await phaseQuery;
-
-                if (phaseMembersError) {
-                    console.error(
-                        "Home phase members error:",
-                        phaseMembersError
-                    );
-                } else {
-                    members = phaseMembers || [];
-                }
+                const { data, error } = await q;
+                if (error) console.error("Home phase members error:", error);
+                else members = data || [];
             }
 
-            if (members.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-users"></i>
-                        <p>
-                            No people in your phase yet.
-                        </p>
-                    </div>
-                `;
+            if (!members.length) {
+                container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-users"></i><p>No people in your phase yet.</p></div>`;
                 return;
             }
 
-            const memberIds = members
-                .map(function(member) {
-                    return member.user_id;
-                })
-                .filter(Boolean);
-
-            if (memberIds.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-users-slash"></i>
-                        <p>No members found in your phase yet.</p>
-                    </div>
-                `;
-                return;
-            }
-
+            const memberIds = members.map(m => m.user_id).filter(Boolean);
             const nameByUserId = {};
+            members.forEach(m => nameByUserId[m.user_id] = m.first_name || "Member");
 
-            members.forEach(function(member) {
-                nameByUserId[member.user_id] =
-                    member.first_name || "Member";
-            });
-
-            const {
-                data: journals,
-                error: journalError
-            } = await db
-                .from("journals")
-                .select(
-                    "id, user_id, mood, win, reflection, help_requested, created_at"
-                )
+            const { data: updates, error: updateError } = await db
+                .from("daily_updates")
+                .select("id, user_id, user_name, phase_name, update_text, created_at")
                 .in("user_id", memberIds)
-                .order("created_at", {
-                    ascending: false
-                })
-                .limit(20);
+                .order("created_at", { ascending: false })
+                .limit(30);
 
-            if (journalError) {
-                console.error(
-                    "Home updates error:",
-                    journalError
-                );
-
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                        <p>Unable to load phase updates right now.</p>
-                    </div>
-                `;
+            if (updateError) {
+                console.error("Home updates error:", updateError);
+                container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><p>Unable to load phase updates right now.</p></div>`;
                 return;
             }
 
-            const data = journals || [];
-
-            if (data.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-pen"></i>
-                        <p>
-                            No updates from people in your phase yet.
-                        </p>
-                    </div>
-                `;
+            const data = updates || [];
+            if (!data.length) {
+                container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-pen"></i><p>No updates from people in your phase yet.</p></div>`;
                 return;
             }
 
-            container.innerHTML = data.map(function(item) {
-
+            container.innerHTML = data.map(item => {
                 const created = item.created_at
-                    ? new Date(item.created_at).toLocaleTimeString(
-                        "en-US",
-                        {
-                            hour: "2-digit",
-                            minute: "2-digit"
-                        }
-                    )
+                    ? new Date(item.created_at).toLocaleString("en-US", { hour: "2-digit", minute: "2-digit", month: "short", day: "numeric" })
                     : "";
-
-                const reflection =
-                    item.reflection || "Nothing";
-
-                const helpRequested =
-                    item.help_requested || "None";
-
+                const name = item.user_name || nameByUserId[item.user_id] || "Member";
+                const phase = item.phase_name || myProfile?.current_phase || "Your Phase";
                 return `
-                    <div
-                        class="card"
-                        style="
-                            padding:14px;
-                            margin-bottom:10px;
-                        "
-                    >
-                        <div
-                            style="
-                                display:flex;
-                                justify-content:space-between;
-                                align-items:flex-start;
-                                gap:8px;
-                            "
-                        >
+                    <div class="card" style="padding:14px;margin-bottom:10px;">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
                             <div>
-                                <div
-                                    style="
-                                        font-size:0.88rem;
-                                        font-weight:800;
-                                        color:var(--accent-glow);
-                                    "
-                                >
-                                    ${escapeHTML(
-                                        nameByUserId[item.user_id] || "Member"
-                                    )}
-                                </div>
-
-                                <div
-                                    style="
-                                        font-size:0.68rem;
-                                        color:var(--text-muted);
-                                        margin-top:2px;
-                                    "
-                                >
-                                    ${escapeHTML(created)}
-                                </div>
+                                <div style="font-size:0.88rem;font-weight:800;color:var(--accent-glow);">${escapeHTML(name)}</div>
+                                <div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">${escapeHTML(created)}</div>
                             </div>
-
-                            <span class="badge badge-location">
-                                ${escapeHTML(
-                                    formatPhaseName(
-                                        myProfile?.current_phase
-                                    ) || "Your Phase"
-                                )}
-                            </span>
+                            <span class="badge badge-location">${escapeHTML(formatPhaseName(phase))}</span>
                         </div>
-
-                        <div
-                            style="
-                                background:rgba(0,0,0,0.20);
-                                border-radius:var(--radius-md);
-                                padding:12px;
-                                margin-top:10px;
-                            "
-                        >
-                            <div
-                                style="
-                                    font-size:0.74rem;
-                                    color:var(--text-muted);
-                                "
-                            >
-                                Mood & Win
-                            </div>
-
-                            <div
-                                style="
-                                    font-size:0.92rem;
-                                    font-weight:750;
-                                    margin-top:4px;
-                                    line-height:1.45;
-                                "
-                            >
-                                ${escapeHTML(item.mood || "🚀")}
-                                ${escapeHTML(item.win || "")}
-                            </div>
+                        <div style="margin-top:10px;background:rgba(0,0,0,0.20);border-radius:var(--radius-md);padding:12px;font-size:0.9rem;line-height:1.55;word-break:break-word;">
+                            ${escapeHTML(item.update_text || "")}
                         </div>
-
-                        <div
-                            style="
-                                margin-top:9px;
-                                font-size:0.80rem;
-                                line-height:1.5;
-                            "
-                        >
-                            <span style="color:var(--text-muted);">
-                                Reflection:
-                            </span>
-                            ${escapeHTML(reflection)}
-                        </div>
-
-                        <div
-                            style="
-                                margin-top:7px;
-                                font-size:0.80rem;
-                                line-height:1.5;
-                            "
-                        >
-                            <span style="color:var(--text-muted);">
-                                Help requested:
-                            </span>
-                            ${escapeHTML(helpRequested)}
-                        </div>
-                    </div>
-                `;
+                    </div>`;
             }).join("");
         }
-
-        /* =========================================================
-           MARK DAILY TASK
-        ========================================================= */
 
         function markStepCompleted() {
 
@@ -5430,174 +5013,75 @@
            JOURNAL SUBMIT
         ========================================================= */
 
-        async function handleJournalSubmit(
-            event
-        ) {
-
+        async function handleJournalSubmit(event) {
             event.preventDefault();
 
-
-            if (!currentUser) {
-
-                alert(
-                    "Please sign in first."
-                );
-
+            if (!currentUser || !db) {
+                alert("Please sign in first.");
                 return;
             }
 
-
-            const button =
-                document.getElementById(
-                    "btnPostUpdate"
-                );
-
-
-            button.disabled =
-                true;
-
-
-            button.innerHTML =
-                `
-                    <i class="fa-solid fa-spinner fa-spin"></i>
-                    Saving...
-                `;
-
+            const button = document.getElementById("btnPostUpdate");
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
+            }
 
             try {
+                const winEl = document.getElementById("updateWin");
+                const reflectionEl = document.getElementById("updateReflection");
+                const helpEl = document.getElementById("updateHelp");
+
+                const win = winEl?.value.trim() || "";
+                const reflection = reflectionEl?.value.trim() || "";
+                const help = helpEl?.value.trim() || "";
+                const mood = selectedMood || "🚀";
+
+                const parts = [];
+                if (win) parts.push(`${mood} ${win}`);
+                if (reflection) parts.push(reflection);
+                if (help) parts.push(`Help: ${help}`);
+
+                const updateText = parts.join(" | ").trim();
+                if (!updateText) throw new Error("Please write an update before posting.");
 
                 const payload = {
-
-                    user_id:
-                        currentUser.id,
-
-                    circle_id:
-                        myProfile?.circle_id ||
-                        null,
-
-                    mood:
-                        selectedMood,
-
-                    win:
-                        document
-                            .getElementById(
-                                "updateWin"
-                            )
-                            .value
-                            .trim(),
-
-                    reflection:
-                        document
-                            .getElementById(
-                                "updateReflection"
-                            )
-                            .value
-                            .trim(),
-
-                    help_requested:
-                        document
-                            .getElementById(
-                                "updateHelp"
-                            )
-                            .value
-                            .trim() ||
-                        null
+                    user_id: currentUser.id,
+                    user_name: myProfile?.first_name || currentUser.user_metadata?.first_name || "Member",
+                    phase_name: myProfile?.current_phase || null,
+                    update_text: updateText
                 };
 
-
-                if (
-                    !payload.win ||
-                    !payload.reflection
-                ) {
-
-                    throw new Error(
-                        "Please complete the required fields."
-                    );
-
+                if (!payload.phase_name) {
+                    throw new Error("Your phase is not set yet. Please complete your profile first.");
                 }
 
+                const { error } = await db.from("daily_updates").insert([payload]);
+                if (error) throw error;
 
-                const {
-                    error
-                } = await db
-                    .from("journals")
-                    .insert(
-                        [payload]
-                    );
+                const form = document.getElementById("dailyJournalForm");
+                if (form) form.reset();
 
-
-                if (error) {
-
-                    throw error;
-
-                }
-
-
-                document.getElementById(
-                    "dailyJournalForm"
-                ).reset();
-
-
-                selectedMood =
-                    "🚀";
-
-
-                document
-                    .querySelectorAll(
-                        ".mood-btn"
-                    )
-                    .forEach(
-                        function(btn, index) {
-
-                            btn.classList.toggle(
-                                "selected",
-                                index === 0
-                            );
-
-                        }
-                    );
-
+                selectedMood = "🚀";
+                document.querySelectorAll(".mood-btn").forEach((btn, index) => {
+                    btn.classList.toggle("selected", index === 0);
+                });
 
                 await checkTodaySubmission();
-
                 await fetchDashboardData();
-
                 await fetchJourneyData();
-
-
-                switchTab(
-                    "Feed"
-                );
-
-
+                await fetchDiscussions();
+                switchTab("Feed");
             } catch (error) {
-
-                console.error(
-                    "Journal submit error:",
-                    error
-                );
-
-
-                alert(
-                    "Error saving log: " +
-                    error.message
-                );
-
+                console.error("Update submit error:", error);
+                alert("Error saving update: " + (error.message || "Unknown error"));
             } finally {
-
-                button.disabled =
-                    false;
-
-                button.innerHTML =
-                    "Save & Share Log";
-
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = "Save & Share Log";
+                }
             }
         }
-
-
-        /* =========================================================
-           CIRCLE MEMBERS
-        ========================================================= */
 
         async function fetchCircleMembers() {
 
@@ -6418,271 +5902,67 @@
         ========================================================= */
 
         async function fetchJourneyData() {
+            if (!currentUser || !db) return;
 
-            if (!currentUser) {
-                return;
-            }
-
-
-            const {
-                data,
-                error
-            } = await db
-                .from("journals")
-                .select("*")
-                .eq(
-                    "user_id",
-                    currentUser.id
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending: false
-                    }
-                );
-
+            const { data, error } = await db
+                .from("daily_updates")
+                .select("id, user_id, user_name, phase_name, update_text, created_at")
+                .eq("user_id", currentUser.id)
+                .order("created_at", { ascending: false });
 
             if (error) {
-
-                console.error(
-                    "Journey error:",
-                    error
-                );
-
+                console.error("Journey error:", error);
                 return;
             }
 
+            const logs = data || [];
+            const activeDays = logs.length;
 
-            const logs =
-                data || [];
+            const totalEl = document.getElementById("statTotalDays");
+            const streakEl = document.getElementById("statStreak");
+            const actionsEl = document.getElementById("statActions");
+            const completionEl = document.getElementById("statCompletionRate");
 
+            if (totalEl) totalEl.innerText = `${activeDays} Days`;
 
-            const activeDays =
-                logs.length;
+            const streak = calculateCurrentStreak(logs);
+            if (streakEl) streakEl.innerText = `${streak} Days`;
+            if (actionsEl) actionsEl.innerText = activeDays;
 
+            const targetDuration = Number(myProfile?.duration) || 30;
+            const completion = Math.min(100, Math.round((activeDays / targetDuration) * 100));
+            if (completionEl) completionEl.innerText = `${completion}%`;
 
-            document.getElementById(
-                "statTotalDays"
-            ).innerText =
-                `${activeDays} Days`;
-
-
-            /*
-                NOTE:
-                This is total logged days, not a real consecutive streak.
-                We calculate the real streak below.
-            */
-
-            const streak =
-                calculateCurrentStreak(
-                    logs
-                );
-
-
-            document.getElementById(
-                "statStreak"
-            ).innerText =
-                `${streak} Days`;
-
-
-            document.getElementById(
-                "statActions"
-            ).innerText =
-                activeDays;
-
-
-            const targetDuration =
-                Number(
-                    myProfile?.duration
-                ) || 30;
-
-
-            const completion =
-                Math.min(
-                    100,
-                    Math.round(
-                        (
-                            activeDays /
-                            targetDuration
-                        ) * 100
-                    )
-                );
-
-
-            document.getElementById(
-                "statCompletionRate"
-            ).innerText =
-                `${completion}%`;
-
-
-            /* -----------------------------------------------------
-               BADGES
-            ----------------------------------------------------- */
-
-            const badgesContainer =
-                document.getElementById(
-                    "badgesContainer"
-                );
-
-
-            let badges = [];
-
-
-            if (
-                activeDays >= 1
-            ) {
-
-                badges.push(
-                    `
-                        <span class="badge badge-active">
-                            <i class="fa-solid fa-star"></i>
-                            First Step
-                        </span>
-                    `
-                );
-
+            const badgesContainer = document.getElementById("badgesContainer");
+            if (badgesContainer) {
+                const badges = [];
+                if (activeDays >= 1) badges.push(`<span class="badge badge-active"><i class="fa-solid fa-star"></i> First Step</span>`);
+                if (streak >= 7) badges.push(`<span class="badge badge-mentor"><i class="fa-solid fa-fire"></i> 7-Day Streak</span>`);
+                if (activeDays >= targetDuration) badges.push(`<span class="badge badge-location"><i class="fa-solid fa-trophy"></i> Phase Finisher</span>`);
+                badgesContainer.innerHTML = badges.length ? badges.join(" ") : `<span style="font-size:0.78rem;color:var(--text-muted);">Keep updating daily to unlock achievements.</span>`;
             }
 
+            const timeline = document.getElementById("journeyTimeline");
+            if (!timeline) return;
 
-            if (
-                streak >= 7
-            ) {
-
-                badges.push(
-                    `
-                        <span class="badge badge-mentor">
-                            <i class="fa-solid fa-fire"></i>
-                            7-Day Streak
-                        </span>
-                    `
-                );
-
-            }
-
-
-            if (
-                activeDays >= targetDuration
-            ) {
-
-                badges.push(
-                    `
-                        <span class="badge badge-location">
-                            <i class="fa-solid fa-trophy"></i>
-                            Phase Finisher
-                        </span>
-                    `
-                );
-
-            }
-
-
-            badgesContainer.innerHTML =
-                badges.length > 0
-                    ? badges.join(" ")
-                    :
-                    `
-                        <span
-                            style="
-                                font-size:0.78rem;
-                                color:var(--text-muted);
-                            "
-                        >
-                            Keep updating daily to unlock achievements.
-                        </span>
-                    `;
-
-
-            /* -----------------------------------------------------
-               TIMELINE
-            ----------------------------------------------------- */
-
-            const timeline =
-                document.getElementById(
-                    "journeyTimeline"
-                );
-
-
-            if (
-                logs.length > 0
-            ) {
-
-                timeline.innerHTML =
-                    logs.map(
-                        function(log) {
-
-                            return `
-                                <div class="timeline-item">
-
-                                    <div
-                                        style="
-                                            font-size:0.7rem;
-                                            color:var(--text-muted);
-                                        "
-                                    >
-                                        ${new Date(
-                                            log.created_at
-                                        ).toLocaleDateString(
-                                            "en-US"
-                                        )}
-                                    </div>
-
-                                    <div
-                                        style="
-                                            font-weight:700;
-                                            font-size:0.85rem;
-                                            margin-top:3px;
-                                            word-break:break-word;
-                                        "
-                                    >
-                                        ${escapeHTML(
-                                            log.mood
-                                        )}
-                                        ${escapeHTML(
-                                            log.win
-                                        )}
-                                    </div>
-
-                                    <p
-                                        style="
-                                            font-size:0.78rem;
-                                            color:var(--text-muted);
-                                            margin-top:3px;
-                                            line-height:1.5;
-                                            word-break:break-word;
-                                        "
-                                    >
-                                        ${escapeHTML(
-                                            log.reflection
-                                        )}
-                                    </p>
-
-                                </div>
-                            `;
-
-                        }
-                    ).join("");
-
-
-            } else {
-
-                timeline.innerHTML =
-                    `
-                        <div class="empty-state">
-
-                            <p>
-                                No activity logs recorded yet.
-                            </p>
-
+            if (logs.length) {
+                timeline.innerHTML = logs.map(log => `
+                    <div class="timeline-item">
+                        <div style="font-size:0.7rem;color:var(--text-muted);">
+                            ${new Date(log.created_at).toLocaleDateString("en-US")}
                         </div>
-                    `;
-
+                        <div style="font-weight:700;font-size:0.85rem;margin-top:3px;word-break:break-word;">
+                            ${escapeHTML(log.update_text || "")}
+                        </div>
+                        <div style="font-size:0.68rem;color:var(--text-muted);margin-top:3px;">
+                            ${escapeHTML(formatPhaseName(log.phase_name || myProfile?.current_phase || ""))}
+                        </div>
+                    </div>
+                `).join("");
+            } else {
+                timeline.innerHTML = `<div class="empty-state"><p>No activity logs recorded yet.</p></div>`;
             }
         }
-
-
-        /* =========================================================
-           REAL STREAK CALCULATION
-        ========================================================= */
 
         function calculateCurrentStreak(
             logs
@@ -6853,6 +6133,18 @@
 
                         }
                     )
+                    .on(
+                        "postgres_changes",
+                        {
+                            event: "*",
+                            schema: "public",
+                            table: "daily_updates"
+                        },
+                        function() {
+                            fetchDashboardData();
+                            fetchJourneyData();
+                        }
+                    )
                     .subscribe(
                         function(status) {
 
@@ -6879,6 +6171,7 @@
             }
         );
 
+    
     </script>
 
 </body>
