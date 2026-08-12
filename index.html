@@ -1413,7 +1413,55 @@
             .mood-btn { min-height: 40px; }
         }
 
-    </style>
+    
+
+        /* =========================================================
+           COMMUNITY DISCUSSION / REPLY STYLES
+        ========================================================= */
+
+        .discussion-actions {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            flex-wrap:wrap;
+            margin-top:10px;
+        }
+
+        .discussion-replies {
+            margin-top:10px;
+            padding-left:12px;
+            border-left:2px solid rgba(124,116,255,0.28);
+        }
+
+        .discussion-reply {
+            margin-top:8px;
+            padding:9px 10px;
+            border-radius:10px;
+            background:rgba(10,15,30,0.62);
+            border:1px solid rgba(124,116,255,0.12);
+        }
+
+        .reply-editor {
+            margin-top:10px;
+            padding:10px;
+            border-radius:12px;
+            background:rgba(8,12,25,0.72);
+            border:1px solid rgba(124,116,255,0.18);
+        }
+
+        .reply-editor textarea {
+            width:100%;
+            resize:vertical;
+            min-height:62px;
+            margin-bottom:8px;
+        }
+
+        .reply-count {
+            color:var(--text-muted);
+            font-size:0.72rem;
+        }
+
+</style>
 </head>
 
 <body>
@@ -2904,6 +2952,8 @@
         let realtimeChannel = null;
 
         let discussionsCache = [];
+
+        let discussionRepliesCache = [];
 
         let currentDiscussionSort = "new";
 
@@ -5783,7 +5833,7 @@
             } = await db
                 .from("discussions")
                 .select(
-                    "id,user_id,user_name,phase_name,topic_text,created_at"
+                    "id,user_id,user_name,phase_name,topic_text,created_at,upvotes"
                 )
                 .order(
                     "created_at",
@@ -5808,9 +5858,7 @@
                         `
                             <div class="empty-state">
                                 <i class="fa-solid fa-triangle-exclamation"></i>
-                                <p>
-                                    Could not load discussions.
-                                </p>
+                                <p>Could not load discussions.</p>
                             </div>
                         `;
                 }
@@ -5818,11 +5866,64 @@
                 return;
             }
 
-            discussionsCache =
-                data || [];
+            discussionsCache = data || [];
 
-            renderDiscussions(
-                discussionsCache
+            await fetchDiscussionReplies();
+
+            sortDiscussions(currentDiscussionSort, true);
+        }
+
+
+        /* =========================================================
+           FETCH REPLIES
+        ========================================================= */
+
+        async function fetchDiscussionReplies() {
+            if (!currentUser) {
+                return;
+            }
+
+            const {
+                data,
+                error
+            } = await db
+                .from("discussion_replies")
+                .select(
+                    "id,discussion_id,user_id,user_name,content,created_at"
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: true
+                    }
+                );
+
+            if (error) {
+                console.error(
+                    "Discussion replies error:",
+                    error
+                );
+
+                /*
+                   Keep the Community page usable if the replies table
+                   has not been created yet. The SQL supplied with this
+                   version creates it.
+                */
+                discussionRepliesCache = [];
+                return;
+            }
+
+            discussionRepliesCache = data || [];
+        }
+
+
+        function getRepliesForDiscussion(
+            discussionId
+        ) {
+            return discussionRepliesCache.filter(
+                function(reply) {
+                    return reply.discussion_id === discussionId;
+                }
             );
         }
 
@@ -5832,35 +5933,41 @@
         ========================================================= */
 
         function sortDiscussions(
-            type
+            type,
+            fromFetch
         ) {
-            currentDiscussionSort =
-                type;
+            currentDiscussionSort = type || "new";
 
-            let list =
-                [...discussionsCache];
+            let list = [...discussionsCache];
 
-            /*
-                The current discussions table has no upvotes column.
-                Therefore Trending safely falls back to newest topics
-                instead of querying a missing column.
-            */
-            list.sort(
-                function(a, b) {
-                    return (
-                        new Date(
-                            b.created_at
-                        ) -
-                        new Date(
-                            a.created_at
-                        )
-                    );
-                }
-            );
+            if (currentDiscussionSort === "trending") {
+                list.sort(
+                    function(a, b) {
+                        const scoreA = Number(a.upvotes || 0);
+                        const scoreB = Number(b.upvotes || 0);
 
-            renderDiscussions(
-                list
-            );
+                        if (scoreB !== scoreA) {
+                            return scoreB - scoreA;
+                        }
+
+                        return (
+                            new Date(b.created_at) -
+                            new Date(a.created_at)
+                        );
+                    }
+                );
+            } else {
+                list.sort(
+                    function(a, b) {
+                        return (
+                            new Date(b.created_at) -
+                            new Date(a.created_at)
+                        );
+                    }
+                );
+            }
+
+            renderDiscussions(list);
         }
 
 
@@ -5880,124 +5987,164 @@
                 return;
             }
 
-            if (
-                !list ||
-                list.length === 0
-            ) {
+            if (!list || list.length === 0) {
                 container.innerHTML =
                     `
                         <div class="empty-state">
-                            <i
-                                class="fa-solid fa-comments"
-                            ></i>
-
-                            <p>
-                                No discussions yet.
-                                Be the first to share!
-                            </p>
+                            <i class="fa-solid fa-comments"></i>
+                            <p>No discussions yet. Be the first to share!</p>
                         </div>
                     `;
-
                 return;
             }
 
-            container.innerHTML =
-                list.map(
-                    function(item) {
-                        const author =
-                            item.user_name ||
-                            "Member";
+            container.innerHTML = list.map(
+                function(item) {
+                    const author = item.user_name || "Member";
+                    const phase = item.phase_name || "General";
+                    const topic = item.topic_text || "";
+                    const replies = getRepliesForDiscussion(item.id);
 
-                        const phase =
-                            item.phase_name ||
-                            "General";
+                    const created = item.created_at
+                        ? new Date(item.created_at).toLocaleString(
+                            "en-US",
+                            {
+                                dateStyle: "medium",
+                                timeStyle: "short"
+                            }
+                        )
+                        : "";
 
-                        const topic =
-                            item.topic_text ||
-                            "";
+                    const repliesHTML = replies.length
+                        ? `
+                            <div class="discussion-replies">
+                                ${replies.map(
+                                    function(reply) {
+                                        const replyCreated = reply.created_at
+                                            ? new Date(reply.created_at).toLocaleString(
+                                                "en-US",
+                                                {
+                                                    dateStyle: "medium",
+                                                    timeStyle: "short"
+                                                }
+                                            )
+                                            : "";
 
-                        const created =
-                            item.created_at
-                                ? new Date(
-                                    item.created_at
-                                ).toLocaleString(
-                                    "en-US",
-                                    {
-                                        dateStyle: "medium",
-                                        timeStyle: "short"
+                                        return `
+                                            <div class="discussion-reply">
+                                                <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:3px;">
+                                                    <strong style="color:var(--text-main);">
+                                                        ${escapeHTML(reply.user_name || "Member")}
+                                                    </strong>
+                                                    <span> · ${escapeHTML(replyCreated)}</span>
+                                                </div>
+                                                <div style="font-size:0.78rem;line-height:1.5;word-break:break-word;">
+                                                    ${escapeHTML(reply.content || "")}
+                                                </div>
+                                            </div>
+                                        `;
                                     }
-                                )
-                                : "";
+                                ).join("")}
+                            </div>
+                        `
+                        : "";
 
-                        return `
-                            <div
-                                class="card reddit-post"
-                            >
+                    return `
+                        <div class="card reddit-post" id="discussion-${escapeHTML(item.id)}">
+                            <div class="upvote-box">
+                                <button
+                                    class="upvote-btn"
+                                    type="button"
+                                    aria-label="Upvote discussion"
+                                    onclick="upvotePost('${escapeHTML(item.id)}', ${Number(item.upvotes || 0)})"
+                                >
+                                    <i class="fa-solid fa-caret-up"></i>
+                                </button>
+                                <span class="upvote-count">
+                                    ${Number(item.upvotes || 0)}
+                                </span>
+                            </div>
+
+                            <div style="flex:1;min-width:0;">
                                 <div
                                     style="
-                                        flex:1;
-                                        min-width:0;
+                                        display:flex;
+                                        align-items:center;
+                                        justify-content:space-between;
+                                        gap:8px;
+                                        flex-wrap:wrap;
+                                        margin-bottom:6px;
                                     "
                                 >
-                                    <div
-                                        style="
-                                            display:flex;
-                                            align-items:center;
-                                            justify-content:space-between;
-                                            gap:8px;
-                                            flex-wrap:wrap;
-                                            margin-bottom:6px;
-                                        "
-                                    >
-                                        <div
-                                            style="
-                                                font-size:0.76rem;
-                                                color:var(--text-muted);
-                                            "
-                                        >
-                                            Posted by
-                                            ${escapeHTML(
-                                                author
-                                            )}
-                                        </div>
-
-                                        <span
-                                            class="badge badge-location"
-                                        >
-                                            ${escapeHTML(
-                                                phase
-                                            )}
-                                        </span>
+                                    <div style="font-size:0.76rem;color:var(--text-muted);">
+                                        Posted by ${escapeHTML(author)}
                                     </div>
 
-                                    <div
-                                        style="
-                                            font-size:0.90rem;
-                                            line-height:1.55;
-                                            word-break:break-word;
-                                        "
-                                    >
-                                        ${escapeHTML(
-                                            topic
-                                        )}
-                                    </div>
+                                    <span class="badge badge-location">
+                                        ${escapeHTML(phase)}
+                                    </span>
+                                </div>
 
-                                    <div
-                                        style="
-                                            font-size:0.68rem;
-                                            color:var(--text-muted);
-                                            margin-top:8px;
-                                        "
+                                <div style="font-size:0.90rem;line-height:1.55;word-break:break-word;">
+                                    ${escapeHTML(topic)}
+                                </div>
+
+                                <div style="font-size:0.68rem;color:var(--text-muted);margin-top:8px;">
+                                    ${escapeHTML(created)}
+                                </div>
+
+                                <div class="discussion-actions">
+                                    <button
+                                        class="btn small ghost"
+                                        type="button"
+                                        onclick="toggleReplyEditor('${escapeHTML(item.id)}')"
                                     >
-                                        ${escapeHTML(
-                                            created
-                                        )}
+                                        <i class="fa-solid fa-reply"></i>
+                                        Reply
+                                    </button>
+
+                                    <span class="reply-count">
+                                        ${replies.length} ${replies.length === 1 ? "reply" : "replies"}
+                                    </span>
+                                </div>
+
+                                <div
+                                    id="reply-editor-${escapeHTML(item.id)}"
+                                    class="reply-editor"
+                                    style="display:none;"
+                                >
+                                    <textarea
+                                        id="reply-input-${escapeHTML(item.id)}"
+                                        class="form-control"
+                                        placeholder="Write a reply and join the discussion..."
+                                        rows="2"
+                                    ></textarea>
+
+                                    <div style="display:flex;gap:7px;flex-wrap:wrap;">
+                                        <button
+                                            class="btn small ghost"
+                                            type="button"
+                                            onclick="toggleReplyEditor('${escapeHTML(item.id)}', false)"
+                                        >
+                                            Cancel
+                                        </button>
+
+                                        <button
+                                            class="btn small"
+                                            type="button"
+                                            onclick="postReply('${escapeHTML(item.id)}')"
+                                        >
+                                            Reply
+                                        </button>
                                     </div>
                                 </div>
+
+                                ${repliesHTML}
                             </div>
-                        `;
-                    }
-                ).join("");
+                        </div>
+                    `;
+                }
+            ).join("");
         }
 
 
@@ -6092,17 +6239,177 @@
         }
 
 
-        /*
-            Compatibility guard.
+        /* =========================================================
+           UPVOTE DISCUSSION
+        ========================================================= */
 
-            The current discussions table has no `upvotes` column, so the
-            old upvote UPDATE caused an error. This prevents an old cached
-            button from breaking the page.
-        */
-        async function upvotePost() {
-            alert(
-                "Reactions are not enabled in the current discussions table yet."
-            );
+        async function upvotePost(
+            id,
+            currentCount
+        ) {
+            if (!currentUser) {
+                alert("Please sign in first.");
+                return;
+            }
+
+            try {
+                const nextCount =
+                    Number(currentCount || 0) + 1;
+
+                const {
+                    error
+                } = await db
+                    .from("discussions")
+                    .update({
+                        upvotes: nextCount
+                    })
+                    .eq("id", id);
+
+                if (error) {
+                    throw error;
+                }
+
+                const item =
+                    discussionsCache.find(
+                        function(row) {
+                            return row.id === id;
+                        }
+                    );
+
+                if (item) {
+                    item.upvotes = nextCount;
+                }
+
+                renderDiscussions(
+                    discussionsCache
+                );
+
+            } catch (error) {
+                console.error(
+                    "Upvote error:",
+                    error
+                );
+
+                alert(
+                    "Could not react to this post: " +
+                    error.message
+                );
+            }
+        }
+
+
+        /* =========================================================
+           REPLIES / DISCUSSION THREADS
+        ========================================================= */
+
+        function toggleReplyEditor(
+            discussionId,
+            forceState
+        ) {
+            const editor =
+                document.getElementById(
+                    "reply-editor-" + discussionId
+                );
+
+            if (!editor) {
+                return;
+            }
+
+            const shouldShow =
+                typeof forceState === "boolean"
+                    ? forceState
+                    : editor.style.display === "none" ||
+                      editor.style.display === "";
+
+            editor.style.display =
+                shouldShow ? "block" : "none";
+
+            if (shouldShow) {
+                const input =
+                    document.getElementById(
+                        "reply-input-" + discussionId
+                    );
+
+                if (input) {
+                    setTimeout(
+                        function() {
+                            input.focus();
+                        },
+                        50
+                    );
+                }
+            }
+        }
+
+
+        async function postReply(
+            discussionId
+        ) {
+            if (!currentUser) {
+                alert("Please sign in first.");
+                return;
+            }
+
+            const input =
+                document.getElementById(
+                    "reply-input-" + discussionId
+                );
+
+            if (!input) {
+                return;
+            }
+
+            const content =
+                input.value.trim();
+
+            if (!content) {
+                alert("Please write a reply first.");
+                return;
+            }
+
+            const author =
+                myProfile?.first_name ||
+                currentUser.user_metadata?.first_name ||
+                currentUser.email?.split("@")[0] ||
+                "Member";
+
+            try {
+                const {
+                    error
+                } = await db
+                    .from("discussion_replies")
+                    .insert([
+                        {
+                            discussion_id:
+                                discussionId,
+                            user_id:
+                                currentUser.id,
+                            user_name:
+                                author,
+                            content:
+                                content
+                        }
+                    ]);
+
+                if (error) {
+                    throw error;
+                }
+
+                input.value = "";
+
+                await fetchDiscussions();
+
+            } catch (error) {
+                console.error(
+                    "Post reply error:",
+                    error
+                );
+
+                alert(
+                    "Could not post reply: " +
+                    error.message
+                );
+            }
         }
 
 
