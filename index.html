@@ -1611,9 +1611,9 @@
                     <button
                         class="btn small"
                         style="width:auto; flex-shrink:0;"
-                        onclick="switchTab('Update')"
+                        onclick="document.getElementById('shareUpdateCard')?.scrollIntoView({behavior:'smooth',block:'start'})"
                     >
-                        Update
+                        Share Update
                     </button>
 
                 </div>
@@ -1823,59 +1823,17 @@
             </div>
 
 
-            <!-- Circle -->
+            <!-- =====================================================
+                 SHARE UPDATE
+            ===================================================== -->
 
-            <div
-                style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                    gap:8px;
-                    margin:17px 0 9px;
-                "
-            >
-
-                <div
-                    style="
-                        font-weight:700;
-                        color:var(--accent-glow);
-                        font-size:0.9rem;
-                    "
-                >
-                    <i class="fa-solid fa-user-group"></i>
-                    Updates From Your Phase
-                </div>
-
-                <button
-                    class="btn small ghost"
-                    onclick="retryMatchCircle()"
-                    style="
-                        padding:5px 9px;
-                        font-size:0.68rem;
-                        flex-shrink:0;
-                    "
-                >
-                    <i class="fa-solid fa-rotate"></i>
-                    Sync
-                </button>
-
-            </div>
-
-            <div id="feedCircleUpdates">
-                Loading circle updates...
-            </div>
-
-        </div>
+            <div class="card" id="shareUpdateCard">
+                <h4 style="margin-bottom:15px;color:var(--accent-glow);">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    Share an Update
+                </h4>
 
 
-        <!-- =====================================================
-             UPDATE
-        ===================================================== -->
-
-        <div
-            id="panelUpdate"
-            class="tab-panel"
-        >
 
             <div
                 class="card"
@@ -2138,6 +2096,87 @@
 
             </div>
 
+
+
+            </div>
+
+
+            <!-- Circle -->
+
+            <div
+                style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    gap:8px;
+                    margin:17px 0 9px;
+                "
+            >
+
+                <div
+                    style="
+                        font-weight:700;
+                        color:var(--accent-glow);
+                        font-size:0.9rem;
+                    "
+                >
+                    <i class="fa-solid fa-user-group"></i>
+                    Updates From Your Phase
+                </div>
+
+                <button
+                    class="btn small ghost"
+                    onclick="retryMatchCircle()"
+                    style="
+                        padding:5px 9px;
+                        font-size:0.68rem;
+                        flex-shrink:0;
+                    "
+                >
+                    <i class="fa-solid fa-rotate"></i>
+                    Sync
+                </button>
+
+            </div>
+
+            <div id="feedCircleUpdates">
+                Loading circle updates...
+            </div>
+
+
+            <!-- =====================================================
+                 CIRCLE DISCUSSIONS
+            ===================================================== -->
+
+            <div class="card" id="homeDiscussionsCard" style="margin-top:16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:13px;">
+                    <h4 style="color:var(--accent-glow);font-size:0.95rem;">
+                        <i class="fa-solid fa-comments"></i>
+                        Discussions
+                    </h4>
+                    <div style="display:flex;gap:5px;">
+                        <button class="btn small ghost" type="button" onclick="sortDiscussions('new')">New</button>
+                        <button class="btn small ghost" type="button" onclick="sortDiscussions('trending')">Trending</button>
+                    </div>
+                </div>
+
+                <div id="discussionsList">Loading discussions...</div>
+
+                <div id="newDiscussionEditor" class="card" style="display:none;margin-top:13px;padding:13px;">
+                    <h5 style="margin-bottom:9px;">Start a New Discussion</h5>
+                    <textarea id="discussionInput" class="form-control" placeholder="Ask a question or share advice..." rows="3"></textarea>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn ghost" type="button" onclick="toggleDiscussionEditor(false)">Cancel</button>
+                        <button class="btn" type="button" onclick="postDiscussion()">Post</button>
+                    </div>
+                </div>
+
+                <button id="btnOpenDiscussionEditor" class="btn" type="button" onclick="toggleDiscussionEditor(true)" style="margin-top:13px;">
+                    <i class="fa-solid fa-plus"></i>
+                    Start Discussion
+                </button>
+            </div>
+
         </div>
 
 
@@ -2183,127 +2222,6 @@
             <div id="circleMembersList">
                 Loading members...
             </div>
-
-        </div>
-
-
-        <!-- =====================================================
-             DISCUSSIONS
-        ===================================================== -->
-
-        <div
-            id="panelDiscussions"
-            class="tab-panel"
-        >
-
-            <div
-                style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                    gap:8px;
-                    margin-bottom:13px;
-                "
-            >
-
-                <h4
-                    style="
-                        color:var(--accent-glow);
-                        font-size:0.95rem;
-                    "
-                >
-                    <i class="fa-solid fa-comments"></i>
-                    Community
-                </h4>
-
-                <div
-                    style="
-                        display:flex;
-                        gap:5px;
-                    "
-                >
-
-                    <button
-                        class="btn small ghost"
-                        onclick="sortDiscussions('new')"
-                    >
-                        New
-                    </button>
-
-                    <button
-                        class="btn small ghost"
-                        onclick="sortDiscussions('trending')"
-                    >
-                        Trending
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <div id="discussionsList">
-                Loading discussions...
-            </div>
-
-
-            <div
-                id="newDiscussionEditor"
-                class="card"
-                style="
-                    display:none;
-                    margin-top:13px;
-                "
-            >
-
-                <h5
-                    style="margin-bottom:9px;"
-                >
-                    Start a New Topic
-                </h5>
-
-                <textarea
-                    id="discussionInput"
-                    class="form-control"
-                    placeholder="Ask a question or share advice..."
-                    rows="3"
-                ></textarea>
-
-                <div
-                    style="
-                        display:flex;
-                        gap:8px;
-                    "
-                >
-
-                    <button
-                        class="btn ghost"
-                        onclick="toggleDiscussionEditor(false)"
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        class="btn"
-                        onclick="postDiscussion()"
-                    >
-                        Post
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <button
-                id="btnOpenDiscussionEditor"
-                class="btn"
-                onclick="toggleDiscussionEditor(true)"
-                style="margin-top:13px;"
-            >
-                <i class="fa-solid fa-plus"></i>
-                Create New Topic
-            </button>
 
         </div>
 
@@ -2529,7 +2447,7 @@
 
         <div
             class="nav-tab"
-            onclick="switchTab('Update')"
+            onclick="document.getElementById('shareUpdateCard')?.scrollIntoView({behavior:'smooth',block:'start'})"
         >
             <i class="fa-solid fa-pen-to-square"></i>
             <span>Update</span>
@@ -2541,14 +2459,6 @@
         >
             <i class="fa-solid fa-user-group"></i>
             <span>Circle</span>
-        </div>
-
-        <div
-            class="nav-tab"
-            onclick="switchTab('Discussions')"
-        >
-            <i class="fa-solid fa-comments"></i>
-            <span>Community</span>
         </div>
 
         <div
@@ -3169,9 +3079,7 @@
 
             const tabs = [
                 "Feed",
-                "Update",
                 "Circle",
-                "Discussions",
                 "Journey"
             ];
 
@@ -3194,6 +3102,9 @@
             if (tabName === "Feed" && currentUser) {
                 fetchDashboardData().catch(function(error) {
                     console.error("Home refresh error:", error);
+                });
+                fetchDiscussions().catch(function(error) {
+                    console.error("Home discussions refresh error:", error);
                 });
             }
 
@@ -4887,6 +4798,22 @@
         }
 
 
+        function startDiscussionFromUpdate(updateId) {
+            const input = document.getElementById("discussionInput");
+            const editor = document.getElementById("newDiscussionEditor");
+            if (!input || !editor) return;
+
+            const card = document.querySelector(`[data-update-id="${CSS.escape(String(updateId))}"]`);
+            const text = card?.dataset?.updateText || "";
+            const author = card?.dataset?.updateAuthor || "Member";
+
+            input.value = text ? `Replying to ${author}: ${text}` : "";
+            editor.style.display = "block";
+            input.focus();
+            editor.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+
+
         async function fetchDashboardData() {
             if (!currentUser || !db) return;
 
@@ -4969,7 +4896,7 @@
                 const name = item.user_name || nameByUserId[item.user_id] || "Member";
                 const phase = item.phase_name || myProfile?.current_phase || "Your Phase";
                 return `
-                    <div class="card" style="padding:14px;margin-bottom:10px;">
+                    <div class="card" data-update-id="${escapeHTML(item.id)}" data-update-text="${escapeHTML(item.update_text || "")}" data-update-author="${escapeHTML(name)}" style="padding:14px;margin-bottom:10px;">
                         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
                             <div>
                                 <div style="font-size:0.88rem;font-weight:800;color:var(--accent-glow);">${escapeHTML(name)}</div>
@@ -4980,9 +4907,15 @@
                         <div style="margin-top:10px;background:rgba(0,0,0,0.20);border-radius:var(--radius-md);padding:12px;font-size:0.9rem;line-height:1.55;word-break:break-word;">
                             ${escapeHTML(item.update_text || "")}
                         </div>
+                        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;">
+                            <button class="btn small ghost" type="button" onclick="startDiscussionFromUpdate('${escapeHTML(item.id)}')">
+                                <i class="fa-solid fa-reply"></i> Discuss / Reply
+                            </button>
+                        </div>
                     </div>`;
             }).join("");
         }
+
 
         function markStepCompleted() {
 
@@ -5311,20 +5244,21 @@
                 return;
             }
 
-            const {
-                data,
-                error
-            } = await db
+            let discussionQuery = db
                 .from("discussions")
                 .select(
                     "id,user_id,user_name,phase_name,topic_text,created_at,upvotes"
                 )
-                .order(
-                    "created_at",
-                    {
-                        ascending: false
-                    }
+                .order("created_at", { ascending: false });
+
+            if (myProfile?.current_phase) {
+                discussionQuery = discussionQuery.eq(
+                    "phase_name",
+                    canonicalPhaseName(myProfile.current_phase)
                 );
+            }
+
+            const { data, error } = await discussionQuery;
 
             if (error) {
                 console.error(
@@ -5672,8 +5606,7 @@
                 "Member";
 
             const phase =
-                myProfile?.current_phase ||
-                "General";
+                canonicalPhaseName(myProfile?.current_phase || "General");
 
             try {
                 const {
