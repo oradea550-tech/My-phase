@@ -571,6 +571,21 @@
         }
 
         /* =========================================================
+           HOME PHASE UPDATES
+        ========================================================= */
+
+        #feedCircleUpdates .card {
+            overflow: hidden;
+        }
+
+        #feedCircleUpdates .badge-location {
+            max-width: 48%;
+            white-space: normal;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* =========================================================
            BADGES
         ========================================================= */
 
@@ -1780,7 +1795,7 @@
                     "
                 >
                     <i class="fa-solid fa-user-group"></i>
-                    Circle Updates
+                    Updates From Your Phase
                 </div>
 
                 <button
@@ -3090,37 +3105,21 @@
             document
                 .querySelectorAll(".tab-panel")
                 .forEach(function(panel) {
-
-                    panel.classList.remove(
-                        "active"
-                    );
-
+                    panel.classList.remove("active");
                 });
 
             document
                 .querySelectorAll(".nav-tab")
                 .forEach(function(tab) {
-
-                    tab.classList.remove(
-                        "active"
-                    );
-
+                    tab.classList.remove("active");
                 });
 
-
             const panel =
-                document.getElementById(
-                    "panel" + tabName
-                );
+                document.getElementById("panel" + tabName);
 
             if (panel) {
-
-                panel.classList.add(
-                    "active"
-                );
-
+                panel.classList.add("active");
             }
-
 
             const tabs = [
                 "Feed",
@@ -3130,24 +3129,26 @@
                 "Journey"
             ];
 
-            const index =
-                tabs.indexOf(tabName);
+            const index = tabs.indexOf(tabName);
 
             if (index !== -1) {
-
                 const navTabs =
-                    document.querySelectorAll(
-                        ".nav-tab"
-                    );
+                    document.querySelectorAll(".nav-tab");
 
                 if (navTabs[index]) {
-
-                    navTabs[index].classList.add(
-                        "active"
-                    );
-
+                    navTabs[index].classList.add("active");
                 }
+            }
 
+            /*
+               Refresh Home every time the user opens it.
+               This makes new updates from other members appear
+               without requiring a full page reload.
+            */
+            if (tabName === "Feed" && currentUser) {
+                fetchDashboardData().catch(function(error) {
+                    console.error("Home refresh error:", error);
+                });
             }
 
             window.scrollTo({
@@ -3155,7 +3156,6 @@
                 behavior: "smooth"
             });
         }
-
 
         /* =========================================================
            SESSION TIMER
@@ -5008,244 +5008,344 @@
                 return;
             }
 
-
+            /* ---------------------------------------------------------
+               JOURNAL COUNT / PHASE PROGRESS
+            --------------------------------------------------------- */
             const {
                 count,
-                error
+                error: countError
             } = await db
                 .from("journals")
-                .select(
-                    "id",
-                    {
-                        count:
-                            "exact",
-                        head:
-                            true
-                    }
-                )
-                .eq(
-                    "user_id",
-                    currentUser.id
-                );
+                .select("id", {
+                    count: "exact",
+                    head: true
+                })
+                .eq("user_id", currentUser.id);
 
-
-            if (error) {
-
-                console.error(
-                    "Dashboard count error:",
-                    error
-                );
-
+            if (countError) {
+                console.error("Dashboard count error:", countError);
             }
 
-
-            const totalDays =
-                count || 0;
-
-
-            /*
-                Duration comes from profile.
-
-                profile.duration was already populated
-                from phases.duration_days during signup.
-            */
+            const totalDays = count || 0;
 
             const targetDuration =
-                Number(
-                    myProfile?.duration
-                ) || 30;
+                Number(myProfile?.duration) || 30;
 
-
-            const pct =
-                Math.min(
-                    100,
-                    Math.round(
-                        (
-                            totalDays /
-                            targetDuration
-                        ) * 100
-                    )
-                );
-
+            const pct = Math.min(
+                100,
+                Math.round((totalDays / targetDuration) * 100)
+            );
 
             const pctElement =
-                document.getElementById(
-                    "dashProgressPct"
-                );
+                document.getElementById("dashProgressPct");
 
             const barElement =
-                document.getElementById(
-                    "dashProgressBar"
-                );
-
+                document.getElementById("dashProgressBar");
 
             if (pctElement) {
-
-                pctElement.innerText =
-                    pct + "%";
-
+                pctElement.innerText = pct + "%";
             }
-
 
             if (barElement) {
-
-                barElement.style.width =
-                    pct + "%";
-
+                barElement.style.width = pct + "%";
             }
 
+            /* ---------------------------------------------------------
+               HOME — UPDATES FROM THE SAME SUPPORT CIRCLE / PHASE
 
-            /*
-                Circle updates
-            */
+               IMPORTANT:
+               Older journals may have circle_id = NULL because they
+               were created before the user was matched to a circle.
+               Therefore Home must NOT filter journals by journals.circle_id.
 
+               Instead:
+               1. Get the users belonging to the current circle.
+               2. Get their journals by user_id.
+
+               This guarantees that existing updates are still visible.
+            --------------------------------------------------------- */
             const container =
-                document.getElementById(
-                    "feedCircleUpdates"
-                );
-
-
-            if (!myProfile?.circle_id) {
-
-                if (container) {
-
-                    container.innerHTML =
-                        `
-                            <div class="empty-state">
-
-                                <i
-                                    class="fa-solid fa-users"
-                                ></i>
-
-                                <p>
-                                    Connecting you to a suitable support circle...
-                                </p>
-
-                            </div>
-                        `;
-
-                }
-
-                return;
-            }
-
-
-            const {
-                data,
-                error:
-                    journalError
-            } = await db
-                .from("journals")
-                .select(
-                    "*, profiles(first_name)"
-                )
-                .eq(
-                    "circle_id",
-                    myProfile.circle_id
-                )
-                .neq(
-                    "user_id",
-                    currentUser.id
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending: false
-                    }
-                )
-                .limit(3);
-
-
-            if (
-                journalError
-            ) {
-
-                console.error(
-                    "Circle updates error:",
-                    journalError
-                );
-
-                return;
-            }
-
+                document.getElementById("feedCircleUpdates");
 
             if (!container) {
                 return;
             }
 
+            let members = [];
 
+            if (myProfile?.circle_id) {
+                const {
+                    data: circleMembers,
+                    error: membersError
+                } = await db
+                    .from("profiles")
+                    .select(
+                        "user_id, first_name, current_phase, circle_id"
+                    )
+                    .eq("circle_id", myProfile.circle_id);
+
+                if (membersError) {
+                    console.error(
+                        "Home circle members error:",
+                        membersError
+                    );
+                } else {
+                    members = circleMembers || [];
+                }
+            }
+
+            /*
+               Fallback: if there is no circle yet, use the same phase
+               (and location when available). This keeps Home useful
+               even while matching is still being completed.
+            */
             if (
-                data &&
-                data.length > 0
+                members.length === 0 &&
+                myProfile?.current_phase
             ) {
+                let phaseQuery = db
+                    .from("profiles")
+                    .select(
+                        "user_id, first_name, current_phase, circle_id"
+                    )
+                    .eq(
+                        "current_phase",
+                        canonicalPhaseName(myProfile.current_phase)
+                    );
 
-                container.innerHTML =
-                    data.map(
-                        function(item) {
+                if (myProfile.country) {
+                    phaseQuery = phaseQuery.eq(
+                        "country",
+                        myProfile.country
+                    );
+                }
 
-                            return `
+                if (myProfile.city) {
+                    phaseQuery = phaseQuery.eq(
+                        "city",
+                        myProfile.city
+                    );
+                }
+
+                const {
+                    data: phaseMembers,
+                    error: phaseMembersError
+                } = await phaseQuery;
+
+                if (phaseMembersError) {
+                    console.error(
+                        "Home phase members error:",
+                        phaseMembersError
+                    );
+                } else {
+                    members = phaseMembers || [];
+                }
+            }
+
+            if (members.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-users"></i>
+                        <p>
+                            No people in your phase yet.
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            const memberIds = members
+                .map(function(member) {
+                    return member.user_id;
+                })
+                .filter(Boolean);
+
+            if (memberIds.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-users-slash"></i>
+                        <p>No members found in your phase yet.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const nameByUserId = {};
+
+            members.forEach(function(member) {
+                nameByUserId[member.user_id] =
+                    member.first_name || "Member";
+            });
+
+            const {
+                data: journals,
+                error: journalError
+            } = await db
+                .from("journals")
+                .select(
+                    "id, user_id, mood, win, reflection, help_requested, created_at"
+                )
+                .in("user_id", memberIds)
+                .order("created_at", {
+                    ascending: false
+                })
+                .limit(20);
+
+            if (journalError) {
+                console.error(
+                    "Home updates error:",
+                    journalError
+                );
+
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <p>Unable to load phase updates right now.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const data = journals || [];
+
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-pen"></i>
+                        <p>
+                            No updates from people in your phase yet.
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = data.map(function(item) {
+
+                const created = item.created_at
+                    ? new Date(item.created_at).toLocaleTimeString(
+                        "en-US",
+                        {
+                            hour: "2-digit",
+                            minute: "2-digit"
+                        }
+                    )
+                    : "";
+
+                const reflection =
+                    item.reflection || "Nothing";
+
+                const helpRequested =
+                    item.help_requested || "None";
+
+                return `
+                    <div
+                        class="card"
+                        style="
+                            padding:14px;
+                            margin-bottom:10px;
+                        "
+                    >
+                        <div
+                            style="
+                                display:flex;
+                                justify-content:space-between;
+                                align-items:flex-start;
+                                gap:8px;
+                            "
+                        >
+                            <div>
                                 <div
-                                    class="card"
                                     style="
-                                        padding:13px;
-                                        margin-bottom:9px;
+                                        font-size:0.88rem;
+                                        font-weight:800;
+                                        color:var(--accent-glow);
                                     "
                                 >
-
-                                    <div
-                                        style="
-                                            font-size:0.78rem;
-                                            font-weight:700;
-                                            color:var(--accent-glow);
-                                        "
-                                    >
-                                        ${escapeHTML(
-                                            item.profiles?.first_name ||
-                                            "Member"
-                                        )}
-                                    </div>
-
-                                    <div
-                                        style="
-                                            font-size:0.86rem;
-                                            margin-top:4px;
-                                        "
-                                    >
-                                        ${escapeHTML(
-                                            item.mood
-                                        )}
-                                        ${escapeHTML(
-                                            item.win
-                                        )}
-                                    </div>
-
+                                    ${escapeHTML(
+                                        nameByUserId[item.user_id] || "Member"
+                                    )}
                                 </div>
-                            `;
 
-                        }
-                    ).join("");
+                                <div
+                                    style="
+                                        font-size:0.68rem;
+                                        color:var(--text-muted);
+                                        margin-top:2px;
+                                    "
+                                >
+                                    ${escapeHTML(created)}
+                                </div>
+                            </div>
 
-
-            } else {
-
-                container.innerHTML =
-                    `
-                        <div class="empty-state">
-
-                            <i
-                                class="fa-solid fa-users-slash"
-                            ></i>
-
-                            <p>
-                                No new updates from your circle members yet.
-                            </p>
-
+                            <span class="badge badge-location">
+                                ${escapeHTML(
+                                    formatPhaseName(
+                                        myProfile?.current_phase
+                                    ) || "Your Phase"
+                                )}
+                            </span>
                         </div>
-                    `;
 
-            }
+                        <div
+                            style="
+                                background:rgba(0,0,0,0.20);
+                                border-radius:var(--radius-md);
+                                padding:12px;
+                                margin-top:10px;
+                            "
+                        >
+                            <div
+                                style="
+                                    font-size:0.74rem;
+                                    color:var(--text-muted);
+                                "
+                            >
+                                Mood & Win
+                            </div>
+
+                            <div
+                                style="
+                                    font-size:0.92rem;
+                                    font-weight:750;
+                                    margin-top:4px;
+                                    line-height:1.45;
+                                "
+                            >
+                                ${escapeHTML(item.mood || "🚀")}
+                                ${escapeHTML(item.win || "")}
+                            </div>
+                        </div>
+
+                        <div
+                            style="
+                                margin-top:9px;
+                                font-size:0.80rem;
+                                line-height:1.5;
+                            "
+                        >
+                            <span style="color:var(--text-muted);">
+                                Reflection:
+                            </span>
+                            ${escapeHTML(reflection)}
+                        </div>
+
+                        <div
+                            style="
+                                margin-top:7px;
+                                font-size:0.80rem;
+                                line-height:1.5;
+                            "
+                        >
+                            <span style="color:var(--text-muted);">
+                                Help requested:
+                            </span>
+                            ${escapeHTML(helpRequested)}
+                        </div>
+                    </div>
+                `;
+            }).join("");
         }
-
 
         /* =========================================================
            MARK DAILY TASK
