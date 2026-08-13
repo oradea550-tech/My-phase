@@ -237,6 +237,84 @@
         }
 
         /* =========================================================
+           NOTIFICATIONS
+        ========================================================= */
+        .notification-button {
+            position:relative;
+            width:38px;
+            height:38px;
+            border-radius:50%;
+            border:1px solid var(--border);
+            background:rgba(255,255,255,0.04);
+            color:var(--text-main);
+            display:none;
+            align-items:center;
+            justify-content:center;
+            cursor:pointer;
+        }
+        .notification-button:hover { color:var(--accent-glow); }
+        .notification-badge {
+            position:absolute;
+            top:-3px;
+            right:-3px;
+            min-width:17px;
+            height:17px;
+            padding:0 4px;
+            border-radius:999px;
+            background:var(--danger);
+            color:#fff;
+            font-size:0.62rem;
+            font-weight:800;
+            display:none;
+            align-items:center;
+            justify-content:center;
+            border:2px solid #111827;
+        }
+        .notification-panel {
+            position:fixed;
+            top:60px;
+            right:12px;
+            width:min(360px, calc(100vw - 24px));
+            max-height:70vh;
+            overflow-y:auto;
+            z-index:4500;
+            display:none;
+            background:var(--bg-card);
+            border:1px solid var(--border);
+            border-radius:16px;
+            box-shadow:var(--shadow-soft);
+        }
+        .notification-panel.show { display:block; }
+        .notification-header {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:8px;
+            padding:13px 14px;
+            border-bottom:1px solid var(--border);
+            position:sticky;
+            top:0;
+            background:rgba(17,24,39,0.98);
+            z-index:1;
+        }
+        .notification-item {
+            display:block;
+            width:100%;
+            text-align:left;
+            border:0;
+            border-bottom:1px solid rgba(38,52,73,0.7);
+            background:transparent;
+            color:var(--text-main);
+            padding:12px 14px;
+            cursor:pointer;
+        }
+        .notification-item:hover { background:rgba(99,102,241,0.08); }
+        .notification-item.unread { background:rgba(99,102,241,0.10); }
+        .notification-message { font-size:0.82rem; line-height:1.45; }
+        .notification-time { font-size:0.67rem; color:var(--text-muted); margin-top:4px; }
+        .notification-empty { padding:24px 14px; text-align:center; color:var(--text-muted); font-size:0.82rem; }
+
+        /* =========================================================
            USER MENU
         ========================================================= */
 
@@ -1519,6 +1597,33 @@
             </span>
         </div>
 
+        <button
+            id="notificationButton"
+            class="notification-button"
+            type="button"
+            onclick="toggleNotifications(event)"
+            aria-label="Notifications"
+        >
+            <i class="fa-regular fa-bell"></i>
+            <span id="notificationBadge" class="notification-badge">0</span>
+        </button>
+
+        <div
+            id="notificationPanel"
+            class="notification-panel"
+            onclick="event.stopPropagation()"
+        >
+            <div class="notification-header">
+                <strong>Notifications</strong>
+                <button class="btn small ghost" type="button" onclick="markAllNotificationsRead()">
+                    Mark all read
+                </button>
+            </div>
+            <div id="notificationList">
+                <div class="notification-empty">No notifications yet.</div>
+            </div>
+        </div>
+
         <div
             class="user-menu-container"
             id="userMenuContainer"
@@ -1611,9 +1716,9 @@
                     <button
                         class="btn small"
                         style="width:auto; flex-shrink:0;"
-                        onclick="document.getElementById('shareUpdateCard')?.scrollIntoView({behavior:'smooth',block:'start'})"
+                        onclick="switchTab('Update')"
                     >
-                        Share Update
+                        Update
                     </button>
 
                 </div>
@@ -1823,17 +1928,59 @@
             </div>
 
 
-            <!-- =====================================================
-                 SHARE UPDATE
-            ===================================================== -->
+            <!-- Circle -->
 
-            <div class="card" id="shareUpdateCard">
-                <h4 style="margin-bottom:15px;color:var(--accent-glow);">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                    Share an Update
-                </h4>
+            <div
+                style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    gap:8px;
+                    margin:17px 0 9px;
+                "
+            >
+
+                <div
+                    style="
+                        font-weight:700;
+                        color:var(--accent-glow);
+                        font-size:0.9rem;
+                    "
+                >
+                    <i class="fa-solid fa-user-group"></i>
+                    Updates From Your Phase
+                </div>
+
+                <button
+                    class="btn small ghost"
+                    onclick="retryMatchCircle()"
+                    style="
+                        padding:5px 9px;
+                        font-size:0.68rem;
+                        flex-shrink:0;
+                    "
+                >
+                    <i class="fa-solid fa-rotate"></i>
+                    Sync
+                </button>
+
+            </div>
+
+            <div id="feedCircleUpdates">
+                Loading circle updates...
+            </div>
+
+        </div>
 
 
+        <!-- =====================================================
+             UPDATE
+        ===================================================== -->
+
+        <div
+            id="panelUpdate"
+            class="tab-panel"
+        >
 
             <div
                 class="card"
@@ -2096,87 +2243,6 @@
 
             </div>
 
-
-
-            </div>
-
-
-            <!-- Circle -->
-
-            <div
-                style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                    gap:8px;
-                    margin:17px 0 9px;
-                "
-            >
-
-                <div
-                    style="
-                        font-weight:700;
-                        color:var(--accent-glow);
-                        font-size:0.9rem;
-                    "
-                >
-                    <i class="fa-solid fa-user-group"></i>
-                    Updates From Your Phase
-                </div>
-
-                <button
-                    class="btn small ghost"
-                    onclick="retryMatchCircle()"
-                    style="
-                        padding:5px 9px;
-                        font-size:0.68rem;
-                        flex-shrink:0;
-                    "
-                >
-                    <i class="fa-solid fa-rotate"></i>
-                    Sync
-                </button>
-
-            </div>
-
-            <div id="feedCircleUpdates">
-                Loading circle updates...
-            </div>
-
-
-            <!-- =====================================================
-                 CIRCLE DISCUSSIONS
-            ===================================================== -->
-
-            <div class="card" id="homeDiscussionsCard" style="margin-top:16px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:13px;">
-                    <h4 style="color:var(--accent-glow);font-size:0.95rem;">
-                        <i class="fa-solid fa-comments"></i>
-                        Discussions
-                    </h4>
-                    <div style="display:flex;gap:5px;">
-                        <button class="btn small ghost" type="button" onclick="sortDiscussions('new')">New</button>
-                        <button class="btn small ghost" type="button" onclick="sortDiscussions('trending')">Trending</button>
-                    </div>
-                </div>
-
-                <div id="discussionsList">Loading discussions...</div>
-
-                <div id="newDiscussionEditor" class="card" style="display:none;margin-top:13px;padding:13px;">
-                    <h5 style="margin-bottom:9px;">Start a New Discussion</h5>
-                    <textarea id="discussionInput" class="form-control" placeholder="Ask a question or share advice..." rows="3"></textarea>
-                    <div style="display:flex;gap:8px;">
-                        <button class="btn ghost" type="button" onclick="toggleDiscussionEditor(false)">Cancel</button>
-                        <button class="btn" type="button" onclick="postDiscussion()">Post</button>
-                    </div>
-                </div>
-
-                <button id="btnOpenDiscussionEditor" class="btn" type="button" onclick="toggleDiscussionEditor(true)" style="margin-top:13px;">
-                    <i class="fa-solid fa-plus"></i>
-                    Start Discussion
-                </button>
-            </div>
-
         </div>
 
 
@@ -2222,6 +2288,127 @@
             <div id="circleMembersList">
                 Loading members...
             </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             DISCUSSIONS
+        ===================================================== -->
+
+        <div
+            id="panelDiscussions"
+            class="tab-panel"
+        >
+
+            <div
+                style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    gap:8px;
+                    margin-bottom:13px;
+                "
+            >
+
+                <h4
+                    style="
+                        color:var(--accent-glow);
+                        font-size:0.95rem;
+                    "
+                >
+                    <i class="fa-solid fa-comments"></i>
+                    Community
+                </h4>
+
+                <div
+                    style="
+                        display:flex;
+                        gap:5px;
+                    "
+                >
+
+                    <button
+                        class="btn small ghost"
+                        onclick="sortDiscussions('new')"
+                    >
+                        New
+                    </button>
+
+                    <button
+                        class="btn small ghost"
+                        onclick="sortDiscussions('trending')"
+                    >
+                        Trending
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div id="discussionsList">
+                Loading discussions...
+            </div>
+
+
+            <div
+                id="newDiscussionEditor"
+                class="card"
+                style="
+                    display:none;
+                    margin-top:13px;
+                "
+            >
+
+                <h5
+                    style="margin-bottom:9px;"
+                >
+                    Start a New Topic
+                </h5>
+
+                <textarea
+                    id="discussionInput"
+                    class="form-control"
+                    placeholder="Ask a question or share advice..."
+                    rows="3"
+                ></textarea>
+
+                <div
+                    style="
+                        display:flex;
+                        gap:8px;
+                    "
+                >
+
+                    <button
+                        class="btn ghost"
+                        onclick="toggleDiscussionEditor(false)"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        class="btn"
+                        onclick="postDiscussion()"
+                    >
+                        Post
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <button
+                id="btnOpenDiscussionEditor"
+                class="btn"
+                onclick="toggleDiscussionEditor(true)"
+                style="margin-top:13px;"
+            >
+                <i class="fa-solid fa-plus"></i>
+                Create New Topic
+            </button>
 
         </div>
 
@@ -2447,7 +2634,7 @@
 
         <div
             class="nav-tab"
-            onclick="document.getElementById('shareUpdateCard')?.scrollIntoView({behavior:'smooth',block:'start'})"
+            onclick="switchTab('Update')"
         >
             <i class="fa-solid fa-pen-to-square"></i>
             <span>Update</span>
@@ -2459,6 +2646,14 @@
         >
             <i class="fa-solid fa-user-group"></i>
             <span>Circle</span>
+        </div>
+
+        <div
+            class="nav-tab"
+            onclick="switchTab('Discussions')"
+        >
+            <i class="fa-solid fa-comments"></i>
+            <span>Community</span>
         </div>
 
         <div
@@ -2862,6 +3057,8 @@
         let discussionRepliesCache = [];
 
         let currentDiscussionSort = "new";
+        let notificationPollInterval = null;
+        let notificationCache = [];
 
 
         /* =========================================================
@@ -3079,7 +3276,9 @@
 
             const tabs = [
                 "Feed",
+                "Update",
                 "Circle",
+                "Discussions",
                 "Journey"
             ];
 
@@ -3102,9 +3301,6 @@
             if (tabName === "Feed" && currentUser) {
                 fetchDashboardData().catch(function(error) {
                     console.error("Home refresh error:", error);
-                });
-                fetchDiscussions().catch(function(error) {
-                    console.error("Home discussions refresh error:", error);
                 });
             }
 
@@ -4381,7 +4577,8 @@
 
 
                     await loadUserProfile();
-
+                    showNotificationUI();
+                    startNotificationPolling();
 
                     setupRealtime();
 
@@ -4430,6 +4627,8 @@
                             ) {
 
                                 await loadUserProfile();
+                                showNotificationUI();
+                                startNotificationPolling();
 
                             }
 
@@ -4441,6 +4640,11 @@
                             myProfile =
                                 null;
 
+                            if (notificationPollInterval) clearInterval(notificationPollInterval);
+                            notificationPollInterval = null;
+                            notificationCache = [];
+                            showNotificationUI();
+                            renderNotifications();
                             showAuthModal();
 
                         }
@@ -4798,22 +5002,6 @@
         }
 
 
-        function startDiscussionFromUpdate(updateId) {
-            const input = document.getElementById("discussionInput");
-            const editor = document.getElementById("newDiscussionEditor");
-            if (!input || !editor) return;
-
-            const card = document.querySelector(`[data-update-id="${CSS.escape(String(updateId))}"]`);
-            const text = card?.dataset?.updateText || "";
-            const author = card?.dataset?.updateAuthor || "Member";
-
-            input.value = text ? `Replying to ${author}: ${text}` : "";
-            editor.style.display = "block";
-            input.focus();
-            editor.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-
-
         async function fetchDashboardData() {
             if (!currentUser || !db) return;
 
@@ -4896,7 +5084,7 @@
                 const name = item.user_name || nameByUserId[item.user_id] || "Member";
                 const phase = item.phase_name || myProfile?.current_phase || "Your Phase";
                 return `
-                    <div class="card" data-update-id="${escapeHTML(item.id)}" data-update-text="${escapeHTML(item.update_text || "")}" data-update-author="${escapeHTML(name)}" style="padding:14px;margin-bottom:10px;">
+                    <div class="card" id="update-${escapeHTML(item.id)}" data-update-id="${escapeHTML(item.id)}" style="padding:14px;margin-bottom:10px;">
                         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
                             <div>
                                 <div style="font-size:0.88rem;font-weight:800;color:var(--accent-glow);">${escapeHTML(name)}</div>
@@ -4907,15 +5095,9 @@
                         <div style="margin-top:10px;background:rgba(0,0,0,0.20);border-radius:var(--radius-md);padding:12px;font-size:0.9rem;line-height:1.55;word-break:break-word;">
                             ${escapeHTML(item.update_text || "")}
                         </div>
-                        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;">
-                            <button class="btn small ghost" type="button" onclick="startDiscussionFromUpdate('${escapeHTML(item.id)}')">
-                                <i class="fa-solid fa-reply"></i> Discuss / Reply
-                            </button>
-                        </div>
                     </div>`;
             }).join("");
         }
-
 
         function markStepCompleted() {
 
@@ -4989,8 +5171,24 @@
                     throw new Error("Your phase is not set yet. Please complete your profile first.");
                 }
 
-                const { error } = await db.from("daily_updates").insert([payload]);
+                const { data: insertedUpdates, error } = await db
+                    .from("daily_updates")
+                    .insert([payload])
+                    .select("id")
+                    .single();
                 if (error) throw error;
+
+                // Notifications are created explicitly after the update succeeds.
+                // This replaces the unreliable database trigger path.
+                if (insertedUpdates?.id) {
+                    const { error: notificationError } = await db.rpc(
+                        "create_update_notifications_for_update",
+                        { p_update_id: insertedUpdates.id }
+                    );
+                    if (notificationError) {
+                        console.error("Notification creation error:", notificationError);
+                    }
+                }
 
                 const form = document.getElementById("dailyJournalForm");
                 if (form) form.reset();
@@ -5244,21 +5442,20 @@
                 return;
             }
 
-            let discussionQuery = db
+            const {
+                data,
+                error
+            } = await db
                 .from("discussions")
                 .select(
                     "id,user_id,user_name,phase_name,topic_text,created_at,upvotes"
                 )
-                .order("created_at", { ascending: false });
-
-            if (myProfile?.current_phase) {
-                discussionQuery = discussionQuery.eq(
-                    "phase_name",
-                    canonicalPhaseName(myProfile.current_phase)
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
                 );
-            }
-
-            const { data, error } = await discussionQuery;
 
             if (error) {
                 console.error(
@@ -5606,7 +5803,8 @@
                 "Member";
 
             const phase =
-                canonicalPhaseName(myProfile?.current_phase || "General");
+                myProfile?.current_phase ||
+                "General";
 
             try {
                 const {
@@ -5829,6 +6027,140 @@
             }
         }
 
+
+        /* =========================================================
+           NOTIFICATIONS
+        ========================================================= */
+
+        function showNotificationUI() {
+            const button = document.getElementById("notificationButton");
+            if (button) button.style.display = currentUser ? "inline-flex" : "none";
+        }
+
+        function toggleNotifications(event) {
+            if (event) event.stopPropagation();
+            const panel = document.getElementById("notificationPanel");
+            if (!panel) return;
+            panel.classList.toggle("show");
+            if (panel.classList.contains("show")) loadNotifications();
+        }
+
+        document.addEventListener("click", function(event) {
+            const panel = document.getElementById("notificationPanel");
+            const button = document.getElementById("notificationButton");
+            if (panel && !panel.contains(event.target) && button && !button.contains(event.target)) {
+                panel.classList.remove("show");
+            }
+        });
+
+        async function loadNotifications() {
+            if (!currentUser || !db) return;
+
+            const { data, error } = await db
+                .from("notifications")
+                .select("id, user_id, actor_id, actor_name, type, message, target_id, target_type, is_read, created_at")
+                .eq("user_id", currentUser.id)
+                .order("created_at", { ascending: false })
+                .limit(30);
+
+            if (error) {
+                console.error("Notifications error:", error);
+                return;
+            }
+
+            notificationCache = data || [];
+            renderNotifications();
+        }
+
+        function renderNotifications() {
+            const list = document.getElementById("notificationList");
+            const badge = document.getElementById("notificationBadge");
+            if (!list || !badge) return;
+
+            const unread = notificationCache.filter(n => !n.is_read).length;
+            badge.innerText = unread > 99 ? "99+" : String(unread);
+            badge.style.display = unread ? "flex" : "none";
+
+            if (!notificationCache.length) {
+                list.innerHTML = `<div class="notification-empty">No notifications yet.</div>`;
+                return;
+            }
+
+            list.innerHTML = notificationCache.map(function(n) {
+                const time = n.created_at
+                    ? new Date(n.created_at).toLocaleString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" })
+                    : "";
+                return `
+                    <button class="notification-item ${n.is_read ? "" : "unread"}" type="button" onclick="openNotification('${escapeHTML(n.id)}')">
+                        <div class="notification-message">
+                            ${escapeHTML(n.message || `${n.actor_name || "Someone"} shared an update`)}
+                        </div>
+                        <div class="notification-time">${escapeHTML(time)}</div>
+                    </button>`;
+            }).join("");
+        }
+
+        async function openNotification(notificationId) {
+            const notification = notificationCache.find(n => n.id === notificationId);
+            if (!notification) return;
+
+            try {
+                await db.from("notifications")
+                    .update({ is_read: true })
+                    .eq("id", notificationId)
+                    .eq("user_id", currentUser.id);
+            } catch (e) {
+                console.error("Mark notification read error:", e);
+            }
+
+            notification.is_read = true;
+            renderNotifications();
+
+            const panel = document.getElementById("notificationPanel");
+            if (panel) panel.classList.remove("show");
+
+            if (notification.target_type === "daily_update" && notification.target_id) {
+                switchTab("Feed");
+                await fetchDashboardData();
+                setTimeout(function() {
+                    const target = document.getElementById("update-" + notification.target_id);
+                    if (target) {
+                        target.scrollIntoView({ behavior: "smooth", block: "center" });
+                        target.style.outline = "2px solid var(--accent-glow)";
+                        setTimeout(() => target.style.outline = "", 2200);
+                    }
+                }, 250);
+            } else if (notification.target_type === "discussion" || notification.target_type === "discussion_reply") {
+                switchTab("Discussions");
+                await fetchDiscussions();
+                if (notification.target_id) {
+                    setTimeout(function() {
+                        const target = document.getElementById("discussion-" + notification.target_id);
+                        if (target) target.scrollIntoView({ behavior:"smooth", block:"center" });
+                    }, 250);
+                }
+            }
+        }
+
+        async function markAllNotificationsRead() {
+            if (!currentUser || !db) return;
+            const { error } = await db.from("notifications")
+                .update({ is_read: true })
+                .eq("user_id", currentUser.id)
+                .eq("is_read", false);
+            if (error) {
+                console.error("Mark all notifications read error:", error);
+                return;
+            }
+            notificationCache.forEach(n => n.is_read = true);
+            renderNotifications();
+        }
+
+        function startNotificationPolling() {
+            if (notificationPollInterval) clearInterval(notificationPollInterval);
+            loadNotifications();
+            notificationPollInterval = setInterval(loadNotifications, 15000);
+        }
 
         /* =========================================================
            JOURNEY
