@@ -1538,6 +1538,73 @@
             color:var(--text-muted);
             font-size:0.72rem;
         }
+        .update-actions {
+            display:flex;
+            align-items:center;
+            gap:7px;
+            flex-wrap:wrap;
+            margin-top:10px;
+        }
+        .update-reactions {
+            display:flex;
+            gap:5px;
+            flex-wrap:wrap;
+            margin-top:8px;
+        }
+        .reaction-btn {
+            border:1px solid rgba(124,116,255,0.20);
+            background:rgba(8,12,25,0.55);
+            color:var(--text-main);
+            border-radius:999px;
+            padding:5px 9px;
+            cursor:pointer;
+            font-size:0.76rem;
+        }
+        .reaction-btn.active {
+            border-color:var(--accent-glow);
+            background:rgba(124,116,255,0.16);
+        }
+        .update-thread {
+            margin-top:10px;
+            padding-left:12px;
+            border-left:2px solid rgba(124,116,255,0.28);
+        }
+        .update-reply {
+            margin-top:8px;
+            padding:9px 10px;
+            border-radius:12px;
+            background:rgba(10,15,30,0.62);
+            border:1px solid rgba(124,116,255,0.12);
+        }
+        .update-reply-author {
+            font-size:0.74rem;
+            color:var(--text-main);
+            font-weight:800;
+        }
+        .update-reply-time {
+            font-size:0.65rem;
+            color:var(--text-muted);
+            margin-left:4px;
+        }
+        .update-reply-text {
+            margin-top:3px;
+            font-size:0.78rem;
+            line-height:1.5;
+            word-break:break-word;
+        }
+        .update-reply-editor {
+            margin-top:9px;
+            padding:9px;
+            border-radius:12px;
+            background:rgba(8,12,25,0.72);
+            border:1px solid rgba(124,116,255,0.18);
+        }
+        .update-reply-editor textarea {
+            width:100%;
+            resize:vertical;
+            min-height:54px;
+            margin-bottom:7px;
+        }
 
 
         /* Minimal MyPhase layout */
@@ -3055,6 +3122,8 @@
         let sessionTimerInterval = null;
 
         let realtimeChannel = null;
+        let updateRepliesCache = [];
+        let updateReactionsCache = [];
 
         let discussionsCache = [];
 
@@ -5006,7 +5075,7 @@
         }
 
 
-        async function fetchDashboardData() {
+        async function fetchDashboardData(scrollToUpdateId = null) {
             if (!currentUser || !db) return;
 
             const { count, error: countError } = await db
@@ -5029,7 +5098,6 @@
             if (!container) return;
 
             let members = [];
-
             if (myProfile?.circle_id) {
                 const { data: circleMembers, error } = await db
                     .from("profiles")
@@ -5039,7 +5107,7 @@
                 else members = circleMembers || [];
             }
 
-            if (members.length === 0 && myProfile?.current_phase) {
+            if (!members.length && myProfile?.current_phase) {
                 const phase = canonicalPhaseName(myProfile.current_phase);
                 let q = db
                     .from("profiles")
@@ -5047,7 +5115,6 @@
                     .eq("current_phase", phase);
                 if (myProfile.country) q = q.eq("country", myProfile.country);
                 if (myProfile.city) q = q.eq("city", myProfile.city);
-
                 const { data, error } = await q;
                 if (error) console.error("Home phase members error:", error);
                 else members = data || [];
@@ -5081,12 +5148,48 @@
                 return;
             }
 
+            const updateIds = data.map(x => x.id);
+
+            const [{ data: replies, error: repliesError }, { data: reactions, error: reactionsError }] = await Promise.all([
+                db.from("daily_update_replies")
+                    .select("id, daily_update_id, user_id, user_name, content, created_at")
+                    .in("daily_update_id", updateIds)
+                    .order("created_at", { ascending: true }),
+                db.from("daily_update_reactions")
+                    .select("id, daily_update_id, user_id, reaction, created_at")
+                    .in("daily_update_id", updateIds)
+            ]);
+
+            if (repliesError) console.error("Update replies error:", repliesError);
+            if (reactionsError) console.error("Update reactions error:", reactionsError);
+
+            updateRepliesCache = replies || [];
+            updateReactionsCache = reactions || [];
+
+            const repliesFor = id => updateRepliesCache.filter(r => r.daily_update_id === id);
+            const reactionsFor = id => updateReactionsCache.filter(r => r.daily_update_id === id);
+
             container.innerHTML = data.map(item => {
                 const created = item.created_at
                     ? new Date(item.created_at).toLocaleString("en-US", { hour: "2-digit", minute: "2-digit", month: "short", day: "numeric" })
                     : "";
                 const name = item.user_name || nameByUserId[item.user_id] || "Member";
                 const phase = item.phase_name || myProfile?.current_phase || "Your Phase";
+                const itemReplies = repliesFor(item.id);
+                const itemReactions = reactionsFor(item.id);
+                const myReaction = itemReactions.find(r => r.user_id === currentUser.id)?.reaction || "";
+                const reactionCount = emoji => itemReactions.filter(r => r.reaction === emoji).length;
+
+                const repliesHTML = itemReplies.map(reply => {
+                    const replyTime = reply.created_at
+                        ? new Date(reply.created_at).toLocaleString("en-US", { hour: "2-digit", minute: "2-digit", month: "short", day: "numeric" })
+                        : "";
+                    return `<div class="update-reply">
+                        <div><span class="update-reply-author">${escapeHTML(reply.user_name || "Member")}</span><span class="update-reply-time">${escapeHTML(replyTime)}</span></div>
+                        <div class="update-reply-text">${escapeHTML(reply.content || "")}</div>
+                    </div>`;
+                }).join("");
+
                 return `
                     <div class="card" id="update-${escapeHTML(item.id)}" data-update-id="${escapeHTML(item.id)}" style="padding:14px;margin-bottom:10px;">
                         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
@@ -5099,8 +5202,141 @@
                         <div style="margin-top:10px;background:rgba(0,0,0,0.20);border-radius:var(--radius-md);padding:12px;font-size:0.9rem;line-height:1.55;word-break:break-word;">
                             ${escapeHTML(item.update_text || "")}
                         </div>
+
+                        <div class="update-reactions">
+                            ${["👍","❤️","😂","👏"].map(e => `<button type="button" class="reaction-btn ${myReaction === e ? "active" : ""}" onclick="toggleUpdateReaction('${escapeHTML(item.id)}','${e}')">${e} ${reactionCount(e) || ""}</button>`).join("")}
+                        </div>
+
+                        <div class="update-actions">
+                            <button class="btn small ghost" type="button" onclick="toggleUpdateThread('${escapeHTML(item.id)}')">
+                                <i class="fa-solid fa-comments"></i> Discuss
+                            </button>
+                            <span class="reply-count">${itemReplies.length} ${itemReplies.length === 1 ? "reply" : "replies"}</span>
+                        </div>
+
+                        <div id="update-thread-${escapeHTML(item.id)}" class="update-thread" style="display:${scrollToUpdateId === item.id ? "block" : "none"};">
+                            <div>${repliesHTML || `<div class="reply-count">No replies yet. Start the conversation.</div>`}</div>
+                            <div id="update-reply-editor-${escapeHTML(item.id)}" class="update-reply-editor">
+                                <textarea id="update-reply-input-${escapeHTML(item.id)}" placeholder="Write a reply..." rows="2"></textarea>
+                                <button class="btn small" type="button" onclick="postUpdateReply('${escapeHTML(item.id)}')">
+                                    <i class="fa-solid fa-paper-plane"></i> Reply
+                                </button>
+                            </div>
+                        </div>
                     </div>`;
             }).join("");
+
+            if (scrollToUpdateId) {
+                setTimeout(() => {
+                    const target = document.getElementById("update-" + scrollToUpdateId);
+                    if (target) {
+                        target.scrollIntoView({ behavior: "smooth", block: "center" });
+                        target.style.outline = "2px solid var(--accent-glow)";
+                        setTimeout(() => target.style.outline = "", 2500);
+                        const input = document.getElementById("update-reply-input-" + scrollToUpdateId);
+                        if (input) input.focus();
+                    }
+                }, 200);
+            }
+        }
+
+        function toggleUpdateThread(updateId) {
+            const thread = document.getElementById("update-thread-" + updateId);
+            if (!thread) return;
+            const open = thread.style.display === "none" || thread.style.display === "";
+            thread.style.display = open ? "block" : "none";
+            if (open) {
+                const input = document.getElementById("update-reply-input-" + updateId);
+                if (input) setTimeout(() => input.focus(), 50);
+            }
+        }
+
+        async function postUpdateReply(updateId) {
+            if (!currentUser || !db) return;
+            const input = document.getElementById("update-reply-input-" + updateId);
+            if (!input) return;
+            const content = input.value.trim();
+            if (!content) return;
+
+            const author = myProfile?.first_name || currentUser.user_metadata?.first_name || "Member";
+            const { error } = await db.from("daily_update_replies").insert([{
+                daily_update_id: updateId,
+                user_id: currentUser.id,
+                user_name: author,
+                content
+            }]);
+            if (error) {
+                console.error("Post update reply error:", error);
+                alert("Could not post reply: " + error.message);
+                return;
+            }
+
+            // Notify the post owner and other participants, but never notify yourself.
+            const { data: parent } = await db.from("daily_updates")
+                .select("user_id, user_name")
+                .eq("id", updateId)
+                .maybeSingle();
+
+            const participantIds = new Set();
+            if (parent?.user_id && parent.user_id !== currentUser.id) participantIds.add(parent.user_id);
+            updateRepliesCache.filter(r => r.daily_update_id === updateId && r.user_id !== currentUser.id)
+                .forEach(r => participantIds.add(r.user_id));
+
+            if (participantIds.size) {
+                const rows = [...participantIds].map(userId => ({
+                    user_id: userId,
+                    actor_id: currentUser.id,
+                    actor_name: author,
+                    type: "update_reply",
+                    message: `${author} replied to an update`,
+                    target_id: updateId,
+                    target_type: "daily_update",
+                    is_read: false
+                }));
+                const { error: nError } = await db.from("notifications").insert(rows);
+                if (nError) console.error("Reply notification error:", nError);
+            }
+
+            input.value = "";
+            await fetchDashboardData(updateId);
+        }
+
+        async function toggleUpdateReaction(updateId, reaction) {
+            if (!currentUser || !db) return;
+            const existing = updateReactionsCache.find(r => r.daily_update_id === updateId && r.user_id === currentUser.id);
+
+            if (existing?.reaction === reaction) {
+                const { error } = await db.from("daily_update_reactions").delete().eq("id", existing.id).eq("user_id", currentUser.id);
+                if (error) console.error("Remove reaction error:", error);
+            } else if (existing) {
+                const { error } = await db.from("daily_update_reactions").update({ reaction }).eq("id", existing.id).eq("user_id", currentUser.id);
+                if (error) console.error("Change reaction error:", error);
+            } else {
+                const { error } = await db.from("daily_update_reactions").insert([{
+                    daily_update_id: updateId,
+                    user_id: currentUser.id,
+                    reaction
+                }]);
+                if (error) console.error("Add reaction error:", error);
+            }
+
+            const { data: parent } = await db.from("daily_updates").select("user_id").eq("id", updateId).maybeSingle();
+            if (parent?.user_id && parent.user_id !== currentUser.id) {
+                const author = myProfile?.first_name || "Member";
+                const { error: nError } = await db.from("notifications").insert([{
+                    user_id: parent.user_id,
+                    actor_id: currentUser.id,
+                    actor_name: author,
+                    type: "update_reaction",
+                    message: `${author} reacted to your update`,
+                    target_id: updateId,
+                    target_type: "daily_update",
+                    is_read: false
+                }]);
+                if (nError) console.error("Reaction notification error:", nError);
+            }
+
+            await fetchDashboardData(updateId);
         }
 
         function markStepCompleted() {
@@ -6146,7 +6382,7 @@
 
             if (notification.target_type === "daily_update" && notification.target_id) {
                 switchTab("Feed");
-                await fetchDashboardData();
+                await fetchDashboardData(notification.target_id);
                 setTimeout(function() {
                     const target = document.getElementById("update-" + notification.target_id);
                     if (target) {
@@ -6434,6 +6670,16 @@
                             fetchDashboardData();
                             fetchJourneyData();
                         }
+                    )
+                    .on(
+                        "postgres_changes",
+                        { event: "*", schema: "public", table: "daily_update_replies" },
+                        function() { fetchDashboardData(); }
+                    )
+                    .on(
+                        "postgres_changes",
+                        { event: "*", schema: "public", table: "daily_update_reactions" },
+                        function() { fetchDashboardData(); }
                     )
                     .subscribe(
                         function(status) {
