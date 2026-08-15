@@ -5470,7 +5470,7 @@
                 return;
             }
 
-            // Keep profiles lightweight: show only the 3 most recent posts.
+            // Keep the profile intentionally lightweight: only the 3 most recent posts.
             const { data: updates, error: updatesError } = await db
                 .from("daily_updates")
                 .select("id, update_text, created_at")
@@ -5488,6 +5488,34 @@
 
             const name = member.first_name || "Member";
             const initial = name.charAt(0).toUpperCase();
+            const updateIds = (updates || []).map(function(u) { return u.id; });
+
+            // Load lightweight engagement counts for the visible posts.
+            let replies = [];
+            let reactions = [];
+
+            if (updateIds.length) {
+                const [replyResult, reactionResult] = await Promise.all([
+                    db.from("daily_update_replies")
+                        .select("id, daily_update_id")
+                        .in("daily_update_id", updateIds),
+                    db.from("daily_update_reactions")
+                        .select("id, daily_update_id")
+                        .in("daily_update_id", updateIds)
+                ]);
+
+                if (replyResult.error) {
+                    console.error("Member post replies count error:", replyResult.error);
+                } else {
+                    replies = replyResult.data || [];
+                }
+
+                if (reactionResult.error) {
+                    console.error("Member post reactions count error:", reactionResult.error);
+                } else {
+                    reactions = reactionResult.data || [];
+                }
+            }
 
             const updatesHTML = (updates || []).length
                 ? updates.map(function(u) {
@@ -5501,23 +5529,31 @@
                         : "";
 
                     const text = u.update_text || "";
+                    const replyCount = replies.filter(function(r) {
+                        return r.daily_update_id === u.id;
+                    }).length;
+                    const reactionCount = reactions.filter(function(r) {
+                        return r.daily_update_id === u.id;
+                    }).length;
 
                     return `
                         <button
                             type="button"
                             class="profile-update"
                             onclick="openMemberPostDiscussion('${escapeHTML(u.id)}')"
-                            style="width:100%;text-align:left;color:inherit;cursor:pointer;border:1px solid var(--border);"
-                            aria-label="Open discussion for this update"
+                            style="width:100%;text-align:left;color:inherit;cursor:pointer;border:1px solid var(--border);display:block;"
+                            aria-label="Open discussion for this post"
                         >
                             <div class="profile-update-meta">${escapeHTML(time)}</div>
                             <div class="profile-update-text">${escapeHTML(text)}</div>
-                            <div style="margin-top:8px;color:var(--accent-glow);font-size:.72rem;font-weight:750;">
-                                <i class="fa-solid fa-comments"></i> Open discussion
+                            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:9px;color:var(--text-muted);font-size:.7rem;font-weight:700;">
+                                <span><i class="fa-solid fa-comments"></i> ${replyCount} ${replyCount === 1 ? "reply" : "replies"}</span>
+                                <span><i class="fa-solid fa-heart"></i> ${reactionCount}</span>
+                                <span style="color:var(--accent-glow);"><i class="fa-solid fa-arrow-right"></i> Open discussion</span>
                             </div>
                         </button>`;
                 }).join("")
-                : `<div class="thread-empty">No updates shared yet.</div>`;
+                : `<div class="thread-empty">No posts shared yet.</div>`;
 
             const hasMore = (updates || []).length >= 3;
 
@@ -5540,9 +5576,9 @@
                 </div>
 
                 <div style="margin-top:15px;font-weight:800;color:var(--accent-glow);">
-                    <i class="fa-solid fa-clock-rotate-left"></i> Recent activity
+                    <i class="fa-solid fa-clock-rotate-left"></i> Recent posts
                 </div>
-                <div style="margin-top:7px;">${updatesHTML}</div>
+                <div style="margin-top:7px;display:grid;gap:8px;">${updatesHTML}</div>
 
                 ${hasMore ? `
                     <button
@@ -5551,7 +5587,7 @@
                         style="width:100%;margin-top:9px;"
                         onclick="closeMemberProfile(); switchTab('Feed');"
                     >
-                        View all activity
+                        View all posts
                     </button>` : ""}
 
                 <div class="profile-actions">
