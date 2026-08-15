@@ -1607,13 +1607,31 @@
         }
 
 
+        /* =========================================================
+           SIMPLE CIRCLE / PROFILE / THREAD UI
+        ========================================================= */
+        .circle-member-card { cursor:pointer; transition:transform .15s ease, border-color .15s ease, background .15s ease; }
+        .circle-member-card:hover { transform:translateY(-1px); border-color:var(--accent-glow); background:rgba(99,102,241,.06); }
+        .circle-member-avatar { width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent-primary),var(--accent-glow));font-weight:800;color:#fff;flex-shrink:0; }
+        .profile-modal-title { display:flex;align-items:center;gap:10px; }
+        .profile-modal-avatar { width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent-primary),var(--accent-glow));font-size:1.15rem;font-weight:800; }
+        .profile-update { padding:11px;border:1px solid var(--border);border-radius:12px;background:rgba(0,0,0,.18);margin-top:8px; }
+        .profile-update-text { font-size:.84rem;line-height:1.5;word-break:break-word; }
+        .profile-update-meta { color:var(--text-muted);font-size:.68rem;margin-bottom:4px; }
+        .profile-actions { display:flex;gap:8px;margin-top:12px; }
+        .profile-actions .btn { flex:1; }
+        .thread-empty { color:var(--text-muted);font-size:.76rem;padding:7px 0; }
+        .thread-composer { display:flex;gap:7px;align-items:flex-end;margin-top:9px; }
+        .thread-composer textarea { flex:1;margin:0;min-height:48px; }
+        .thread-composer .btn { width:auto;min-height:44px;padding:9px 13px; }
+        .thread-reaction-summary { color:var(--text-muted);font-size:.7rem;margin-left:auto; }
+
         /* Minimal MyPhase layout */
                 .bottom-nav {
             grid-template-columns: repeat(3, 1fr) !important;
         }
-        #panelUpdate, #panelDiscussions {
-            /* Accessible from actions, not primary navigation. */
-        }
+        #panelUpdate { /* opened from Home */ }
+        #panelDiscussions { display:none !important; }
 
         /* Keep Home focused on the phase and people. These tools remain available elsewhere. */
         #dailyTaskCard, #todayProgressHeading, #feedTodayProgress {
@@ -2029,7 +2047,7 @@
                     "
                 >
                     <i class="fa-solid fa-user-group"></i>
-                    Updates From Your Phase
+                    Updates From Your Circle
                 </div>
 
                 <button
@@ -2713,6 +2731,7 @@
 
         <div
             class="nav-tab active"
+            data-tab="Feed"
             onclick="switchTab('Feed')"
         >
             <i class="fa-solid fa-house"></i>
@@ -2721,6 +2740,7 @@
 
         <div
             class="nav-tab"
+            data-tab="Circle"
             onclick="switchTab('Circle')"
         >
             <i class="fa-solid fa-user-group"></i>
@@ -2729,6 +2749,7 @@
 
         <div
             class="nav-tab"
+            data-tab="Journey"
             onclick="switchTab('Journey')"
         >
             <i class="fa-solid fa-route"></i>
@@ -2737,6 +2758,15 @@
 
     </nav>
 
+
+    <!-- =========================================================
+         MEMBER PROFILE MODAL
+    ========================================================= -->
+    <div id="memberProfileModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeMemberProfile()">
+        <div class="modal-box">
+            <div id="memberProfileContent"></div>
+        </div>
+    </div>
 
     <!-- =========================================================
          AUTH MODAL
@@ -3327,60 +3357,32 @@
         ========================================================= */
 
         function switchTab(tabName) {
+            document.querySelectorAll(".tab-panel").forEach(function(panel) {
+                panel.classList.remove("active");
+            });
 
-            document
-                .querySelectorAll(".tab-panel")
-                .forEach(function(panel) {
-                    panel.classList.remove("active");
-                });
+            document.querySelectorAll(".nav-tab").forEach(function(tab) {
+                tab.classList.remove("active");
+            });
 
-            document
-                .querySelectorAll(".nav-tab")
-                .forEach(function(tab) {
-                    tab.classList.remove("active");
-                });
+            const panel = document.getElementById("panel" + tabName);
+            if (panel) panel.classList.add("active");
 
-            const panel =
-                document.getElementById("panel" + tabName);
+            const activeNav = document.querySelector('.nav-tab[data-tab="' + tabName + '"]');
+            if (activeNav) activeNav.classList.add("active");
 
-            if (panel) {
-                panel.classList.add("active");
-            }
-
-            const tabs = [
-                "Feed",
-                "Update",
-                "Circle",
-                "Discussions",
-                "Journey"
-            ];
-
-            const index = tabs.indexOf(tabName);
-
-            if (index !== -1) {
-                const navTabs =
-                    document.querySelectorAll(".nav-tab");
-
-                if (navTabs[index]) {
-                    navTabs[index].classList.add("active");
-                }
-            }
-
-            /*
-               Refresh Home every time the user opens it.
-               This makes new updates from other members appear
-               without requiring a full page reload.
-            */
             if (tabName === "Feed" && currentUser) {
                 fetchDashboardData().catch(function(error) {
                     console.error("Home refresh error:", error);
                 });
             }
+            if (tabName === "Circle" && currentUser) {
+                fetchCircleMembers().catch(function(error) {
+                    console.error("Circle refresh error:", error);
+                });
+            }
 
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
+            window.scrollTo({ top: 0, behavior: "smooth" });
         }
 
         /* =========================================================
@@ -5209,7 +5211,7 @@
 
                         <div class="update-actions">
                             <button class="btn small ghost" type="button" onclick="toggleUpdateThread('${escapeHTML(item.id)}')">
-                                <i class="fa-solid fa-comments"></i> Discuss
+                                <i class="fa-solid fa-reply"></i> Reply
                             </button>
                             <span class="reply-count">${itemReplies.length} ${itemReplies.length === 1 ? "reply" : "replies"}</span>
                         </div>
@@ -5271,32 +5273,6 @@
                 return;
             }
 
-            // Notify the post owner and other participants, but never notify yourself.
-            const { data: parent } = await db.from("daily_updates")
-                .select("user_id, user_name")
-                .eq("id", updateId)
-                .maybeSingle();
-
-            const participantIds = new Set();
-            if (parent?.user_id && parent.user_id !== currentUser.id) participantIds.add(parent.user_id);
-            updateRepliesCache.filter(r => r.daily_update_id === updateId && r.user_id !== currentUser.id)
-                .forEach(r => participantIds.add(r.user_id));
-
-            if (participantIds.size) {
-                const rows = [...participantIds].map(userId => ({
-                    user_id: userId,
-                    actor_id: currentUser.id,
-                    actor_name: author,
-                    type: "update_reply",
-                    message: `${author} replied to an update`,
-                    target_id: updateId,
-                    target_type: "daily_update",
-                    is_read: false
-                }));
-                const { error: nError } = await db.from("notifications").insert(rows);
-                if (nError) console.error("Reply notification error:", nError);
-            }
-
             input.value = "";
             await fetchDashboardData(updateId);
         }
@@ -5318,22 +5294,6 @@
                     reaction
                 }]);
                 if (error) console.error("Add reaction error:", error);
-            }
-
-            const { data: parent } = await db.from("daily_updates").select("user_id").eq("id", updateId).maybeSingle();
-            if (parent?.user_id && parent.user_id !== currentUser.id) {
-                const author = myProfile?.first_name || "Member";
-                const { error: nError } = await db.from("notifications").insert([{
-                    user_id: parent.user_id,
-                    actor_id: currentUser.id,
-                    actor_name: author,
-                    type: "update_reaction",
-                    message: `${author} reacted to your update`,
-                    target_id: updateId,
-                    target_type: "daily_update",
-                    is_read: false
-                }]);
-                if (nError) console.error("Reaction notification error:", nError);
             }
 
             await fetchDashboardData(updateId);
@@ -5418,39 +5378,6 @@
                     .single();
                 if (error) throw error;
 
-                // Create notifications directly from the client.
-                // We intentionally do not depend on database triggers or RPCs.
-                if (insertedUpdates?.id && myProfile?.circle_id) {
-                    const { data: circlePeople, error: peopleError } = await db
-                        .from("profiles")
-                        .select("user_id, first_name")
-                        .eq("circle_id", myProfile.circle_id)
-                        .neq("user_id", currentUser.id);
-
-                    if (peopleError) {
-                        console.error("Circle notification members error:", peopleError);
-                    } else if (circlePeople?.length) {
-                        const notificationRows = circlePeople.map(person => ({
-                            user_id: person.user_id,
-                            actor_id: currentUser.id,
-                            actor_name: myProfile?.first_name || currentUser.user_metadata?.first_name || "Member",
-                            type: "new_update",
-                            message: `${myProfile?.first_name || "Someone"} shared an update`,
-                            target_id: insertedUpdates.id,
-                            target_type: "daily_update",
-                            is_read: false
-                        }));
-
-                        const { error: notificationError } = await db
-                            .from("notifications")
-                            .insert(notificationRows);
-
-                        if (notificationError) {
-                            console.error("Direct notification insert error:", notificationError);
-                        }
-                    }
-                }
-
                 const form = document.getElementById("dailyJournalForm");
                 if (form) form.reset();
 
@@ -5476,182 +5403,117 @@
         }
 
         async function fetchCircleMembers() {
-
-            const container =
-                document.getElementById(
-                    "circleMembersList"
-                );
-
-
-            if (!container) {
-                return;
-            }
-
+            const container = document.getElementById("circleMembersList");
+            if (!container) return;
 
             if (!myProfile?.circle_id) {
-
-                container.innerHTML =
-                    `
-                        <div class="empty-state">
-
-                            <i
-                                class="fa-solid fa-users"
-                            ></i>
-
-                            <p>
-                                You are not assigned to a circle yet.
-                            </p>
-
-                            <button
-                                class="btn small"
-                                style="
-                                    margin-top:12px;
-                                    max-width:180px;
-                                "
-                                onclick="retryMatchCircle()"
-                            >
-                                Sync Circle
-                            </button>
-
-                        </div>
-                    `;
-
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-users"></i>
+                        <p>You are not assigned to a circle yet.</p>
+                        <button class="btn small" style="margin-top:12px;max-width:180px;" onclick="retryMatchCircle()">Sync Circle</button>
+                    </div>`;
                 return;
             }
 
-
-            const {
-                data,
-                error
-            } = await db
+            const { data, error } = await db
                 .from("profiles")
-                .select("*")
-                .eq(
-                    "circle_id",
-                    myProfile.circle_id
-                );
-
+                .select("user_id, first_name, current_phase, city, country, goal, reason, is_mentor, last_active")
+                .eq("circle_id", myProfile.circle_id)
+                .order("created_at", { ascending: true });
 
             if (error) {
-
-                console.error(
-                    "Circle members error:",
-                    error
-                );
-
-
-                container.innerHTML =
-                    `
-                        <div class="empty-state">
-
-                            <p>
-                                Could not load circle members.
-                            </p>
-
-                        </div>
-                    `;
-
+                console.error("Circle members error:", error);
+                container.innerHTML = `<div class="empty-state"><p>Could not load circle members.</p></div>`;
                 return;
             }
 
-
-            if (
-                data &&
-                data.length > 0
-            ) {
-
-                container.innerHTML =
-                    data.map(
-                        function(member) {
-
-                            return `
-                                <div
-                                    class="card"
-                                    style="
-                                        padding:14px;
-                                        margin-bottom:10px;
-                                        display:flex;
-                                        justify-content:space-between;
-                                        align-items:center;
-                                        gap:10px;
-                                    "
-                                >
-
-                                    <div
-                                        style="
-                                            min-width:0;
-                                        "
-                                    >
-
-                                        <div
-                                            style="
-                                                font-weight:700;
-                                                font-size:0.88rem;
-                                                word-break:break-word;
-                                            "
-                                        >
-                                            ${escapeHTML(
-                                                member.first_name
-                                            )}
-
-                                            ${
-                                                member.user_id ===
-                                                currentUser.id
-                                                    ? "(You)"
-                                                    : ""
-                                            }
-                                        </div>
-
-                                        <div
-                                            style="
-                                                font-size:0.73rem;
-                                                color:var(--text-muted);
-                                                margin-top:3px;
-                                                word-break:break-word;
-                                            "
-                                        >
-                                            ${escapeHTML(
-                                                member.current_phase ||
-                                                ""
-                                            )}
-                                        </div>
-
-                                    </div>
-
-
-                                    <span
-                                        class="badge badge-location"
-                                        style="flex-shrink:0;"
-                                    >
-                                        ${escapeHTML(
-                                            member.city ||
-                                            "Local"
-                                        )}
-                                    </span>
-
-                                </div>
-                            `;
-
-                        }
-                    ).join("");
-
-
-            } else {
-
-                container.innerHTML =
-                    `
-                        <div class="empty-state">
-
-                            <p>
-                                No other members found in this circle yet.
-                            </p>
-
-                        </div>
-                    `;
-
+            if (!data?.length) {
+                container.innerHTML = `<div class="empty-state"><p>No other members found in this circle yet.</p></div>`;
+                return;
             }
+
+            container.innerHTML = data.map(function(member) {
+                const name = member.first_name || "Member";
+                const initial = name.charAt(0).toUpperCase();
+                const isMe = member.user_id === currentUser.id;
+                const active = member.last_active ? "Active recently" : "";
+                return `
+                    <div class="card circle-member-card" onclick="openMemberProfile('${escapeHTML(member.user_id)}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ') openMemberProfile('${escapeHTML(member.user_id)}')" style="padding:13px;margin-bottom:9px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div class="circle-member-avatar">${escapeHTML(initial)}</div>
+                            <div style="min-width:0;flex:1;">
+                                <div style="font-weight:800;font-size:.9rem;">${escapeHTML(name)} ${isMe ? '<span style="color:var(--text-muted);font-weight:500;">(You)</span>' : ''}</div>
+                                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;word-break:break-word;">${escapeHTML(formatPhaseName(member.current_phase || myProfile.current_phase || "Your Phase"))}</div>
+                                <div style="font-size:.66rem;color:var(--text-muted);margin-top:3px;">${escapeHTML(active)}</div>
+                            </div>
+                            <div style="color:var(--accent-glow);font-size:.8rem;"><i class="fa-solid fa-chevron-right"></i></div>
+                        </div>
+                    </div>`;
+            }).join("");
         }
 
+        async function openMemberProfile(userId) {
+            if (!userId || !db) return;
+            const { data: member, error } = await db
+                .from("profiles")
+                .select("user_id, first_name, current_phase, city, country, goal, reason, is_mentor, last_active")
+                .eq("user_id", userId)
+                .maybeSingle();
+            if (error || !member) {
+                console.error("Member profile error:", error);
+                alert("Could not open this profile.");
+                return;
+            }
+
+            const { data: updates, error: updatesError } = await db
+                .from("daily_updates")
+                .select("id, update_text, created_at")
+                .eq("user_id", userId)
+                .order("created_at", { ascending: false })
+                .limit(5);
+            if (updatesError) console.error("Member updates error:", updatesError);
+
+            const modal = document.getElementById("memberProfileModal");
+            const content = document.getElementById("memberProfileContent");
+            if (!modal || !content) return;
+
+            const name = member.first_name || "Member";
+            const initial = name.charAt(0).toUpperCase();
+            const updatesHTML = (updates || []).length
+                ? updates.map(function(u) {
+                    const time = u.created_at ? new Date(u.created_at).toLocaleString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" }) : "";
+                    return `<div class="profile-update"><div class="profile-update-meta">${escapeHTML(time)}</div><div class="profile-update-text">${escapeHTML(u.update_text || "")}</div><button class="btn small ghost" style="margin-top:8px;" onclick="closeMemberProfile(); switchTab('Feed'); fetchDashboardData('${escapeHTML(u.id)}');"><i class="fa-solid fa-comments"></i> Open discussion</button></div>`;
+                }).join("")
+                : `<div class="thread-empty">No updates shared yet.</div>`;
+
+            content.innerHTML = `
+                <div class="profile-modal-title">
+                    <div class="profile-modal-avatar">${escapeHTML(initial)}</div>
+                    <div style="min-width:0;">
+                        <h3 style="font-size:1.05rem;">${escapeHTML(name)}</h3>
+                        <div style="font-size:.74rem;color:var(--text-muted);margin-top:2px;">${escapeHTML(member.city || "")}${member.city && member.country ? ", " : ""}${escapeHTML(member.country || "")}</div>
+                    </div>
+                </div>
+                <div style="margin-top:14px;padding:11px;border-radius:12px;background:rgba(0,0,0,.18);">
+                    <div style="font-size:.7rem;color:var(--accent-glow);font-weight:800;text-transform:uppercase;">Current phase</div>
+                    <div style="font-weight:800;margin-top:3px;">${escapeHTML(formatPhaseName(member.current_phase || "Your Phase"))}</div>
+                    ${member.goal ? `<div style="font-size:.75rem;color:var(--text-muted);margin-top:7px;"><strong>Goal:</strong> ${escapeHTML(member.goal)}</div>` : ""}
+                    ${member.is_mentor ? `<div style="margin-top:8px;"><span class="badge badge-mentor">Mentor</span></div>` : ""}
+                </div>
+                <div style="margin-top:15px;font-weight:800;color:var(--accent-glow);"><i class="fa-solid fa-clock-rotate-left"></i> Recent updates</div>
+                <div>${updatesHTML}</div>
+                <div class="profile-actions">
+                    <button class="btn ghost" type="button" onclick="closeMemberProfile()">Close</button>
+                    <button class="btn" type="button" onclick="closeMemberProfile(); switchTab('Feed');">View phase</button>
+                </div>`;
+            modal.style.display = "flex";
+        }
+
+        function closeMemberProfile() {
+            const modal = document.getElementById("memberProfileModal");
+            if (modal) modal.style.display = "none";
+        }
 
         /* =========================================================
            DISCUSSION EDITOR
@@ -6388,18 +6250,9 @@
                     if (target) {
                         target.scrollIntoView({ behavior: "smooth", block: "center" });
                         target.style.outline = "2px solid var(--accent-glow)";
-                        setTimeout(() => target.style.outline = "", 2200);
+                        setTimeout(() => target.style.outline = "", 2500);
                     }
                 }, 250);
-            } else if (notification.target_type === "discussion" || notification.target_type === "discussion_reply") {
-                switchTab("Discussions");
-                await fetchDiscussions();
-                if (notification.target_id) {
-                    setTimeout(function() {
-                        const target = document.getElementById("discussion-" + notification.target_id);
-                        if (target) target.scrollIntoView({ behavior:"smooth", block:"center" });
-                    }, 250);
-                }
             }
         }
 
