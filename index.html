@@ -3403,140 +3403,247 @@
         }
 
         /* =========================================================
-           SESSION TIMER
+           ACTIVE-TIME SESSION TIMER
+
+           Rules:
+           - The user gets 2 hours of ACTUAL app usage.
+           - Time is counted only while the app is open/visible.
+           - Closing the tab, switching away, or hiding the page pauses it.
+           - Returning resumes from the saved remaining time.
+           - A rolling 24-hour usage window starts on first use.
+           - When that 24-hour window ends, a fresh 2-hour allowance begins.
         ========================================================= */
 
         function startSessionTimer() {
 
             const container =
-                document.getElementById(
-                    "sessionTimerContainer"
-                );
+                document.getElementById("sessionTimerContainer");
 
             const display =
-                document.getElementById(
-                    "sessionTimer"
-                );
+                document.getElementById("sessionTimer");
 
-            if (!container || !display) {
-                return;
+            if (!container || !display) return;
+
+            container.style.display = "inline-flex";
+
+            const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+            const WINDOW_MS = 24 * 60 * 60 * 1000;
+
+            const WINDOW_KEY = "myphase_usage_window_start";
+            const USED_KEY = "myphase_active_time_ms";
+            const RESUME_KEY = "myphase_active_resume_time";
+
+            let timerInterval = null;
+            let windowStart = parseInt(
+                localStorage.getItem(WINDOW_KEY) || "0",
+                10
+            );
+            let usedMs = parseInt(
+                localStorage.getItem(USED_KEY) || "0",
+                10
+            );
+            let resumeTime = parseInt(
+                localStorage.getItem(RESUME_KEY) || "0",
+                10
+            );
+
+            const now = Date.now();
+
+            /* Start a fresh 24-hour window when:
+               - this is the first visit, or
+               - the previous 24-hour window has ended. */
+            if (!windowStart || now - windowStart >= WINDOW_MS) {
+                windowStart = now;
+                usedMs = 0;
+                resumeTime = now;
+
+                localStorage.setItem(WINDOW_KEY, String(windowStart));
+                localStorage.setItem(USED_KEY, "0");
+                localStorage.setItem(RESUME_KEY, String(resumeTime));
+            } else if (!resumeTime) {
+                /* Returning to the app: start/resume active counting now. */
+                resumeTime = now;
+                localStorage.setItem(RESUME_KEY, String(resumeTime));
             }
 
-            container.style.display =
-                "inline-flex";
-
-
-            const TWO_HOURS_MS =
-                2 * 60 * 60 * 1000;
-
-
-            let sessionStartTime =
-                localStorage.getItem(
-                    "myphase_session_start"
-                );
-
-
-            if (!sessionStartTime) {
-
-                sessionStartTime =
-                    Date.now();
-
-                localStorage.setItem(
-                    "myphase_session_start",
-                    String(sessionStartTime)
-                );
-
-            } else {
-
-                sessionStartTime =
-                    parseInt(
-                        sessionStartTime,
-                        10
-                    );
-
+            function saveState() {
+                localStorage.setItem(WINDOW_KEY, String(windowStart));
+                localStorage.setItem(USED_KEY, String(Math.max(0, usedMs)));
+                localStorage.setItem(RESUME_KEY, String(resumeTime || 0));
             }
 
+            function pauseUsage() {
+                if (!resumeTime) return;
 
-            if (
-                sessionTimerInterval
-            ) {
-
-                clearInterval(
-                    sessionTimerInterval
-                );
-
+                const current = Date.now();
+                usedMs += Math.max(0, current - resumeTime);
+                resumeTime = 0;
+                saveState();
             }
 
+            function resumeUsage() {
+                const current = Date.now();
+
+                /* If the 24-hour window ended while the user was away,
+                   reset the allowance before resuming. */
+                if (current - windowStart >= WINDOW_MS) {
+                    windowStart = current;
+                    usedMs = 0;
+                }
+
+                resumeTime = current;
+                saveState();
+                updateTimer();
+            }
+
+            function formatTime(ms) {
+                const totalSeconds = Math.max(
+                    0,
+                    Math.ceil(ms / 1000)
+                );
+
+                const hrs = Math.floor(totalSeconds / 3600);
+                const mins = Math.floor((totalSeconds % 3600) / 60);
+                const secs = totalSeconds % 60;
+
+                return (
+                    `${hrs < 10 ? "0" : ""}${hrs}:` +
+                    `${mins < 10 ? "0" : ""}${mins}:` +
+                    `${secs < 10 ? "0" : ""}${secs}`
+                );
+            }
+
+            function expireUsage() {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+
+                /* Remove only the active resume marker. Keep the
+                   24-hour window data until logout so we don't accidentally
+                   grant another 2 hours by refreshing the page. */
+                pauseUsage();
+
+                alert(
+                    "Your 2-hour active time has expired. You can use MyPhase again when the 24-hour window resets."
+                );
+
+                logout();
+            }
 
             function updateTimer() {
+                const current = Date.now();
 
-                const elapsed =
-                    Date.now() -
-                    sessionStartTime;
+                /* Roll over to a new 24-hour window. */
+                if (current - windowStart >= WINDOW_MS) {
+                    windowStart = current;
+                    usedMs = 0;
+                    resumeTime = document.hidden ? 0 : current;
+                    saveState();
+                }
 
-                const remaining =
-                    TWO_HOURS_MS -
-                    elapsed;
+                let currentUsed = usedMs;
 
+                if (resumeTime && !document.hidden) {
+                    currentUsed += Math.max(0, current - resumeTime);
+                }
+
+                const remaining = TWO_HOURS_MS - currentUsed;
 
                 if (remaining <= 0) {
-
-                    clearInterval(
-                        sessionTimerInterval
-                    );
-
-                    localStorage.removeItem(
-                        "myphase_session_start"
-                    );
-
-                    alert(
-                        "Your 2-hour session has expired. Please sign in again."
-                    );
-
-                    logout();
-
+                    display.innerText = "00:00:00";
+                    expireUsage();
                     return;
                 }
 
-
-                const hrs =
-                    Math.floor(
-                        remaining /
-                        (1000 * 60 * 60)
-                    );
-
-                const mins =
-                    Math.floor(
-                        (remaining %
-                            (1000 * 60 * 60)) /
-                        (1000 * 60)
-                    );
-
-                const secs =
-                    Math.floor(
-                        (remaining %
-                            (1000 * 60)) /
-                        1000
-                    );
-
-
-                display.innerText =
-                    `${hrs < 10 ? "0" : ""}${hrs}:` +
-                    `${mins < 10 ? "0" : ""}${mins}:` +
-                    `${secs < 10 ? "0" : ""}${secs}`;
+                display.innerText = formatTime(remaining);
             }
 
+            /* Prevent duplicate listeners if startSessionTimer is called
+               more than once during the same login session. */
+            if (window._myPhaseTimerVisibilityHandler) {
+                document.removeEventListener(
+                    "visibilitychange",
+                    window._myPhaseTimerVisibilityHandler
+                );
+            }
+
+            window._myPhaseTimerVisibilityHandler = function () {
+                if (document.hidden) {
+                    pauseUsage();
+                } else {
+                    resumeUsage();
+                }
+
+                updateTimer();
+            };
+
+            document.addEventListener(
+                "visibilitychange",
+                window._myPhaseTimerVisibilityHandler
+            );
+
+            /* Save active time when the page is being closed/reloaded. */
+            if (window._myPhaseBeforeUnloadHandler) {
+                window.removeEventListener(
+                    "beforeunload",
+                    window._myPhaseBeforeUnloadHandler
+                );
+            }
+
+            window._myPhaseBeforeUnloadHandler = function () {
+                pauseUsage();
+            };
+
+            window.addEventListener(
+                "beforeunload",
+                window._myPhaseBeforeUnloadHandler
+            );
+
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            /* Only count active/visible time. */
+            if (!document.hidden && !resumeTime) {
+                resumeTime = Date.now();
+                saveState();
+            }
 
             updateTimer();
 
+            timerInterval = setInterval(function () {
+                if (!document.hidden) {
+                    updateTimer();
+                }
+            }, 1000);
 
-            sessionTimerInterval =
-                setInterval(
-                    updateTimer,
-                    1000
-                );
+            /* Expose cleanup so logout can remove timer listeners cleanly. */
+            window._myPhaseStopTimer = function () {
+                pauseUsage();
+
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+
+                if (window._myPhaseTimerVisibilityHandler) {
+                    document.removeEventListener(
+                        "visibilitychange",
+                        window._myPhaseTimerVisibilityHandler
+                    );
+                    window._myPhaseTimerVisibilityHandler = null;
+                }
+
+                if (window._myPhaseBeforeUnloadHandler) {
+                    window.removeEventListener(
+                        "beforeunload",
+                        window._myPhaseBeforeUnloadHandler
+                    );
+                    window._myPhaseBeforeUnloadHandler = null;
+                }
+            };
         }
-
 
         /* =========================================================
            AUTH MODAL
@@ -4568,22 +4675,19 @@
 
             try {
 
-                localStorage.removeItem(
-                    "myphase_session_start"
-                );
+                if (window._myPhaseStopTimer) {
+                    window._myPhaseStopTimer();
+                    window._myPhaseStopTimer = null;
+                }
 
+                localStorage.removeItem("myphase_session_start");
+                localStorage.removeItem("myphase_usage_window_start");
+                localStorage.removeItem("myphase_active_time_ms");
+                localStorage.removeItem("myphase_active_resume_time");
 
-                if (
-                    sessionTimerInterval
-                ) {
-
-                    clearInterval(
-                        sessionTimerInterval
-                    );
-
-                    sessionTimerInterval =
-                        null;
-
+                if (sessionTimerInterval) {
+                    clearInterval(sessionTimerInterval);
+                    sessionTimerInterval = null;
                 }
 
 
