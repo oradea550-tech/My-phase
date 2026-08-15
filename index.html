@@ -2067,10 +2067,25 @@
 
             </div>
 
-            <div style="margin:10px 0 12px;">
-                <button class="btn" type="button" onclick="switchTab('Update')" style="width:100%;">
+            <div class="home-post-actions" style="margin:10px 0 12px;">
+                <button class="btn" type="button" onclick="switchTab('Update')">
                     <i class="fa-solid fa-pen"></i> Share an update
                 </button>
+                <button class="btn ghost" type="button" onclick="openNewPostComposer()">
+                    <i class="fa-solid fa-plus"></i> New post
+                </button>
+            </div>
+
+            <div id="newPostModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeNewPostComposer()">
+                <div class="modal-box">
+                    <h3><i class="fa-solid fa-plus"></i> New post</h3>
+                    <div class="hint">Share a topic, question, or something you want your circle to discuss.</div>
+                    <textarea id="newPostInput" class="form-control" placeholder="What would you like to share?" rows="4"></textarea>
+                    <div style="display:flex;gap:8px;margin-top:10px;">
+                        <button class="btn ghost" type="button" onclick="closeNewPostComposer()">Cancel</button>
+                        <button class="btn" type="button" onclick="submitNewPost()"><i class="fa-solid fa-paper-plane"></i> Post</button>
+                    </div>
+                </div>
             </div>
 
             <div id="feedCircleUpdates">
@@ -5079,6 +5094,46 @@
         }
 
 
+        function openNewPostComposer() {
+            const modal = document.getElementById("newPostModal");
+            const input = document.getElementById("newPostInput");
+            if (!modal) return;
+            modal.style.display = "flex";
+            if (input) { input.value = ""; setTimeout(() => input.focus(), 50); }
+        }
+
+        function closeNewPostComposer() {
+            const modal = document.getElementById("newPostModal");
+            if (modal) modal.style.display = "none";
+        }
+
+        async function submitNewPost() {
+            if (!currentUser || !db) return;
+            const input = document.getElementById("newPostInput");
+            const text = (input?.value || "").trim();
+            if (!text) {
+                showToast("Please write something first.", "warning");
+                return;
+            }
+
+            const { error } = await db.from("daily_updates").insert([{
+                user_id: currentUser.id,
+                user_name: myProfile?.first_name || currentUser.user_metadata?.first_name || "Member",
+                phase_name: myProfile?.current_phase || "My Phase",
+                update_text: text
+            }]);
+
+            if (error) {
+                console.error("New post error:", error);
+                showToast("Could not publish the post.", "error");
+                return;
+            }
+
+            closeNewPostComposer();
+            showToast("Post shared with your circle.", "success");
+            await fetchDashboardData();
+        }
+
         async function fetchDashboardData(scrollToUpdateId = null) {
             if (!currentUser || !db) return;
 
@@ -5470,7 +5525,7 @@
                 return;
             }
 
-            // Keep the profile intentionally lightweight: only the 3 most recent posts.
+            // Keep profiles lightweight: show only the 3 most recent posts.
             const { data: updates, error: updatesError } = await db
                 .from("daily_updates")
                 .select("id, update_text, created_at")
@@ -5488,34 +5543,6 @@
 
             const name = member.first_name || "Member";
             const initial = name.charAt(0).toUpperCase();
-            const updateIds = (updates || []).map(function(u) { return u.id; });
-
-            // Load lightweight engagement counts for the visible posts.
-            let replies = [];
-            let reactions = [];
-
-            if (updateIds.length) {
-                const [replyResult, reactionResult] = await Promise.all([
-                    db.from("daily_update_replies")
-                        .select("id, daily_update_id")
-                        .in("daily_update_id", updateIds),
-                    db.from("daily_update_reactions")
-                        .select("id, daily_update_id")
-                        .in("daily_update_id", updateIds)
-                ]);
-
-                if (replyResult.error) {
-                    console.error("Member post replies count error:", replyResult.error);
-                } else {
-                    replies = replyResult.data || [];
-                }
-
-                if (reactionResult.error) {
-                    console.error("Member post reactions count error:", reactionResult.error);
-                } else {
-                    reactions = reactionResult.data || [];
-                }
-            }
 
             const updatesHTML = (updates || []).length
                 ? updates.map(function(u) {
@@ -5529,31 +5556,23 @@
                         : "";
 
                     const text = u.update_text || "";
-                    const replyCount = replies.filter(function(r) {
-                        return r.daily_update_id === u.id;
-                    }).length;
-                    const reactionCount = reactions.filter(function(r) {
-                        return r.daily_update_id === u.id;
-                    }).length;
 
                     return `
                         <button
                             type="button"
                             class="profile-update"
                             onclick="openMemberPostDiscussion('${escapeHTML(u.id)}')"
-                            style="width:100%;text-align:left;color:inherit;cursor:pointer;border:1px solid var(--border);display:block;"
-                            aria-label="Open discussion for this post"
+                            style="width:100%;text-align:left;color:inherit;cursor:pointer;border:1px solid var(--border);"
+                            aria-label="Open discussion for this update"
                         >
                             <div class="profile-update-meta">${escapeHTML(time)}</div>
                             <div class="profile-update-text">${escapeHTML(text)}</div>
-                            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:9px;color:var(--text-muted);font-size:.7rem;font-weight:700;">
-                                <span><i class="fa-solid fa-comments"></i> ${replyCount} ${replyCount === 1 ? "reply" : "replies"}</span>
-                                <span><i class="fa-solid fa-heart"></i> ${reactionCount}</span>
-                                <span style="color:var(--accent-glow);"><i class="fa-solid fa-arrow-right"></i> Open discussion</span>
+                            <div style="margin-top:8px;color:var(--accent-glow);font-size:.72rem;font-weight:750;">
+                                <i class="fa-solid fa-comments"></i> Open discussion
                             </div>
                         </button>`;
                 }).join("")
-                : `<div class="thread-empty">No posts shared yet.</div>`;
+                : `<div class="thread-empty">No updates shared yet.</div>`;
 
             const hasMore = (updates || []).length >= 3;
 
@@ -5576,9 +5595,9 @@
                 </div>
 
                 <div style="margin-top:15px;font-weight:800;color:var(--accent-glow);">
-                    <i class="fa-solid fa-clock-rotate-left"></i> Recent posts
+                    <i class="fa-solid fa-clock-rotate-left"></i> Recent activity
                 </div>
-                <div style="margin-top:7px;display:grid;gap:8px;">${updatesHTML}</div>
+                <div style="margin-top:7px;">${updatesHTML}</div>
 
                 ${hasMore ? `
                     <button
@@ -5587,7 +5606,7 @@
                         style="width:100%;margin-top:9px;"
                         onclick="closeMemberProfile(); switchTab('Feed');"
                     >
-                        View all posts
+                        View all activity
                     </button>` : ""}
 
                 <div class="profile-actions">
