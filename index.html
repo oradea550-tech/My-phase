@@ -1626,6 +1626,45 @@
         .thread-composer .btn { width:auto;min-height:44px;padding:9px 13px; }
         .thread-reaction-summary { color:var(--text-muted);font-size:.7rem;margin-left:auto; }
 
+        /* New discussion composer - intentionally compact */
+        .home-post-actions {
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:8px;
+            margin:10px 0 12px;
+        }
+        .home-post-actions .btn {
+            width:100%;
+            min-height:46px;
+        }
+        .new-discussion-modal-card {
+            max-width:520px;
+        }
+        .new-discussion-modal-card h3 {
+            color:var(--accent-glow);
+            margin-bottom:6px;
+        }
+        .new-discussion-modal-card .hint {
+            color:var(--text-muted);
+            font-size:.76rem;
+            line-height:1.45;
+            margin-bottom:12px;
+        }
+        .new-discussion-modal-card textarea {
+            width:100%;
+            min-height:110px;
+            resize:vertical;
+        }
+        .new-discussion-modal-actions {
+            display:flex;
+            gap:8px;
+            margin-top:10px;
+        }
+        .new-discussion-modal-actions .btn { flex:1; }
+        @media (max-width:600px) {
+            .home-post-actions { grid-template-columns:1fr; }
+        }
+
         /* Minimal MyPhase layout */
                 .bottom-nav {
             grid-template-columns: repeat(3, 1fr) !important;
@@ -2065,9 +2104,12 @@
 
             </div>
 
-            <div style="margin:10px 0 12px;">
-                <button class="btn" type="button" onclick="switchTab('Update')" style="width:100%;">
+            <div class="home-post-actions">
+                <button class="btn" type="button" onclick="switchTab('Update')">
                     <i class="fa-solid fa-pen"></i> Share an update
+                </button>
+                <button class="btn ghost" type="button" onclick="openNewDiscussionComposer()">
+                    <i class="fa-solid fa-comments"></i> Start a discussion
                 </button>
             </div>
 
@@ -2075,6 +2117,39 @@
                 Loading circle updates...
             </div>
 
+        </div>
+
+
+        <!-- =====================================================
+             NEW DISCUSSION COMPOSER
+        ===================================================== -->
+
+        <div
+            id="newCircleDiscussionModal"
+            class="modal-overlay"
+            style="display:none;"
+            onclick="if(event.target===this) closeNewDiscussionComposer()"
+        >
+            <div class="modal-box new-discussion-modal-card">
+                <h3><i class="fa-solid fa-comments"></i> Start a new discussion</h3>
+                <div class="hint">Share a topic, question, or something you want your circle to talk about.</div>
+
+                <textarea
+                    id="newCircleDiscussionInput"
+                    class="form-control"
+                    placeholder="What would you like to discuss?"
+                    rows="4"
+                ></textarea>
+
+                <div class="new-discussion-modal-actions">
+                    <button class="btn ghost" type="button" onclick="closeNewDiscussionComposer()">
+                        Cancel
+                    </button>
+                    <button class="btn" type="button" onclick="postNewCircleDiscussion()">
+                        <i class="fa-solid fa-paper-plane"></i> Post
+                    </button>
+                </div>
+            </div>
         </div>
 
 
@@ -5021,15 +5096,17 @@
             const end = new Date(start);
             end.setDate(end.getDate() + 1);
 
-            const { data, error } = await db
+            const { data: todayRows, error } = await db
                 .from("daily_updates")
                 .select("id, user_id, user_name, phase_name, update_text, created_at")
                 .eq("user_id", currentUser.id)
                 .gte("created_at", start.toISOString())
                 .lt("created_at", end.toISOString())
-                .order("created_at", { ascending: false })
-                .limit(1)
-                .maybeSingle();
+                .order("created_at", { ascending: false });
+
+            const data = (todayRows || []).find(function(row) {
+                return !String(row.update_text || "").startsWith("💬 ");
+            }) || null;
 
             if (error) {
                 console.error("Today's update error:", error);
@@ -5080,14 +5157,16 @@
         async function fetchDashboardData(scrollToUpdateId = null) {
             if (!currentUser || !db) return;
 
-            const { count, error: countError } = await db
+            const { data: progressRows, error: countError } = await db
                 .from("daily_updates")
-                .select("id", { count: "exact", head: true })
+                .select("id, update_text")
                 .eq("user_id", currentUser.id);
 
             if (countError) console.error("Dashboard count error:", countError);
 
-            const totalDays = count || 0;
+            const totalDays = (progressRows || []).filter(function(row) {
+                return !String(row.update_text || "").startsWith("💬 ");
+            }).length;
             const targetDuration = Number(myProfile?.duration) || 30;
             const pct = Math.min(100, Math.round((totalDays / targetDuration) * 100));
 
@@ -5177,6 +5256,8 @@
                     : "";
                 const name = item.user_name || nameByUserId[item.user_id] || "Member";
                 const phase = item.phase_name || myProfile?.current_phase || "Your Phase";
+                const isDiscussion = String(item.update_text || "").startsWith("💬 ");
+                const displayText = isDiscussion ? String(item.update_text || "").replace(/^💬\s*/, "") : String(item.update_text || "");
                 const itemReplies = repliesFor(item.id);
                 const itemReactions = reactionsFor(item.id);
                 const myReaction = itemReactions.find(r => r.user_id === currentUser.id)?.reaction || "";
@@ -5201,8 +5282,9 @@
                             </div>
                             <span class="badge badge-location">${escapeHTML(formatPhaseName(phase))}</span>
                         </div>
+                        ${isDiscussion ? `<div style="margin-top:9px;"><span class="badge badge-location"><i class="fa-solid fa-comments"></i> Discussion</span></div>` : ""}
                         <div style="margin-top:10px;background:rgba(0,0,0,0.20);border-radius:var(--radius-md);padding:12px;font-size:0.9rem;line-height:1.55;word-break:break-word;">
-                            ${escapeHTML(item.update_text || "")}
+                            ${escapeHTML(displayText)}
                         </div>
 
                         <div class="update-reactions">
@@ -5218,7 +5300,7 @@
 
                         <div id="update-thread-${escapeHTML(item.id)}" class="update-thread" style="display:${scrollToUpdateId === item.id ? "block" : "none"};">
                             <div>${repliesHTML || `<div class="reply-count">No replies yet. Start the conversation.</div>`}</div>
-                            <div id="update-reply-editor-${escapeHTML(item.id)}" class="update-reply-editor">
+                            <div id="update-reply-editor-${escapeHTML(item.id)}" class="update-reply-editor" style="display:none;">
                                 <textarea id="update-reply-input-${escapeHTML(item.id)}" placeholder="Write a reply..." rows="2"></textarea>
                                 <button class="btn small" type="button" onclick="postUpdateReply('${escapeHTML(item.id)}')">
                                     <i class="fa-solid fa-paper-plane"></i> Reply
@@ -5235,8 +5317,8 @@
                         target.scrollIntoView({ behavior: "smooth", block: "center" });
                         target.style.outline = "2px solid var(--accent-glow)";
                         setTimeout(() => target.style.outline = "", 2500);
-                        const input = document.getElementById("update-reply-input-" + scrollToUpdateId);
-                        if (input) input.focus();
+                        // Do not open the reply composer automatically.
+                        // The user can press Reply when they are ready to join the discussion.
                     }
                 }, 200);
             }
@@ -5244,12 +5326,18 @@
 
         function toggleUpdateThread(updateId) {
             const thread = document.getElementById("update-thread-" + updateId);
+            const editor = document.getElementById("update-reply-editor-" + updateId);
             if (!thread) return;
+
             const open = thread.style.display === "none" || thread.style.display === "";
             thread.style.display = open ? "block" : "none";
-            if (open) {
+
+            if (open && editor) {
+                editor.style.display = "block";
                 const input = document.getElementById("update-reply-input-" + updateId);
                 if (input) setTimeout(() => input.focus(), 50);
+            } else if (!open && editor) {
+                editor.style.display = "none";
             }
         }
 
@@ -5514,6 +5602,101 @@
             const modal = document.getElementById("memberProfileModal");
             if (modal) modal.style.display = "none";
         }
+
+        /* =========================================================
+           HOME: NEW DISCUSSION COMPOSER
+
+           A discussion is stored as a daily_updates post so it uses
+           the same circle feed, replies, reactions and notifications.
+           The 💬 prefix distinguishes it visually without requiring
+           another database migration.
+        ========================================================= */
+
+        function openNewDiscussionComposer() {
+            if (!currentUser) {
+                alert("Please sign in first.");
+                return;
+            }
+
+            const modal = document.getElementById("newCircleDiscussionModal");
+            const input = document.getElementById("newCircleDiscussionInput");
+            if (!modal || !input) return;
+
+            input.value = "";
+            modal.style.display = "flex";
+            setTimeout(() => input.focus(), 80);
+        }
+
+        function closeNewDiscussionComposer() {
+            const modal = document.getElementById("newCircleDiscussionModal");
+            const input = document.getElementById("newCircleDiscussionInput");
+            if (input) input.value = "";
+            if (modal) modal.style.display = "none";
+        }
+
+        async function postNewCircleDiscussion() {
+            if (!currentUser || !db) return;
+
+            const input = document.getElementById("newCircleDiscussionInput");
+            if (!input) return;
+
+            const content = input.value.trim();
+            if (!content) {
+                alert("Please write something to discuss.");
+                input.focus();
+                return;
+            }
+
+            if (!myProfile?.circle_id) {
+                alert("You are not assigned to a circle yet.");
+                return;
+            }
+
+            const author =
+                myProfile?.first_name ||
+                currentUser.user_metadata?.first_name ||
+                currentUser.email?.split("@")[0] ||
+                "Member";
+
+            const phase = myProfile?.current_phase || "Your Phase";
+
+            const postButton = document.querySelector("#newCircleDiscussionModal .new-discussion-modal-actions .btn:not(.ghost)");
+            if (postButton) {
+                postButton.disabled = true;
+                postButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Posting...';
+            }
+
+            try {
+                const { error } = await db.from("daily_updates").insert([{
+                    user_id: currentUser.id,
+                    user_name: author,
+                    phase_name: phase,
+                    update_text: "💬 " + content
+                }]);
+
+                if (error) throw error;
+
+                closeNewDiscussionComposer();
+                await fetchDashboardData();
+                await loadNotifications();
+
+                setTimeout(function() {
+                    const feed = document.getElementById("feedCircleUpdates");
+                    if (feed) {
+                        feed.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }
+                }, 120);
+            } catch (error) {
+                console.error("New discussion error:", error);
+                alert("Could not start the discussion: " + (error.message || "Unknown error"));
+            } finally {
+                if (postButton) {
+                    postButton.disabled = false;
+                    postButton.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Post';
+                }
+            }
+        }
+
 
         /* =========================================================
            DISCUSSION EDITOR
@@ -6294,7 +6477,9 @@
                 return;
             }
 
-            const logs = data || [];
+            const logs = (data || []).filter(function(log) {
+                return !String(log.update_text || "").startsWith("💬 ");
+            });
             const activeDays = logs.length;
 
             const totalEl = document.getElementById("statTotalDays");
