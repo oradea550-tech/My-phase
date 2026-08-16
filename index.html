@@ -3377,6 +3377,8 @@
         </div>
 
 
+    </div>
+
     <!-- =========================================================
          FATAL ERROR SCREEN
     ========================================================= -->
@@ -8395,6 +8397,27 @@
     }
   });
 })();
+</script>
+
+
+<script>
+function openSignupFromWelcome() {
+    const welcome = document.getElementById("publicWelcome");
+    if (welcome) welcome.style.display = "none";
+    if (typeof showAuthModal === "function") {
+        showAuthModal();
+        if (typeof showStep === "function") showStep(1);
+    }
+}
+
+function openSignInFromWelcome() {
+    const welcome = document.getElementById("publicWelcome");
+    if (welcome) welcome.style.display = "none";
+    if (typeof showAuthModal === "function") {
+        showAuthModal();
+        if (typeof showSignIn === "function") showSignIn();
+    }
+}
 </script>
 
 </body>
