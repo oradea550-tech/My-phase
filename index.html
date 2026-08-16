@@ -1639,6 +1639,1627 @@
         #dailyTaskCard, #todayProgressHeading, #feedTodayProgress {
             display:none !important;
         }
+</style>
+
+<style>
+
+
+        /* =========================================================
+           ROOT VARIABLES
+        ========================================================= */
+
+        :root {
+            --bg-main: #070b18;
+            --bg-card: #111827;
+            --bg-card-2: #182235;
+
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+
+            --border: #263449;
+
+            --accent-primary: #6366f1;
+            --accent-glow: #818cf8;
+
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+
+            --shadow-soft:
+                0 8px 30px rgba(0, 0, 0, 0.28);
+        }
+
+        /* =========================================================
+           RESET
+        ========================================================= */
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            width: 100%;
+            min-height: 100%;
+            overflow-x: hidden;
+            background: var(--bg-main);
+        }
+
+        body {
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+
+            overflow-x: hidden;
+
+            background:
+                radial-gradient(
+                    circle at top right,
+                    rgba(99, 102, 241, 0.10),
+                    transparent 35%
+                ),
+                var(--bg-main);
+
+            color: var(--text-main);
+
+            font-family:
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Oxygen,
+                Ubuntu,
+                Cantarell,
+                sans-serif;
+
+            padding-bottom: 82px;
+
+            -webkit-font-smoothing: antialiased;
+        }
+
+        button,
+        input,
+        textarea,
+        select {
+            font: inherit;
+        }
+
+        button {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* =========================================================
+           ERROR SCREEN
+        ========================================================= */
+
+        #fatalError {
+            display: none;
+
+            position: fixed;
+            inset: 0;
+
+            z-index: 99999;
+
+            padding: 20px;
+
+            background: #070b18;
+            color: white;
+
+            align-items: center;
+            justify-content: center;
+        }
+
+        #fatalErrorBox {
+            width: 100%;
+            max-width: 480px;
+
+            background: #111827;
+
+            border: 1px solid #334155;
+
+            border-radius: 18px;
+
+            padding: 24px;
+
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        #fatalErrorBox h2 {
+            color: #f87171;
+            margin-bottom: 12px;
+        }
+
+        #fatalErrorBox p {
+            color: #cbd5e1;
+            line-height: 1.6;
+            font-size: 0.9rem;
+            word-break: break-word;
+        }
+
+        /* =========================================================
+           HEADER
+        ========================================================= */
+
+        header {
+            position: sticky;
+            top: 0;
+
+            z-index: 1000;
+
+            width: 100%;
+
+            background: rgba(17, 24, 39, 0.96);
+
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+
+            border-bottom:
+                1px solid var(--border);
+
+            box-shadow:
+                0 4px 16px rgba(0, 0, 0, 0.25);
+
+            padding:
+                12px 16px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 10px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+
+            gap: 7px;
+
+            font-weight: 800;
+            font-size: 1.15rem;
+
+            color: var(--accent-glow);
+
+            white-space: nowrap;
+        }
+
+        .session-timer-badge {
+            display: none;
+
+            align-items: center;
+            justify-content: center;
+
+            gap: 5px;
+
+            padding: 5px 9px;
+
+            border-radius: 999px;
+
+            background:
+                rgba(99, 102, 241, 0.14);
+
+            border:
+                1px solid var(--accent-primary);
+
+            color: var(--accent-glow);
+
+            font-size: 0.68rem;
+            font-weight: 700;
+
+            white-space: nowrap;
+        }
+
+        /* =========================================================
+           NOTIFICATIONS
+        ========================================================= */
+        .notification-button {
+            position:relative;
+            width:38px;
+            height:38px;
+            border-radius:50%;
+            border:1px solid var(--border);
+            background:rgba(255,255,255,0.04);
+            color:var(--text-main);
+            display:none;
+            align-items:center;
+            justify-content:center;
+            cursor:pointer;
+        }
+        .notification-button:hover { color:var(--accent-glow); }
+        .notification-badge {
+            position:absolute;
+            top:-3px;
+            right:-3px;
+            min-width:17px;
+            height:17px;
+            padding:0 4px;
+            border-radius:999px;
+            background:var(--danger);
+            color:#fff;
+            font-size:0.62rem;
+            font-weight:800;
+            display:none;
+            align-items:center;
+            justify-content:center;
+            border:2px solid #111827;
+        }
+        .notification-panel {
+            position:fixed;
+            top:60px;
+            right:12px;
+            width:min(360px, calc(100vw - 24px));
+            max-height:70vh;
+            overflow-y:auto;
+            z-index:4500;
+            display:none;
+            background:var(--bg-card);
+            border:1px solid var(--border);
+            border-radius:16px;
+            box-shadow:var(--shadow-soft);
+        }
+        .notification-panel.show { display:block; }
+        .notification-header {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:8px;
+            padding:13px 14px;
+            border-bottom:1px solid var(--border);
+            position:sticky;
+            top:0;
+            background:rgba(17,24,39,0.98);
+            z-index:1;
+        }
+        .notification-item {
+            display:block;
+            width:100%;
+            text-align:left;
+            border:0;
+            border-bottom:1px solid rgba(38,52,73,0.7);
+            background:transparent;
+            color:var(--text-main);
+            padding:12px 14px;
+            cursor:pointer;
+        }
+        .notification-item:hover { background:rgba(99,102,241,0.08); }
+        .notification-item.unread { background:rgba(99,102,241,0.10); }
+        .notification-message { font-size:0.82rem; line-height:1.45; }
+        .notification-time { font-size:0.67rem; color:var(--text-muted); margin-top:4px; }
+        .notification-empty { padding:24px 14px; text-align:center; color:var(--text-muted); font-size:0.82rem; }
+
+        /* =========================================================
+           USER MENU
+        ========================================================= */
+
+        .user-menu-container {
+            position: relative;
+
+            display: none;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+
+            border-radius: 50%;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--accent-primary),
+                    var(--accent-glow)
+                );
+
+            color: white;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            font-weight: 800;
+
+            cursor: pointer;
+
+            border:
+                2px solid var(--border);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+
+            right: 0;
+            top: 46px;
+
+            width: 190px;
+
+            background: var(--bg-card);
+
+            border:
+                1px solid var(--border);
+
+            border-radius:
+                var(--radius-md);
+
+            box-shadow:
+                var(--shadow-soft);
+
+            display: none;
+
+            flex-direction: column;
+
+            overflow: hidden;
+
+            z-index: 2000;
+        }
+
+        .dropdown-menu.show {
+            display: flex;
+        }
+
+        .dropdown-item {
+            width: 100%;
+
+            padding: 13px 15px;
+
+            color: var(--text-main);
+
+            font-size: 0.88rem;
+
+            text-decoration: none;
+
+            display: flex;
+            align-items: center;
+
+            gap: 10px;
+
+            cursor: pointer;
+
+            background: transparent;
+
+            border: none;
+
+            text-align: left;
+        }
+
+        .dropdown-item:hover {
+            background:
+                rgba(255, 255, 255, 0.05);
+
+            color: var(--accent-glow);
+        }
+
+        /* =========================================================
+           MAIN
+        ========================================================= */
+
+        main {
+            width: 100%;
+
+            max-width: 760px;
+
+            margin:
+                0 auto;
+
+            padding:
+                14px;
+        }
+
+        /* =========================================================
+           CARDS
+        ========================================================= */
+
+        .card {
+            width: 100%;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    rgba(17, 24, 39, 0.98),
+                    rgba(15, 23, 42, 0.98)
+                );
+
+            border:
+                1px solid var(--border);
+
+            border-radius:
+                var(--radius-lg);
+
+            padding:
+                18px;
+
+            margin-bottom:
+                14px;
+
+            box-shadow:
+                var(--shadow-soft);
+
+            overflow: hidden;
+        }
+
+        /* =========================================================
+           FORMS
+        ========================================================= */
+
+        .form-control {
+            width: 100%;
+
+            min-width: 0;
+
+            padding:
+                13px 14px;
+
+            border-radius:
+                var(--radius-md);
+
+            border:
+                1px solid var(--border);
+
+            background:
+                rgba(255, 255, 255, 0.035);
+
+            color:
+                var(--text-main);
+
+            margin-bottom:
+                13px;
+
+            font-size:
+                0.94rem;
+
+            outline:
+                none;
+
+            appearance:
+                none;
+        }
+
+        .form-control::placeholder {
+            color:
+                #64748b;
+        }
+
+        .form-control:focus {
+            border-color:
+                var(--accent-glow);
+
+            box-shadow:
+                0 0 0 3px
+                rgba(99, 102, 241, 0.12);
+        }
+
+        select.form-control {
+            background-color:
+                #111827;
+        }
+
+        textarea.form-control {
+            min-height:
+                90px;
+
+            resize:
+                vertical;
+        }
+
+        label {
+            display:
+                block;
+
+            font-size:
+                0.82rem;
+
+            color:
+                var(--text-muted);
+
+            margin-bottom:
+                6px;
+
+            font-weight:
+                650;
+        }
+
+        /* =========================================================
+           BUTTONS
+        ========================================================= */
+
+        .btn {
+            width: 100%;
+
+            min-height: 46px;
+
+            padding:
+                12px 16px;
+
+            border-radius:
+                999px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--accent-primary),
+                    var(--accent-glow)
+                );
+
+            color:
+                white;
+
+            font-weight:
+                750;
+
+            border:
+                none;
+
+            cursor:
+                pointer;
+
+            text-align:
+                center;
+
+            font-size:
+                0.92rem;
+
+            display:
+                inline-flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            gap:
+                8px;
+
+            transition:
+                opacity 0.2s ease,
+                transform 0.1s ease;
+        }
+
+        .btn:active {
+            transform:
+                scale(0.98);
+        }
+
+        .btn:hover {
+            opacity:
+                0.92;
+        }
+
+        .btn:disabled {
+            opacity:
+                0.5;
+
+            cursor:
+                not-allowed;
+        }
+
+        .btn.ghost {
+            width:
+                auto;
+
+            background:
+                transparent;
+
+            border:
+                1px solid var(--border);
+
+            color:
+                var(--text-main);
+        }
+
+        .btn.small {
+            min-height:
+                36px;
+
+            padding:
+                8px 12px;
+
+            font-size:
+                0.78rem;
+
+            border-radius:
+                var(--radius-md);
+        }
+
+        /* =========================================================
+           HOME PHASE UPDATES
+        ========================================================= */
+
+        #feedCircleUpdates .card {
+            overflow: hidden;
+        }
+
+        #feedCircleUpdates .badge-location {
+            max-width: 48%;
+            white-space: normal;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* =========================================================
+           BADGES
+        ========================================================= */
+
+        .badge {
+            display:
+                inline-flex;
+
+            align-items:
+                center;
+
+            gap:
+                4px;
+
+            padding:
+                4px 9px;
+
+            border-radius:
+                999px;
+
+            font-size:
+                0.7rem;
+
+            font-weight:
+                700;
+        }
+
+        .badge-location {
+            background:
+                rgba(99,102,241,0.15);
+
+            border:
+                1px solid var(--accent-primary);
+
+            color:
+                var(--accent-glow);
+        }
+
+        .badge-active {
+            background:
+                rgba(34,197,94,0.14);
+
+            border:
+                1px solid var(--success);
+
+            color:
+                #4ade80;
+        }
+
+        .badge-mentor {
+            background:
+                rgba(245,158,11,0.14);
+
+            border:
+                1px solid var(--warning);
+
+            color:
+                #fbbf24;
+        }
+
+        /* =========================================================
+           PROGRESS
+        ========================================================= */
+
+        .progress-container {
+            width:
+                100%;
+
+            height:
+                9px;
+
+            margin:
+                11px 0;
+
+            background:
+                rgba(255,255,255,0.06);
+
+            border-radius:
+                999px;
+
+            overflow:
+                hidden;
+        }
+
+        .progress-bar {
+            width:
+                0%;
+
+            height:
+                100%;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--accent-primary),
+                    var(--accent-glow)
+                );
+
+            transition:
+                width 0.4s ease;
+        }
+
+        /* =========================================================
+           NAVIGATION
+        ========================================================= */
+
+        .bottom-nav {
+            position:
+                fixed;
+
+            left:
+                0;
+
+            right:
+                0;
+
+            bottom:
+                0;
+
+            z-index:
+                3000;
+
+            width:
+                100%;
+
+            background:
+                rgba(17, 24, 39, 0.97);
+
+            backdrop-filter:
+                blur(12px);
+
+            -webkit-backdrop-filter:
+                blur(12px);
+
+            border-top:
+                1px solid var(--border);
+
+            display:
+                flex;
+
+            justify-content:
+                space-around;
+
+            padding:
+                7px 2px;
+
+            padding-bottom:
+                calc(7px + env(safe-area-inset-bottom));
+        }
+
+        .nav-tab {
+            min-width:
+                0;
+
+            flex:
+                1;
+
+            display:
+                flex;
+
+            flex-direction:
+                column;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            gap:
+                3px;
+
+            color:
+                var(--text-muted);
+
+            font-size:
+                0.62rem;
+
+            text-decoration:
+                none;
+
+            cursor:
+                pointer;
+
+            padding:
+                3px 1px;
+        }
+
+        .nav-tab i {
+            font-size:
+                1.05rem;
+        }
+
+        .nav-tab.active {
+            color:
+                var(--accent-glow);
+
+            font-weight:
+                750;
+        }
+
+        .tab-panel {
+            display:
+                none;
+        }
+
+        .tab-panel.active {
+            display:
+                block;
+        }
+
+        /* =========================================================
+           MODAL
+        ========================================================= */
+
+        .modal-overlay {
+            position:
+                fixed;
+
+            inset:
+                0;
+
+            z-index:
+                5000;
+
+            width:
+                100%;
+
+            min-height:
+                100dvh;
+
+            background:
+                rgba(2, 6, 23, 0.92);
+
+            display:
+                flex;
+
+            align-items:
+                flex-start;
+
+            justify-content:
+                center;
+
+            padding:
+                12px;
+
+            overflow-y:
+                auto;
+
+            overflow-x:
+                hidden;
+
+            backdrop-filter:
+                blur(8px);
+
+            -webkit-backdrop-filter:
+                blur(8px);
+        }
+
+        .modal-box {
+            width:
+                100%;
+
+            max-width:
+                520px;
+
+            margin:
+                0 auto;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #111827,
+                    #0f172a
+                );
+
+            border:
+                1px solid var(--border);
+
+            border-radius:
+                var(--radius-lg);
+
+            padding:
+                20px 16px;
+
+            box-shadow:
+                0 20px 70px rgba(0,0,0,0.55);
+
+            overflow:
+                hidden;
+        }
+
+        /* =========================================================
+           ONBOARDING
+        ========================================================= */
+
+        .onboard-title {
+            font-size:
+                1.35rem;
+
+            color:
+                var(--accent-glow);
+
+            font-weight:
+                800;
+
+            margin-bottom:
+                7px;
+
+            text-align:
+                center;
+
+            line-height:
+                1.25;
+        }
+
+        .onboard-sub {
+            color:
+                var(--text-muted);
+
+            font-size:
+                0.84rem;
+
+            line-height:
+                1.5;
+
+            margin-bottom:
+                20px;
+
+            text-align:
+                center;
+        }
+
+        .step-indicator {
+            width:
+                100%;
+
+            display:
+                flex;
+
+            gap:
+                6px;
+
+            justify-content:
+                center;
+
+            margin-bottom:
+                20px;
+        }
+
+        .step-pill {
+            flex:
+                1;
+
+            min-width:
+                0;
+
+            background:
+                rgba(255,255,255,0.045);
+
+            padding:
+                8px 4px;
+
+            border-radius:
+                999px;
+
+            font-size:
+                0.68rem;
+
+            color:
+                var(--text-muted);
+
+            text-align:
+                center;
+
+            white-space:
+                normal;
+        }
+
+        .step-pill.active {
+            background:
+                rgba(99,102,241,0.22);
+
+            color:
+                var(--accent-glow);
+
+            font-weight:
+                700;
+
+            border:
+                1px solid var(--accent-primary);
+        }
+
+        /* =========================================================
+           MOOD
+        ========================================================= */
+
+        .mood-selector {
+            display:
+                grid;
+
+            grid-template-columns:
+                repeat(5, 1fr);
+
+            gap:
+                7px;
+
+            margin-bottom:
+                13px;
+        }
+
+        .mood-btn {
+            min-width:
+                0;
+
+            min-height:
+                44px;
+
+            padding:
+                7px;
+
+            border-radius:
+                var(--radius-md);
+
+            border:
+                1px solid var(--border);
+
+            background:
+                rgba(255,255,255,0.03);
+
+            color:
+                var(--text-main);
+
+            cursor:
+                pointer;
+
+            font-size:
+                1.15rem;
+
+            text-align:
+                center;
+        }
+
+        .mood-btn.selected {
+            border-color:
+                var(--accent-glow);
+
+            background:
+                rgba(99,102,241,0.2);
+        }
+
+        /* =========================================================
+           EMPTY STATE
+        ========================================================= */
+
+        .empty-state {
+            width:
+                100%;
+
+            text-align:
+                center;
+
+            padding:
+                28px 14px;
+
+            background:
+                rgba(255,255,255,0.02);
+
+            border:
+                1px dashed var(--border);
+
+            border-radius:
+                var(--radius-lg);
+
+            margin-top:
+                10px;
+        }
+
+        .empty-state i {
+            font-size:
+                2rem;
+
+            color:
+                var(--accent-glow);
+
+            margin-bottom:
+                9px;
+
+            opacity:
+                0.8;
+        }
+
+        .empty-state p {
+            color:
+                var(--text-muted);
+
+            font-size:
+                0.84rem;
+
+            line-height:
+                1.5;
+        }
+
+        /* =========================================================
+           DISCUSSIONS
+        ========================================================= */
+
+        .reddit-post {
+            display:
+                flex;
+
+            gap:
+                10px;
+
+            border-bottom:
+                1px solid var(--border);
+
+            padding-bottom:
+                13px;
+
+            margin-bottom:
+                13px;
+        }
+
+        .upvote-box {
+            flex:
+                0 0 42px;
+
+            display:
+                flex;
+
+            flex-direction:
+                column;
+
+            align-items:
+                center;
+
+            justify-content:
+                flex-start;
+
+            gap:
+                3px;
+
+            background:
+                rgba(255,255,255,0.03);
+
+            border:
+                1px solid var(--border);
+
+            border-radius:
+                var(--radius-md);
+
+            padding:
+                5px;
+
+            height:
+                fit-content;
+        }
+
+        .upvote-btn {
+            background:
+                none;
+
+            border:
+                none;
+
+            color:
+                var(--text-muted);
+
+            cursor:
+                pointer;
+
+            font-size:
+                1rem;
+        }
+
+        .upvote-btn:hover {
+            color:
+                var(--accent-glow);
+        }
+
+        .upvote-count {
+            font-weight:
+                700;
+
+            font-size:
+                0.78rem;
+        }
+
+        /* =========================================================
+           TIMELINE
+        ========================================================= */
+
+        .timeline-item {
+            border-left:
+                2px solid var(--accent-primary);
+
+            padding-left:
+                14px;
+
+            margin-bottom:
+                16px;
+
+            position:
+                relative;
+        }
+
+        .timeline-item::before {
+            content:
+                "";
+
+            width:
+                9px;
+
+            height:
+                9px;
+
+            background:
+                var(--accent-glow);
+
+            border-radius:
+                50%;
+
+            position:
+                absolute;
+
+            left:
+                -5.5px;
+
+            top:
+                4px;
+        }
+
+        /* =========================================================
+           MOBILE
+        ========================================================= */
+
+        @media (max-width: 600px) {
+
+            main {
+                padding:
+                    11px;
+            }
+
+            .card {
+                padding:
+                    15px;
+
+                border-radius:
+                    15px;
+            }
+
+            header {
+                padding:
+                    11px 13px;
+            }
+
+            .logo {
+                font-size:
+                    1rem;
+            }
+
+            .session-timer-badge {
+                font-size:
+                    0.62rem;
+            }
+
+            .user-avatar {
+                width:
+                    36px;
+
+                height:
+                    36px;
+            }
+
+            .modal-overlay {
+                padding:
+                    8px 7px 90px;
+            }
+
+            .modal-box {
+                padding:
+                    18px 13px;
+
+                border-radius:
+                    15px;
+            }
+
+            .onboard-title {
+                font-size:
+                    1.25rem;
+            }
+
+            .onboard-sub {
+                font-size:
+                    0.8rem;
+            }
+
+            .step-pill {
+                font-size:
+                    0.64rem;
+
+                padding:
+                    7px 2px;
+            }
+
+            #step2 .location-row {
+                display:
+                    block !important;
+            }
+
+            #step2 .location-row .form-control {
+                width:
+                    100%;
+            }
+
+            .bottom-nav {
+                padding-left:
+                    1px;
+
+                padding-right:
+                    1px;
+            }
+
+            .nav-tab {
+                font-size:
+                    0.58rem;
+            }
+
+            .nav-tab i {
+                font-size:
+                    1rem;
+            }
+        }
+
+        /* =========================================================
+           VERY SMALL PHONES
+        ========================================================= */
+
+        @media (max-width: 360px) {
+
+            main {
+                padding:
+                    8px;
+            }
+
+            .card {
+                padding:
+                    13px;
+            }
+
+            .nav-tab {
+                font-size:
+                    0.54rem;
+            }
+
+            .nav-tab i {
+                font-size:
+                    0.9rem;
+            }
+
+            .session-timer-badge {
+                display:
+                    inline-flex !important;
+                flex:
+                    0 0 auto;
+                max-width:
+                    92px;
+                padding:
+                    4px 6px;
+                gap:
+                    3px;
+                font-size:
+                    0.60rem;
+            }
+
+            .session-timer-badge span:first-of-type {
+                display:
+                    none;
+            }
+
+            #sessionTimer {
+                font-variant-numeric:
+                    tabular-nums;
+            }
+        }
+
+    
+        /* FINAL MOBILE RESPONSIVE SAFETY */
+        img, video, canvas, svg { max-width: 100%; height: auto; }
+        .row, .grid, .flex-row, .two-column, .three-column { min-width: 0; max-width: 100%; }
+        @media (max-width: 600px) {
+            main { padding: 10px; }
+            .card { padding: 14px; border-radius: 15px; }
+            header { padding: 10px 12px; }
+
+            .session-timer-badge {
+                display: inline-flex !important;
+                flex: 0 0 auto;
+                max-width: 96px;
+                padding: 4px 6px;
+                gap: 3px;
+                font-size: 0.60rem;
+            }
+
+            .session-timer-badge span:first-of-type {
+                display: none;
+            }
+
+            #sessionTimer {
+                font-variant-numeric: tabular-nums;
+            }
+            .logo { font-size: 1.02rem; }
+            .modal-overlay { padding: 8px; }
+            .modal-box { max-width: 100%; padding: 17px 13px; border-radius: 16px; max-height: calc(100dvh - 16px); overflow-y: auto; }
+            .form-control { min-height: 44px; font-size: 16px; }
+            textarea.form-control { min-height: 82px; }
+            .btn { min-height: 44px; }
+            .nav-tab { font-size: 0.58rem; }
+            .nav-tab i { font-size: 1rem; }
+        }
+        @media (max-width: 380px) {
+            .card { padding: 12px; }
+            .step-pill { font-size: 0.60rem; }
+            .mood-selector { gap: 5px; }
+            .mood-btn { min-height: 40px; }
+        }
+
+    
+
+        /* =========================================================
+           COMMUNITY DISCUSSION / REPLY STYLES
+        ========================================================= */
+
+        .discussion-actions {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            flex-wrap:wrap;
+            margin-top:10px;
+        }
+
+        .discussion-replies {
+            margin-top:10px;
+            padding-left:12px;
+            border-left:2px solid rgba(124,116,255,0.28);
+        }
+
+        .discussion-reply {
+            margin-top:8px;
+            padding:9px 10px;
+            border-radius:10px;
+            background:rgba(10,15,30,0.62);
+            border:1px solid rgba(124,116,255,0.12);
+        }
+
+        .reply-editor {
+            margin-top:10px;
+            padding:10px;
+            border-radius:12px;
+            background:rgba(8,12,25,0.72);
+            border:1px solid rgba(124,116,255,0.18);
+        }
+
+        .reply-editor textarea {
+            width:100%;
+            resize:vertical;
+            min-height:62px;
+            margin-bottom:8px;
+        }
+
+        .reply-count {
+            color:var(--text-muted);
+            font-size:0.72rem;
+        }
+        .update-actions {
+            display:flex;
+            align-items:center;
+            gap:7px;
+            flex-wrap:wrap;
+            margin-top:10px;
+        }
+        .update-reactions {
+            display:flex;
+            gap:5px;
+            flex-wrap:wrap;
+            margin-top:8px;
+        }
+        .reaction-btn {
+            border:1px solid rgba(124,116,255,0.20);
+            background:rgba(8,12,25,0.55);
+            color:var(--text-main);
+            border-radius:999px;
+            padding:5px 9px;
+            cursor:pointer;
+            font-size:0.76rem;
+        }
+        .reaction-btn.active {
+            border-color:var(--accent-glow);
+            background:rgba(124,116,255,0.16);
+        }
+        .update-thread {
+            margin-top:10px;
+            padding-left:12px;
+            border-left:2px solid rgba(124,116,255,0.28);
+        }
+        .update-reply {
+            margin-top:8px;
+            padding:9px 10px;
+            border-radius:12px;
+            background:rgba(10,15,30,0.62);
+            border:1px solid rgba(124,116,255,0.12);
+        }
+        .update-reply-author {
+            font-size:0.74rem;
+            color:var(--text-main);
+            font-weight:800;
+        }
+        .update-reply-time {
+            font-size:0.65rem;
+            color:var(--text-muted);
+            margin-left:4px;
+        }
+        .update-reply-text {
+            margin-top:3px;
+            font-size:0.78rem;
+            line-height:1.5;
+            word-break:break-word;
+        }
+        .update-reply-editor {
+            margin-top:9px;
+            padding:9px;
+            border-radius:12px;
+            background:rgba(8,12,25,0.72);
+            border:1px solid rgba(124,116,255,0.18);
+        }
+        .update-reply-editor textarea {
+            width:100%;
+            resize:vertical;
+            min-height:54px;
+            margin-bottom:7px;
+        }
+
+
+        /* =========================================================
+           SIMPLE CIRCLE / PROFILE / THREAD UI
+        ========================================================= */
+        .circle-member-card { cursor:pointer; transition:transform .15s ease, border-color .15s ease, background .15s ease; }
+        .circle-member-card:hover { transform:translateY(-1px); border-color:var(--accent-glow); background:rgba(99,102,241,.06); }
+        .circle-member-avatar { width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent-primary),var(--accent-glow));font-weight:800;color:#fff;flex-shrink:0; }
+        .profile-modal-title { display:flex;align-items:center;gap:10px; }
+        .profile-modal-avatar { width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent-primary),var(--accent-glow));font-size:1.15rem;font-weight:800; }
+        .profile-update { padding:11px;border:1px solid var(--border);border-radius:12px;background:rgba(0,0,0,.18);margin-top:8px; }
+        .profile-update-text { font-size:.84rem;line-height:1.5;word-break:break-word; }
+        .profile-update-meta { color:var(--text-muted);font-size:.68rem;margin-bottom:4px; }
+        .profile-update:hover { border-color:var(--accent-primary) !important; background:rgba(99,102,241,.06); }
+        .profile-update:active { transform:scale(.995); }
+        .profile-actions { display:flex;gap:8px;margin-top:12px; }
+        .profile-actions .btn { flex:1; }
+        .thread-empty { color:var(--text-muted);font-size:.76rem;padding:7px 0; }
+        .thread-composer { display:flex;gap:7px;align-items:flex-end;margin-top:9px; }
+        .thread-composer textarea { flex:1;margin:0;min-height:48px; }
+        .thread-composer .btn { width:auto;min-height:44px;padding:9px 13px; }
+        .thread-reaction-summary { color:var(--text-muted);font-size:.7rem;margin-left:auto; }
+
+        /* Minimal MyPhase layout */
+                .bottom-nav {
+            grid-template-columns: repeat(3, 1fr) !important;
+        }
+        #panelUpdate { /* opened from Home */ }
+        #panelDiscussions { display:none !important; }
+
+        /* Keep Home focused on the phase and people. These tools remain available elsewhere. */
+        #dailyTaskCard, #todayProgressHeading, #feedTodayProgress {
+            display:none !important;
+        }
 
         /* =========================================================
            PUBLIC WELCOME / LANDING SCREEN
@@ -1715,12 +3336,24 @@
             .welcome-step-number { grid-row:span 2; margin-bottom:0; }
         }
 
-    </style>
+    
+</style>
+
+<style>
+.new-post-btn{
+  margin-left:8px;
+  border:1px solid rgba(0,0,0,.12);
+  border-radius:10px;
+  padding:10px 14px;
+  background:#fff;
+  cursor:pointer;
+  font-weight:600;
+}
+</style>
 </head>
 
 <body>
-    <!-- PUBLIC WELCOME SCREEN -->
-    <div id="publicWelcome" aria-label="Welcome to MyPhase">
+<div id="publicWelcome" aria-label="Welcome to MyPhase">
         <div class="welcome-shell">
             <div class="welcome-top">
                 <div class="welcome-logo"><i class="fa-solid fa-compass"></i> MyPhase</div>
@@ -1742,7 +3375,6 @@
                 <span class="welcome-value">Small Circles</span><span class="welcome-value">Real Conversations</span><span class="welcome-value">Temporary Phases</span><span class="welcome-value">No Follower Counts</span>
             </div>
         </div>
-    </div>
 
 
     <!-- =========================================================
@@ -2168,25 +3800,15 @@
 
             </div>
 
-            <div class="home-post-actions" style="margin:10px 0 12px;">
-                <button class="btn" type="button" onclick="switchTab('Update')">
+            <div style="margin:10px 0 12px;">
+                <button class="btn" type="button" onclick="switchTab('Update')" style="width:100%;">
                     <i class="fa-solid fa-pen"></i> Share an update
                 </button>
-                <button class="btn ghost" type="button" onclick="openNewPostComposer()">
-                    <i class="fa-solid fa-plus"></i> New post
-                </button>
-            </div>
+<button type="button" class="secondary new-post-btn"
+        onclick="(window.openNewPostModal || window.openNewPost || window.createNewPost)?.()">
+  ➕ New post
+</button>
 
-            <div id="newPostModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeNewPostComposer()">
-                <div class="modal-box">
-                    <h3><i class="fa-solid fa-plus"></i> New post</h3>
-                    <div class="hint">Share a topic, question, or something you want your circle to discuss.</div>
-                    <textarea id="newPostInput" class="form-control" placeholder="What would you like to share?" rows="4"></textarea>
-                    <div style="display:flex;gap:8px;margin-top:10px;">
-                        <button class="btn ghost" type="button" onclick="closeNewPostComposer()">Cancel</button>
-                        <button class="btn" type="button" onclick="submitNewPost()"><i class="fa-solid fa-paper-plane"></i> Post</button>
-                    </div>
-                </div>
             </div>
 
             <div id="feedCircleUpdates">
@@ -3337,29 +4959,6 @@
         );
 
 
-
-        /* =========================================================
-           PUBLIC WELCOME SCREEN
-        ========================================================= */
-        function showPublicWelcome() {
-            const el=document.getElementById("publicWelcome");
-            if(el) el.classList.add("show");
-        }
-        function hidePublicWelcome() {
-            const el=document.getElementById("publicWelcome");
-            if(el) el.classList.remove("show");
-        }
-        function openSignupFromWelcome() {
-            hidePublicWelcome();
-            showAuthModal();
-            showStep(1);
-        }
-        function openSignInFromWelcome() {
-            hidePublicWelcome();
-            showAuthModal();
-            showSignIn();
-        }
-
         /* =========================================================
            INITIALIZE SUPABASE
         ========================================================= */
@@ -3527,255 +5126,146 @@
         }
 
         /* =========================================================
-           ACTIVE-TIME SESSION TIMER
-
-           Rules:
-           - The user gets 2 hours of ACTUAL app usage.
-           - Time is counted only while the app is open/visible.
-           - Closing the tab, switching away, or hiding the page pauses it.
-           - Returning resumes from the saved remaining time.
-           - A rolling 24-hour usage window starts on first use.
-           - When that 24-hour window ends, a fresh 2-hour allowance begins.
+           SESSION TIMER
         ========================================================= */
 
         function startSessionTimer() {
 
             const container =
-                document.getElementById("sessionTimerContainer");
+                document.getElementById(
+                    "sessionTimerContainer"
+                );
 
             const display =
-                document.getElementById("sessionTimer");
-
-            if (!container || !display) return;
-
-            container.style.display = "inline-flex";
-
-            const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
-            const WINDOW_MS = 24 * 60 * 60 * 1000;
-
-            const WINDOW_KEY = "myphase_usage_window_start";
-            const USED_KEY = "myphase_active_time_ms";
-            const RESUME_KEY = "myphase_active_resume_time";
-
-            let timerInterval = null;
-            let windowStart = parseInt(
-                localStorage.getItem(WINDOW_KEY) || "0",
-                10
-            );
-            let usedMs = parseInt(
-                localStorage.getItem(USED_KEY) || "0",
-                10
-            );
-            let resumeTime = parseInt(
-                localStorage.getItem(RESUME_KEY) || "0",
-                10
-            );
-
-            const now = Date.now();
-
-            /* Start a fresh 24-hour window when:
-               - this is the first visit, or
-               - the previous 24-hour window has ended. */
-            if (!windowStart || now - windowStart >= WINDOW_MS) {
-                windowStart = now;
-                usedMs = 0;
-                resumeTime = now;
-
-                localStorage.setItem(WINDOW_KEY, String(windowStart));
-                localStorage.setItem(USED_KEY, "0");
-                localStorage.setItem(RESUME_KEY, String(resumeTime));
-            } else if (!resumeTime) {
-                /* Returning to the app: start/resume active counting now. */
-                resumeTime = now;
-                localStorage.setItem(RESUME_KEY, String(resumeTime));
-            }
-
-            function saveState() {
-                localStorage.setItem(WINDOW_KEY, String(windowStart));
-                localStorage.setItem(USED_KEY, String(Math.max(0, usedMs)));
-                localStorage.setItem(RESUME_KEY, String(resumeTime || 0));
-            }
-
-            function pauseUsage() {
-                if (!resumeTime) return;
-
-                const current = Date.now();
-                usedMs += Math.max(0, current - resumeTime);
-                resumeTime = 0;
-                saveState();
-            }
-
-            function resumeUsage() {
-                const current = Date.now();
-
-                /* If the 24-hour window ended while the user was away,
-                   reset the allowance before resuming. */
-                if (current - windowStart >= WINDOW_MS) {
-                    windowStart = current;
-                    usedMs = 0;
-                }
-
-                resumeTime = current;
-                saveState();
-                updateTimer();
-            }
-
-            function formatTime(ms) {
-                const totalSeconds = Math.max(
-                    0,
-                    Math.ceil(ms / 1000)
+                document.getElementById(
+                    "sessionTimer"
                 );
 
-                const hrs = Math.floor(totalSeconds / 3600);
-                const mins = Math.floor((totalSeconds % 3600) / 60);
-                const secs = totalSeconds % 60;
-
-                return (
-                    `${hrs < 10 ? "0" : ""}${hrs}:` +
-                    `${mins < 10 ? "0" : ""}${mins}:` +
-                    `${secs < 10 ? "0" : ""}${secs}`
-                );
+            if (!container || !display) {
+                return;
             }
 
-            function expireUsage() {
-                if (timerInterval) {
-                    clearInterval(timerInterval);
-                    timerInterval = null;
-                }
+            container.style.display =
+                "inline-flex";
 
-                /* Remove only the active resume marker. Keep the
-                   24-hour window data until logout so we don't accidentally
-                   grant another 2 hours by refreshing the page. */
-                pauseUsage();
 
-                alert(
-                    "Your 2-hour active time has expired. You can use MyPhase again when the 24-hour window resets."
+            const TWO_HOURS_MS =
+                2 * 60 * 60 * 1000;
+
+
+            let sessionStartTime =
+                localStorage.getItem(
+                    "myphase_session_start"
                 );
 
-                logout();
+
+            if (!sessionStartTime) {
+
+                sessionStartTime =
+                    Date.now();
+
+                localStorage.setItem(
+                    "myphase_session_start",
+                    String(sessionStartTime)
+                );
+
+            } else {
+
+                sessionStartTime =
+                    parseInt(
+                        sessionStartTime,
+                        10
+                    );
+
             }
+
+
+            if (
+                sessionTimerInterval
+            ) {
+
+                clearInterval(
+                    sessionTimerInterval
+                );
+
+            }
+
 
             function updateTimer() {
-                const current = Date.now();
 
-                /* Roll over to a new 24-hour window. */
-                if (current - windowStart >= WINDOW_MS) {
-                    windowStart = current;
-                    usedMs = 0;
-                    resumeTime = document.hidden ? 0 : current;
-                    saveState();
-                }
+                const elapsed =
+                    Date.now() -
+                    sessionStartTime;
 
-                let currentUsed = usedMs;
+                const remaining =
+                    TWO_HOURS_MS -
+                    elapsed;
 
-                if (resumeTime && !document.hidden) {
-                    currentUsed += Math.max(0, current - resumeTime);
-                }
-
-                const remaining = TWO_HOURS_MS - currentUsed;
 
                 if (remaining <= 0) {
-                    display.innerText = "00:00:00";
-                    expireUsage();
+
+                    clearInterval(
+                        sessionTimerInterval
+                    );
+
+                    localStorage.removeItem(
+                        "myphase_session_start"
+                    );
+
+                    alert(
+                        "Your 2-hour session has expired. Please sign in again."
+                    );
+
+                    logout();
+
                     return;
                 }
 
-                display.innerText = formatTime(remaining);
+
+                const hrs =
+                    Math.floor(
+                        remaining /
+                        (1000 * 60 * 60)
+                    );
+
+                const mins =
+                    Math.floor(
+                        (remaining %
+                            (1000 * 60 * 60)) /
+                        (1000 * 60)
+                    );
+
+                const secs =
+                    Math.floor(
+                        (remaining %
+                            (1000 * 60)) /
+                        1000
+                    );
+
+
+                display.innerText =
+                    `${hrs < 10 ? "0" : ""}${hrs}:` +
+                    `${mins < 10 ? "0" : ""}${mins}:` +
+                    `${secs < 10 ? "0" : ""}${secs}`;
             }
 
-            /* Prevent duplicate listeners if startSessionTimer is called
-               more than once during the same login session. */
-            if (window._myPhaseTimerVisibilityHandler) {
-                document.removeEventListener(
-                    "visibilitychange",
-                    window._myPhaseTimerVisibilityHandler
-                );
-            }
-
-            window._myPhaseTimerVisibilityHandler = function () {
-                if (document.hidden) {
-                    pauseUsage();
-                } else {
-                    resumeUsage();
-                }
-
-                updateTimer();
-            };
-
-            document.addEventListener(
-                "visibilitychange",
-                window._myPhaseTimerVisibilityHandler
-            );
-
-            /* Save active time when the page is being closed/reloaded. */
-            if (window._myPhaseBeforeUnloadHandler) {
-                window.removeEventListener(
-                    "beforeunload",
-                    window._myPhaseBeforeUnloadHandler
-                );
-            }
-
-            window._myPhaseBeforeUnloadHandler = function () {
-                pauseUsage();
-            };
-
-            window.addEventListener(
-                "beforeunload",
-                window._myPhaseBeforeUnloadHandler
-            );
-
-            if (timerInterval) {
-                clearInterval(timerInterval);
-            }
-
-            /* Only count active/visible time. */
-            if (!document.hidden && !resumeTime) {
-                resumeTime = Date.now();
-                saveState();
-            }
 
             updateTimer();
 
-            timerInterval = setInterval(function () {
-                if (!document.hidden) {
-                    updateTimer();
-                }
-            }, 1000);
 
-            /* Expose cleanup so logout can remove timer listeners cleanly. */
-            window._myPhaseStopTimer = function () {
-                pauseUsage();
-
-                if (timerInterval) {
-                    clearInterval(timerInterval);
-                    timerInterval = null;
-                }
-
-                if (window._myPhaseTimerVisibilityHandler) {
-                    document.removeEventListener(
-                        "visibilitychange",
-                        window._myPhaseTimerVisibilityHandler
-                    );
-                    window._myPhaseTimerVisibilityHandler = null;
-                }
-
-                if (window._myPhaseBeforeUnloadHandler) {
-                    window.removeEventListener(
-                        "beforeunload",
-                        window._myPhaseBeforeUnloadHandler
-                    );
-                    window._myPhaseBeforeUnloadHandler = null;
-                }
-            };
+            sessionTimerInterval =
+                setInterval(
+                    updateTimer,
+                    1000
+                );
         }
+
 
         /* =========================================================
            AUTH MODAL
         ========================================================= */
 
         function showAuthModal() {
-
-            hidePublicWelcome();
 
             const modal =
                 document.getElementById(
@@ -4801,19 +6291,22 @@
 
             try {
 
-                if (window._myPhaseStopTimer) {
-                    window._myPhaseStopTimer();
-                    window._myPhaseStopTimer = null;
-                }
+                localStorage.removeItem(
+                    "myphase_session_start"
+                );
 
-                localStorage.removeItem("myphase_session_start");
-                localStorage.removeItem("myphase_usage_window_start");
-                localStorage.removeItem("myphase_active_time_ms");
-                localStorage.removeItem("myphase_active_resume_time");
 
-                if (sessionTimerInterval) {
-                    clearInterval(sessionTimerInterval);
-                    sessionTimerInterval = null;
+                if (
+                    sessionTimerInterval
+                ) {
+
+                    clearInterval(
+                        sessionTimerInterval
+                    );
+
+                    sessionTimerInterval =
+                        null;
+
                 }
 
 
@@ -4906,7 +6399,7 @@
 
                 } else {
 
-                    showPublicWelcome();
+                    showAuthModal();
 
                 }
 
@@ -4931,8 +6424,6 @@
                             session &&
                             session.user
                         ) {
-
-                            hidePublicWelcome();
 
                             currentUser =
                                 session.user;
@@ -5325,46 +6816,6 @@
             }
         }
 
-
-        function openNewPostComposer() {
-            const modal = document.getElementById("newPostModal");
-            const input = document.getElementById("newPostInput");
-            if (!modal) return;
-            modal.style.display = "flex";
-            if (input) { input.value = ""; setTimeout(() => input.focus(), 50); }
-        }
-
-        function closeNewPostComposer() {
-            const modal = document.getElementById("newPostModal");
-            if (modal) modal.style.display = "none";
-        }
-
-        async function submitNewPost() {
-            if (!currentUser || !db) return;
-            const input = document.getElementById("newPostInput");
-            const text = (input?.value || "").trim();
-            if (!text) {
-                showToast("Please write something first.", "warning");
-                return;
-            }
-
-            const { error } = await db.from("daily_updates").insert([{
-                user_id: currentUser.id,
-                user_name: myProfile?.first_name || currentUser.user_metadata?.first_name || "Member",
-                phase_name: myProfile?.current_phase || "My Phase",
-                update_text: text
-            }]);
-
-            if (error) {
-                console.error("New post error:", error);
-                showToast("Could not publish the post.", "error");
-                return;
-            }
-
-            closeNewPostComposer();
-            showToast("Post shared with your circle.", "success");
-            await fetchDashboardData();
-        }
 
         async function fetchDashboardData(scrollToUpdateId = null) {
             if (!currentUser || !db) return;
@@ -6911,6 +8362,40 @@
 
     
     </script>
+
+
+<script>
+(function () {
+  function showPublicWelcome() {
+    const welcome = document.getElementById('publicWelcome');
+    const app = document.getElementById('app') || document.getElementById('mainApp');
+    if (welcome) welcome.style.display = 'flex';
+    if (app) app.style.display = 'none';
+  }
+
+  function hidePublicWelcome() {
+    const welcome = document.getElementById('publicWelcome');
+    const app = document.getElementById('app') || document.getElementById('mainApp');
+    if (welcome) welcome.style.display = 'none';
+    if (app) app.style.display = '';
+  }
+
+  window.showPublicWelcome = showPublicWelcome;
+  window.hidePublicWelcome = hidePublicWelcome;
+
+  document.addEventListener('DOMContentLoaded', async function () {
+    try {
+      if (window.supabase && typeof window.supabase.auth?.getSession === 'function') {
+        const result = await window.supabase.auth.getSession();
+        if (!result?.data?.session) showPublicWelcome();
+        else hidePublicWelcome();
+      }
+    } catch (e) {
+      console.warn('Welcome/session check failed:', e);
+    }
+  });
+})();
+</script>
 
 </body>
 </html>
