@@ -6386,6 +6386,10 @@
                     session.user
                 ) {
 
+                    if (typeof hidePublicWelcome === "function") {
+                        hidePublicWelcome();
+                    }
+
                     currentUser =
                         session.user;
 
@@ -6401,7 +6405,11 @@
 
                 } else {
 
-                    showAuthModal();
+                    currentUser = null;
+
+                    if (typeof showPublicWelcome === "function") {
+                        showPublicWelcome();
+                    }
 
                 }
 
@@ -6426,6 +6434,10 @@
                             session &&
                             session.user
                         ) {
+
+                            if (typeof hidePublicWelcome === "function") {
+                                hidePublicWelcome();
+                            }
 
                             currentUser =
                                 session.user;
@@ -6453,6 +6465,10 @@
 
                             currentUser =
                                 null;
+
+                            if (typeof showPublicWelcome === "function") {
+                                showPublicWelcome();
+                            }
 
                             myProfile =
                                 null;
@@ -8370,32 +8386,16 @@
 (function () {
   function showPublicWelcome() {
     const welcome = document.getElementById('publicWelcome');
-    const app = document.getElementById('app') || document.getElementById('mainApp');
-    if (welcome) welcome.style.display = 'flex';
-    if (app) app.style.display = 'none';
+    if (welcome) welcome.classList.add('show');
   }
 
   function hidePublicWelcome() {
     const welcome = document.getElementById('publicWelcome');
-    const app = document.getElementById('app') || document.getElementById('mainApp');
-    if (welcome) welcome.style.display = 'none';
-    if (app) app.style.display = '';
+    if (welcome) welcome.classList.remove('show');
   }
 
   window.showPublicWelcome = showPublicWelcome;
   window.hidePublicWelcome = hidePublicWelcome;
-
-  document.addEventListener('DOMContentLoaded', async function () {
-    try {
-      if (window.supabase && typeof window.supabase.auth?.getSession === 'function') {
-        const result = await window.supabase.auth.getSession();
-        if (!result?.data?.session) showPublicWelcome();
-        else hidePublicWelcome();
-      }
-    } catch (e) {
-      console.warn('Welcome/session check failed:', e);
-    }
-  });
 })();
 </script>
 
